@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Super Admin — AI Growth Labs OS</title>
+<link rel="stylesheet" href="/static/css/dashboard.css">
+</head>
+<body>
+<aside class="sidebar">
+<div class="sidebar-logo">AI Growth<span>Labs</span></div>
+<nav class="sidebar-nav">
+<div class="sidebar-section">Main</div>
+<a href="/dashboard" class="sidebar-link active"><span class="icon">📊</span><span>Dashboard</span></a>
+<div class="sidebar-section">Management</div>
+<a href="#clients-section" class="sidebar-link"><span class="icon">👥</span><span>Clients</span></a>
+<a href="#projects-section" class="sidebar-link"><span class="icon">📋</span><span>Projects</span></a>
+<a href="#tasks-section" class="sidebar-link"><span class="icon">✅</span><span>Tasks</span></a>
+<a href="#workers-section" class="sidebar-link"><span class="icon">👷</span><span>Workers</span></a>
+<div class="sidebar-section">Finance</div>
+<a href="#payments-section" class="sidebar-link"><span class="icon">💰</span><span>Payments</span></a>
+<div class="sidebar-section">Tools</div>
+<a href="#audit-section" class="sidebar-link"><span class="icon">🔍</span><span>SEO Audit</span></a>
+</nav>
+<div class="sidebar-user">
+<div class="sidebar-avatar">{{ user.full_name[:2].upper() }}</div>
+<div class="sidebar-user-info"><div class="name">{{ user.full_name }}</div><div class="role">{{ user.role.replace('_', ' ') }}</div></div>
+</div>
+</aside>
+
+<main class="main">
+<div class="main-header">
+<div><h1>Super Admin Dashboard</h1><div class="subtitle">Agency Operating System — Complete Overview</div></div>
+<div class="header-actions">
+<button class="header-btn" onclick="openModal('addClient')">+ Add Client</button>
+<button class="header-btn" onclick="openModal('addProject')">+ New Project</button>
+<button class="header-btn" onclick="openModal('addWorker')">+ Add Worker</button>
+<a href="/logout" class="header-btn">Logout</a>
+</div>
+</div>
+
+<!-- Stats -->
+<div class="stats-grid">
+<div class="stat-card"><div class="stat-label">Monthly Revenue</div><div class="stat-value cyan">${{ "{:,.0f}".format(stats.monthly_recurring) }}</div><div class="stat-sub">Active MRR</div></div>
+<div class="stat-card"><div class="stat-label">Total Collected</div><div class="stat-value green">${{ "{:,.0f}".format(stats.total_revenue) }}</div><div class="stat-sub">All time payments</div></div>
+<div class="stat-card"><div class="stat-label">Pending Revenue</div><div class="stat-value yellow">${{ "{:,.0f}".format(stats.pending_revenue) }}</div><div class="stat-sub">Outstanding payments</div></div>
+<div class="stat-card"><div class="stat-label">Active Clients</div><div class="stat-value">{{ stats.active_clients }}</div><div class="stat-sub">Currently active</div></div>
+<div class="stat-card"><div class="stat-label">Active Projects</div><div class="stat-value">{{ stats.active_projects }}</div><div class="stat-sub">In progress</div></div>
+<div class="stat-card"><div class="stat-label">Task Completion</div><div class="stat-value cyan">{{ stats.task_completion }}%</div><div class="stat-sub">{{ stats.completed_tasks }}/{{ stats.total_tasks }} tasks</div></div>
+</div>
+
+<!-- Projects Kanban -->
+<div class="card" id="projects-section">
+<div class="card-header"><h3>📋 All Projects</h3></div>
+<div class="card-body">
+<table>
+<thead><tr><th>Client</th><th>Project</th><th>Service</th><th>Worker</th><th>Team Lead</th><th>Progress</th><th>Priority</th><th>Status</th><th>Upsell</th></tr></thead>
+<tbody>
+{% for p in projects %}
+<tr>
+<td><strong>{{ p.business_name or 'N/A' }}</strong></td>
+<td>{{ p.title }}</td>
+<td>{{ p.service_type or '-' }}</td>
+<td>{{ p.worker_name or 'Unassigned' }}</td>
+<td>{{ p.leader_name or '-' }}</td>
+<td style="min-width:120px"><div class="progress-bar"><div class="progress-fill" style="width:{{ p.progress }}%"></div></div><div class="progress-text">{{ p.progress }}%</div></td>
+<td><span class="badge badge-{{ p.priority }}">{{ p.priority }}</span></td>
+<td><span class="badge badge-{{ p.status }}">{{ p.status.replace('_', ' ') }}</span></td>
+<td>{{ p.upsell_opportunities or '—' }}</td>
+</tr>
+{% endfor %}
+</tbody>
+</table>
+</div>
+</div>
+
+<!-- Clients -->
+<div class="card" id="clients-section">
+<div class="card-header"><h3>👥 All Clients</h3></div>
+<div class="card-body">
+<table>
+<thead><tr><th>Business</th><th>Contact</th><th>Industry</th><th>Location</th><th>Package</th><th>Payment</th><th>Status</th></tr></thead>
+<tbody>
+{% for c in clients %}
+<tr>
+<td><strong>{{ c.business_name }}</strong><br><span style="color:#64748B;font-size:.75rem">{{ c.website or '' }}</span></td>
+<td>{{ c.contact_name or '-' }}<br><span style="color:#64748B;font-size:.75rem">{{ c.email or '' }}</span></td>
+<td>{{ c.industry or '-' }}</td>
+<td>{{ c.location or '-' }}</td>
+<td>{{ c.package or 'None' }}</td>
+<td>{{ '${:,.0f}/mo'.format(c.monthly_payment) if c.monthly_payment else '-' }}</td>
+<td><span class="badge badge-{{ c.status }}">{{ c.status }}</span></td>
+</tr>
+{% endfor %}
+</tbody>
+</table>
+</div>
+</div>
+
+<!-- Workers & Tasks -->
+<div class="grid-2">
+<div class="card" id="workers-section">
+<div class="card-header"><h3>👷 Team Members</h3></div>
+<div class="card-body">
+<table>
+<thead><tr><th>Name</th><th>Role</th><th>Rank</th><th>Salary</th><th>Status</th></tr></thead>
+<tbody>
+{% for w in workers %}
+<tr>
+<td><strong>{{ w.full_name }}</strong><br><span style="color:#64748B;font-size:.75rem">@{{ w.username }}</span></td>
+<td>{{ w.role.replace('_', ' ').title() }}</td>
+<td><span class="badge badge-active">{{ w.rank }}</span></td>
+<td>${{ "{:,.0f}".format(w.salary) }}</td>
+<td><span class="badge badge-{{ 'active' if w.is_active else 'paused' }}">{{ 'Active' if w.is_active else 'Inactive' }}</span></td>
+</tr>
+{% endfor %}
+</tbody>
+</table>
+</div>
+</div>
+
+<div class="card" id="tasks-section">
+<div class="card-header"><h3>✅ Recent Tasks</h3></div>
+<div class="card-body">
+<table>
+<thead><tr><th>Task</th><th>Project</th><th>Assigned</th><th>Priority</th><th>Status</th></tr></thead>
+<tbody>
+{% for t in tasks[:15] %}
+<tr>
+<td>{{ t.title }}</td>
+<td>{{ t.project_title or '-' }}</td>
+<td>{{ t.assigned_name or 'Unassigned' }}</td>
+<td><span class="badge badge-{{ t.priority }}">{{ t.priority }}</span></td>
+<td><span class="badge badge-{{ t.status }}">{{ t.status.replace('_', ' ') }}</span></td>
+</tr>
+{% endfor %}
+</tbody>
+</table>
+</div>
+</div>
+</div>
+
+<!-- Payments -->
+<div class="card" id="payments-section">
+<div class="card-header"><h3>💰 Payment Records</h3></div>
+<div class="card-body">
+<table>
+<thead><tr><th>Invoice</th><th>Client</th><th>Amount</th><th>Due Date</th><th>Paid Date</th><th>Status</th></tr></thead>
+<tbody>
+{% for p in payments %}
+<tr>
+<td>{{ p.invoice_number or '-' }}</td>
+<td>{{ p.business_name or '-' }}</td>
+<td><strong>${{ "{:,.0f}".format(p.amount) }}</strong></td>
+<td>{{ p.due_date or '-' }}</td>
+<td>{{ p.paid_date or '-' }}</td>
+<td><span class="badge badge-{{ p.status }}">{{ p.status }}</span></td>
+</tr>
+{% endfor %}
+</tbody>
+</table>
+</div>
+</div>
+
+<!-- SEO Audit Panel -->
+<div class="audit-panel" id="audit-section">
+<h3>🔍 Run SEO DNA Audit</h3>
+<p style="color:#94A3B8;font-size:.85rem;margin-bottom:16px">Paste a client's website URL and select an AI provider to run a complete DNA-level audit.</p>
+<div class="audit-input-group">
+<input type="url" id="auditUrl" placeholder="https://clientwebsite.com">
+<select id="auditProvider">
+<option value="claude">Claude Sonnet</option>
+<option value="chatgpt">ChatGPT 4.5</option>
+<option value="gemini">Google Gemini</option>
+</select>
+<button class="audit-btn" onclick="runAudit()">Run Audit →</button>
+</div>
+<p style="color:#475569;font-size:.78rem">Note: AI API key must be configured in environment for audits to process.</p>
+</div>
+</main>
+
+<!-- Add Client Modal -->
+<div class="modal-overlay" id="addClient">
+<div class="modal">
+<h3>Add New Client</h3>
+<div class="modal-group"><label>Business Name *</label><input type="text" id="cl_name"></div>
+<div class="modal-group"><label>Contact Person</label><input type="text" id="cl_contact"></div>
+<div class="modal-group"><label>Email</label><input type="email" id="cl_email"></div>
+<div class="modal-group"><label>Phone</label><input type="tel" id="cl_phone"></div>
+<div class="modal-group"><label>Website</label><input type="url" id="cl_website"></div>
+<div class="modal-group"><label>Industry</label><input type="text" id="cl_industry"></div>
+<div class="modal-group"><label>Location</label><input type="text" id="cl_location"></div>
+<div class="modal-group"><label>Package</label><select id="cl_package"><option value="">Select...</option><option>Growth Starter</option><option>Growth Pro</option><option>Growth Elite</option></select></div>
+<div class="modal-group"><label>Monthly Payment</label><input type="number" id="cl_payment" placeholder="0"></div>
+<div class="modal-group"><label>Status</label><select id="cl_status"><option value="lead">Lead</option><option value="prospect">Prospect</option><option value="active">Active</option></select></div>
+<div class="modal-actions"><button class="cancel" onclick="closeModal('addClient')">Cancel</button><button class="save" onclick="saveClient()">Save Client</button></div>
+</div>
+</div>
+
+<!-- Add Project Modal -->
+<div class="modal-overlay" id="addProject">
+<div class="modal">
+<h3>Create New Project</h3>
+<div class="modal-group"><label>Client</label><select id="pj_client">{% for c in clients %}<option value="{{ c.id }}">{{ c.business_name }}</option>{% endfor %}</select></div>
+<div class="modal-group"><label>Title *</label><input type="text" id="pj_title"></div>
+<div class="modal-group"><label>Service Type</label><select id="pj_service"><option>Local SEO</option><option>GBP Optimization</option><option>Reputation Management</option><option>AI SEO</option><option>Paid Advertising</option><option>Social Media</option><option>Content Creation</option></select></div>
+<div class="modal-group"><label>Assign Worker</label><select id="pj_worker"><option value="">Select...</option>{% for w in workers %}<option value="{{ w.id }}">{{ w.full_name }} ({{ w.role.replace('_', ' ') }})</option>{% endfor %}</select></div>
+<div class="modal-group"><label>Priority</label><select id="pj_priority"><option value="medium">Medium</option><option value="high">High</option><option value="urgent">Urgent</option><option value="low">Low</option></select></div>
+<div class="modal-group"><label>Description</label><textarea id="pj_desc" rows="3"></textarea></div>
+<div class="modal-actions"><button class="cancel" onclick="closeModal('addProject')">Cancel</button><button class="save" onclick="saveProject()">Create Project</button></div>
+</div>
+</div>
+
+<!-- Add Worker Modal -->
+<div class="modal-overlay" id="addWorker">
+<div class="modal">
+<h3>Add Team Member</h3>
+<div class="modal-group"><label>Username *</label><input type="text" id="usr_username"></div>
+<div class="modal-group"><label>Full Name *</label><input type="text" id="usr_name"></div>
+<div class="modal-group"><label>Email</label><input type="email" id="usr_email"></div>
+<div class="modal-group"><label>Role *</label><select id="usr_role"><option value="worker">Worker</option><option value="tech_seo">Tech SEO</option><option value="social_media">Social Media</option><option value="sales">Sales</option><option value="finance">Finance</option></select></div>
+<div class="modal-group"><label>Rank</label><select id="usr_rank"><option value="junior">Junior</option><option value="mid">Mid</option><option value="senior">Senior</option><option value="lead">Lead</option></select></div>
+<div class="modal-group"><label>Salary</label><input type="number" id="usr_salary" placeholder="0"></div>
+<div class="modal-group"><label>Password</label><input type="text" id="usr_password" value="changeme123"></div>
+<div class="modal-actions"><button class="cancel" onclick="closeModal('addWorker')">Cancel</button><button class="save" onclick="saveWorker()">Add Member</button></div>
+</div>
+</div>
+
+<script>
+function openModal(id){document.getElementById(id).classList.add('open')}
+function closeModal(id){document.getElementById(id).classList.remove('open')}
+document.querySelectorAll('.modal-overlay').forEach(m=>m.addEventListener('click',e=>{if(e.target===m)m.classList.remove('open')}));
+
+async function api(url,data){
+  const r=await fetch(url,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(data)});
+  return r.json();
+}
+
+async function saveClient(){
+  await api('/api/clients',{business_name:document.getElementById('cl_name').value,contact_name:document.getElementById('cl_contact').value,email:document.getElementById('cl_email').value,phone:document.getElementById('cl_phone').value,website:document.getElementById('cl_website').value,industry:document.getElementById('cl_industry').value,location:document.getElementById('cl_location').value,package:document.getElementById('cl_package').value,monthly_payment:parseFloat(document.getElementById('cl_payment').value)||0,status:document.getElementById('cl_status').value});
+  location.reload();
+}
+async function saveProject(){
+  await api('/api/projects',{client_id:parseInt(document.getElementById('pj_client').value),title:document.getElementById('pj_title').value,description:document.getElementById('pj_desc').value,service_type:document.getElementById('pj_service').value,assigned_worker_id:parseInt(document.getElementById('pj_worker').value)||null,priority:document.getElementById('pj_priority').value});
+  location.reload();
+}
+async function saveWorker(){
+  await api('/api/users',{username:document.getElementById('usr_username').value,full_name:document.getElementById('usr_name').value,email:document.getElementById('usr_email').value,role:document.getElementById('usr_role').value,rank:document.getElementById('usr_rank').value,salary:parseFloat(document.getElementById('usr_salary').value)||0,password:document.getElementById('usr_password').value});
+  location.reload();
+}
+async function runAudit(){
+  const url=document.getElementById('auditUrl').value;
+  if(!url){alert('Please enter a website URL');return;}
+  const r=await api('/api/audit',{website_url:url,ai_provider:document.getElementById('auditProvider').value});
+  alert(r.message||'Audit queued');
+}
+</script>
+</body>
+</html>

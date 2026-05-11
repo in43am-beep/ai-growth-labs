@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Worker Dashboard — AI Growth Labs OS</title>
+<link rel="stylesheet" href="/static/css/dashboard.css">
+</head>
+<body>
+<aside class="sidebar">
+<div class="sidebar-logo">AI Growth<span>Labs</span></div>
+<nav class="sidebar-nav">
+<div class="sidebar-section">My Work</div>
+<a href="/dashboard" class="sidebar-link active"><span class="icon">📊</span><span>Dashboard</span></a>
+<a href="#tasks-section" class="sidebar-link"><span class="icon">✅</span><span>My Tasks</span></a>
+<a href="#projects-section" class="sidebar-link"><span class="icon">📋</span><span>My Projects</span></a>
+<div class="sidebar-section">Tools</div>
+<a href="#audit-section" class="sidebar-link"><span class="icon">🔍</span><span>SEO Audit</span></a>
+<a href="#notifications-section" class="sidebar-link"><span class="icon">🔔</span><span>Notifications</span></a>
+</nav>
+<div class="sidebar-user">
+<div class="sidebar-avatar">{{ user.full_name[:2].upper() }}</div>
+<div class="sidebar-user-info"><div class="name">{{ user.full_name }}</div><div class="role">{{ user.role.replace('_', ' ').title() }}</div></div>
+</div>
+</aside>
+
+<main class="main">
+<div class="main-header">
+<div><h1>Welcome, {{ user.full_name.split()[0] }}!</h1><div class="subtitle">{{ user.role.replace('_', ' ').title() }} Dashboard</div></div>
+<div class="header-actions"><a href="/logout" class="header-btn">Logout</a></div>
+</div>
+
+<!-- Stats -->
+<div class="stats-grid">
+<div class="stat-card"><div class="stat-label">Total Tasks</div><div class="stat-value">{{ stats.total_tasks }}</div></div>
+<div class="stat-card"><div class="stat-label">Completed</div><div class="stat-value green">{{ stats.completed_tasks }}</div></div>
+<div class="stat-card"><div class="stat-label">Pending</div><div class="stat-value yellow">{{ stats.pending_tasks }}</div></div>
+<div class="stat-card"><div class="stat-label">Completion Rate</div><div class="stat-value cyan">{{ stats.completion_pct }}%</div><div class="progress-bar" style="margin-top:8px"><div class="progress-fill" style="width:{{ stats.completion_pct }}%"></div></div></div>
+<div class="stat-card"><div class="stat-label">Active Projects</div><div class="stat-value">{{ stats.active_projects }}</div></div>
+</div>
+
+<!-- Task Kanban Board -->
+<div class="card" id="tasks-section">
+<div class="card-header"><h3>✅ My Tasks — Kanban Board</h3></div>
+<div class="card-body">
+<div class="kanban-board">
+<div class="kanban-col">
+<div class="kanban-col-header">📋 Pending <span class="count">{{ my_tasks|selectattr('status','eq','pending')|list|length }}</span></div>
+<div class="kanban-cards">
+{% for t in my_tasks if t.status == 'pending' %}
+<div class="kanban-card" data-id="{{ t.id }}">
+<div class="k-title">{{ t.title }}</div>
+<div class="k-project">{{ t.business_name or t.project_title or '' }}</div>
+<div class="k-priority"><span class="badge badge-{{ t.priority }}">{{ t.priority }}</span></div>
+<button style="margin-top:8px;background:rgba(6,182,212,.1);border:1px solid rgba(6,182,212,.2);color:#22D3EE;padding:4px 12px;border-radius:6px;font-size:.72rem;cursor:pointer" onclick="updateTask({{ t.id }},'in_progress')">Start →</button>
+</div>
+{% endfor %}
+</div>
+</div>
+<div class="kanban-col">
+<div class="kanban-col-header">🔄 In Progress <span class="count">{{ my_tasks|selectattr('status','eq','in_progress')|list|length }}</span></div>
+<div class="kanban-cards">
+{% for t in my_tasks if t.status == 'in_progress' %}
+<div class="kanban-card" data-id="{{ t.id }}">
+<div class="k-title">{{ t.title }}</div>
+<div class="k-project">{{ t.business_name or t.project_title or '' }}</div>
+<div class="k-priority"><span class="badge badge-{{ t.priority }}">{{ t.priority }}</span></div>
+<button style="margin-top:8px;background:rgba(52,211,153,.1);border:1px solid rgba(52,211,153,.2);color:#34D399;padding:4px 12px;border-radius:6px;font-size:.72rem;cursor:pointer" onclick="updateTask({{ t.id }},'completed')">Complete ✓</button>
+</div>
+{% endfor %}
+</div>
+</div>
+<div class="kanban-col">
+<div class="kanban-col-header">🚫 Blocked <span class="count">{{ my_tasks|selectattr('status','eq','blocked')|list|length }}</span></div>
+<div class="kanban-cards">
+{% for t in my_tasks if t.status == 'blocked' %}
+<div class="kanban-card" data-id="{{ t.id }}">
+<div class="k-title">{{ t.title }}</div>
+<div class="k-project">{{ t.business_name or t.project_title or '' }}</div>
+<div class="k-priority"><span class="badge badge-{{ t.priority }}">{{ t.priority }}</span></div>
+</div>
+{% endfor %}
+</div>
+</div>
+<div class="kanban-col">
+<div class="kanban-col-header">✅ Completed <span class="count">{{ my_tasks|selectattr('status','eq','completed')|list|length }}</span></div>
+<div class="kanban-cards">
+{% for t in my_tasks if t.status == 'completed' %}
+<div class="kanban-card" data-id="{{ t.id }}">
+<div class="k-title">{{ t.title }}</div>
+<div class="k-project">{{ t.business_name or t.project_title or '' }}</div>
+</div>
+{% endfor %}
+</div>
+</div>
+</div>
+</div>
+</div>
+
+<!-- Projects -->
+<div class="grid-3">
+<div class="card" id="projects-section">
+<div class="card-header"><h3>📋 My Projects</h3></div>
+<div class="card-body">
+{% for p in my_projects %}
+<div style="padding:16px 0;border-bottom:1px solid rgba(30,58,95,.3)">
+<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+<div>
+<strong style="color:#F1F5F9">{{ p.title }}</strong>
+<div style="color:#22D3EE;font-size:.78rem">{{ p.business_name or '' }} — {{ p.industry or '' }}</div>
+</div>
+<span class="badge badge-{{ p.status }}">{{ p.status.replace('_', ' ') }}</span>
+</div>
+<div class="progress-bar"><div class="progress-fill" style="width:{{ p.progress }}%"></div></div>
+<div class="progress-text">{{ p.progress }}% complete</div>
+<div style="color:#64748B;font-size:.78rem;margin-top:4px">{{ p.website or '' }} • {{ p.location or '' }}</div>
+</div>
+{% endfor %}
+</div>
+</div>
+
+<div>
+<!-- Notifications -->
+<div class="card" id="notifications-section">
+<div class="card-header"><h3>🔔 Notifications</h3></div>
+<div class="notif-list">
+{% for n in notifications %}
+<div class="notif-item {{ 'unread' if not n.is_read else '' }}" onclick="markRead({{ n.id }})">
+<span class="notif-icon">{{ '🔴' if n.type == 'urgent' else '📋' if n.type == 'task' else '✅' if n.type == 'success' else 'ℹ️' }}</span>
+<div class="notif-content">
+<div class="title">{{ n.title }}</div>
+<div class="msg">{{ n.message or '' }}</div>
+<div class="time">{{ n.created_at }}</div>
+</div>
+</div>
+{% endfor %}
+{% if not notifications %}<div style="padding:20px;text-align:center;color:#475569">No notifications</div>{% endif %}
+</div>
+</div>
+</div>
+</div>
+
+<!-- SEO Audit Tool -->
+<div class="audit-panel" id="audit-section">
+<h3>🔍 SEO DNA Audit Tool</h3>
+<p style="color:#94A3B8;font-size:.85rem;margin-bottom:16px">Paste a client website URL to run a complete DNA-level SEO audit. Select an AI provider for analysis.</p>
+<div class="audit-input-group">
+<input type="url" id="auditUrl" placeholder="https://clientwebsite.com">
+<select id="auditProvider">
+<option value="claude">Claude Sonnet</option>
+<option value="chatgpt">ChatGPT 4.5</option>
+<option value="gemini">Google Gemini</option>
+</select>
+<button class="audit-btn" onclick="runAudit()">Run DNA Audit →</button>
+</div>
+<p style="color:#475569;font-size:.78rem">Results will include: Technical SEO, On-Page, Content, Entity SEO, Local SEO, Competitor Analysis, and 90-day roadmap.</p>
+</div>
+
+<!-- Recent Audits -->
+{% if audits %}
+<div class="card">
+<div class="card-header"><h3>📊 Recent Audits</h3></div>
+<div class="card-body">
+<table>
+<thead><tr><th>Client</th><th>Website</th><th>Score</th><th>Provider</th><th>Status</th><th>Date</th></tr></thead>
+<tbody>
+{% for a in audits %}
+<tr>
+<td>{{ a.business_name or '-' }}</td>
+<td style="color:#22D3EE;font-size:.82rem">{{ a.website_url }}</td>
+<td><strong>{{ a.overall_score or '-' }}</strong>/120</td>
+<td>{{ a.ai_provider or '-' }}</td>
+<td><span class="badge badge-{{ a.status }}">{{ a.status }}</span></td>
+<td style="color:#475569;font-size:.78rem">{{ a.created_at }}</td>
+</tr>
+{% endfor %}
+</tbody>
+</table>
+</div>
+</div>
+{% endif %}
+</main>
+
+<script>
+async function updateTask(id,status){
+  await fetch('/api/tasks/'+id+'/status',{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({status})});
+  location.reload();
+}
+async function markRead(id){
+  await fetch('/api/notifications/'+id+'/read',{method:'POST'});
+  event.currentTarget.classList.remove('unread');
+}
+async function runAudit(){
+  const url=document.getElementById('auditUrl').value;
+  if(!url){alert('Enter a website URL');return;}
+  const r=await fetch('/api/audit',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({website_url:url,ai_provider:document.getElementById('auditProvider').value})});
+  const d=await r.json();
+  alert(d.message||'Audit started');
+  location.reload();
+}
+</script>
+</body>
+</html>

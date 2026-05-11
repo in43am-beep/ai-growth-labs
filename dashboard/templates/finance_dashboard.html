@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Finance Dashboard — AI Growth Labs OS</title>
+<link rel="stylesheet" href="/static/css/dashboard.css">
+</head>
+<body>
+<aside class="sidebar">
+<div class="sidebar-logo">AI Growth<span>Labs</span></div>
+<nav class="sidebar-nav">
+<div class="sidebar-section">Finance</div>
+<a href="/dashboard" class="sidebar-link active"><span class="icon">📊</span><span>Dashboard</span></a>
+<a href="#payments-section" class="sidebar-link"><span class="icon">💰</span><span>Payments</span></a>
+<a href="#expenses-section" class="sidebar-link"><span class="icon">💳</span><span>Expenses</span></a>
+<a href="#salaries-section" class="sidebar-link"><span class="icon">👷</span><span>Salaries</span></a>
+</nav>
+<div class="sidebar-user">
+<div class="sidebar-avatar">{{ user.full_name[:2].upper() }}</div>
+<div class="sidebar-user-info"><div class="name">{{ user.full_name }}</div><div class="role">Finance</div></div>
+</div>
+</aside>
+
+<main class="main">
+<div class="main-header">
+<div><h1>Finance & Accounts Dashboard</h1><div class="subtitle">Revenue, Expenses, Salaries & Audits</div></div>
+<div class="header-actions">
+<button class="header-btn primary" onclick="openModal('addExpense')">+ Add Expense</button>
+<a href="/logout" class="header-btn">Logout</a>
+</div>
+</div>
+
+<!-- Stats -->
+<div class="stats-grid">
+<div class="stat-card"><div class="stat-label">Total Income</div><div class="stat-value green">${{ "{:,.0f}".format(stats.total_income) }}</div><div class="stat-sub">From client payments</div></div>
+<div class="stat-card"><div class="stat-label">Total Expenses</div><div class="stat-value red">${{ "{:,.0f}".format(stats.total_expenses) }}</div><div class="stat-sub">All categories</div></div>
+<div class="stat-card"><div class="stat-label">Net Profit</div><div class="stat-value {{ 'green' if stats.net_profit >= 0 else 'red' }}">${{ "{:,.0f}".format(stats.net_profit) }}</div><div class="stat-sub">Income - Expenses</div></div>
+<div class="stat-card"><div class="stat-label">Pending Payments</div><div class="stat-value yellow">${{ "{:,.0f}".format(stats.pending_payments) }}</div><div class="stat-sub">Outstanding client payments</div></div>
+<div class="stat-card"><div class="stat-label">Total Salaries</div><div class="stat-value">${{ "{:,.0f}".format(stats.total_salaries) }}</div><div class="stat-sub">Monthly payroll</div></div>
+<div class="stat-card"><div class="stat-label">Tools Cost</div><div class="stat-value cyan">${{ "{:,.0f}".format(stats.tools_cost) }}</div><div class="stat-sub">Software & services</div></div>
+</div>
+
+<!-- Client Payments -->
+<div class="card" id="payments-section">
+<div class="card-header"><h3>💰 Client Payments</h3></div>
+<div class="card-body">
+<table>
+<thead><tr><th>Invoice</th><th>Client</th><th>Amount</th><th>Due Date</th><th>Paid Date</th><th>Status</th></tr></thead>
+<tbody>
+{% for p in payments %}
+<tr>
+<td style="font-weight:600">{{ p.invoice_number or '-' }}</td>
+<td>{{ p.business_name or '-' }}</td>
+<td><strong>${{ "{:,.0f}".format(p.amount) }}</strong></td>
+<td>{{ p.due_date or '-' }}</td>
+<td>{{ p.paid_date or '-' }}</td>
+<td><span class="badge badge-{{ p.status }}">{{ p.status }}</span></td>
+</tr>
+{% endfor %}
+</tbody>
+</table>
+</div>
+</div>
+
+<!-- Expenses & Salaries -->
+<div class="grid-2">
+<div class="card" id="expenses-section">
+<div class="card-header"><h3>💳 Expenses</h3></div>
+<div class="card-body">
+<table>
+<thead><tr><th>Category</th><th>Description</th><th>Amount</th><th>Date</th></tr></thead>
+<tbody>
+{% for e in expenses %}
+<tr>
+<td><span class="badge badge-{{ 'active' if e.category == 'tools' else 'pending' if e.category == 'salary' else 'draft' }}">{{ e.category }}</span></td>
+<td>{{ e.description }}</td>
+<td><strong>${{ "{:,.0f}".format(e.amount) }}</strong></td>
+<td style="color:#475569;font-size:.82rem">{{ e.date }}</td>
+</tr>
+{% endfor %}
+</tbody>
+</table>
+</div>
+</div>
+
+<div class="card" id="salaries-section">
+<div class="card-header"><h3>👷 Staff Salaries</h3></div>
+<div class="card-body">
+<table>
+<thead><tr><th>Name</th><th>Role</th><th>Rank</th><th>Salary</th></tr></thead>
+<tbody>
+{% for w in workers %}
+<tr>
+<td><strong>{{ w.full_name }}</strong></td>
+<td>{{ w.role.replace('_', ' ').title() }}</td>
+<td><span class="badge badge-active">{{ w.rank }}</span></td>
+<td><strong>${{ "{:,.0f}".format(w.salary) }}</strong>/mo</td>
+</tr>
+{% endfor %}
+<tr style="border-top:2px solid #1E3A5F">
+<td colspan="3" style="font-weight:700;color:#F1F5F9">Total Monthly Payroll</td>
+<td style="font-weight:700;color:#22D3EE">${{ "{:,.0f}".format(stats.total_salaries) }}/mo</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+</div>
+</main>
+
+<!-- Add Expense Modal -->
+<div class="modal-overlay" id="addExpense">
+<div class="modal">
+<h3>Add Expense</h3>
+<div class="modal-group"><label>Category *</label><select id="exp_cat"><option value="tools">Tools & Software</option><option value="salary">Salary</option><option value="marketing">Marketing</option><option value="office">Office</option><option value="other">Other</option></select></div>
+<div class="modal-group"><label>Description *</label><input type="text" id="exp_desc"></div>
+<div class="modal-group"><label>Amount *</label><input type="number" id="exp_amount" step="0.01"></div>
+<div class="modal-group"><label>Date</label><input type="date" id="exp_date"></div>
+<div class="modal-actions"><button class="cancel" onclick="closeModal('addExpense')">Cancel</button><button class="save" onclick="saveExpense()">Save Expense</button></div>
+</div>
+</div>
+
+<script>
+function openModal(id){document.getElementById(id).classList.add('open')}
+function closeModal(id){document.getElementById(id).classList.remove('open')}
+document.querySelectorAll('.modal-overlay').forEach(m=>m.addEventListener('click',e=>{if(e.target===m)m.classList.remove('open')}));
+
+async function saveExpense(){
+  await fetch('/api/expenses',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({category:document.getElementById('exp_cat').value,description:document.getElementById('exp_desc').value,amount:parseFloat(document.getElementById('exp_amount').value),date:document.getElementById('exp_date').value||null})});
+  location.reload();
+}
+</script>
+</body>
+</html>

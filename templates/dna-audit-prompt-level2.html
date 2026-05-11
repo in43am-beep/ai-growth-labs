@@ -1,0 +1,562 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DNA SEO Audit Prompt — Level 2 Professional Audit (Credentials Required)</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap');
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Inter',sans-serif;color:#1E293B;line-height:1.7;background:#f8fafc}
+.container{max-width:960px;margin:0 auto;padding:20px}
+.doc{background:#fff;padding:60px;border-radius:16px;box-shadow:0 4px 20px rgba(0,0,0,0.08);margin:20px auto}
+@media print{.doc{box-shadow:none;padding:40px;margin:0}.no-print{display:none!important}body{background:#fff}}
+.hdr{background:linear-gradient(135deg,#0A1628,#112240);color:#fff;padding:40px;border-radius:12px;margin-bottom:40px}
+.logo{font-size:1.6rem;font-weight:800}.logo span{color:#00D4FF}
+.hdr p{color:#94A3B8;font-size:0.9rem}
+h1{font-size:2rem;color:#0A1628;margin:20px 0 10px;font-weight:800}
+h2{font-size:1.3rem;color:#0A1628;margin:30px 0 15px;padding-bottom:8px;border-bottom:2px solid #00D4FF;font-weight:700}
+h3{font-size:1.05rem;color:#112240;margin:20px 0 8px;font-weight:600}
+p{margin-bottom:12px;color:#475569}
+.badge{display:inline-block;padding:4px 14px;border-radius:20px;font-size:0.8rem;font-weight:600}
+.b-orange{background:#FFF7ED;color:#D97706}
+.b-purple{background:#F5F3FF;color:#7C3AED}
+.tip{background:#ECFDF5;border:1px solid #A7F3D0;border-radius:8px;padding:14px 18px;margin:12px 0;font-size:0.9rem;color:#065F46}
+.warn{background:#FEF2F2;border:1px solid #FECACA;border-radius:8px;padding:14px 18px;margin:12px 0;font-size:0.9rem;color:#991B1B}
+.info{background:#FFF7ED;border:1px solid #FDBA74;border-radius:8px;padding:14px 18px;margin:12px 0;font-size:0.9rem;color:#9A3412}
+.card{background:#F8FAFC;border:1px solid #E2E8F0;border-radius:12px;padding:24px;margin:15px 0}
+.c-cyan{border-left:4px solid #00D4FF}
+table{width:100%;border-collapse:collapse;margin:15px 0}
+th,td{padding:10px 14px;text-align:left;border-bottom:1px solid #E2E8F0;font-size:0.88rem}
+th{background:#F1F5F9;font-weight:600;color:#334155}
+ul{margin:10px 0 15px 20px}
+li{margin-bottom:6px;color:#475569;font-size:0.93rem}
+li::marker{color:#00D4FF}
+.prompt-box{position:relative;background:#0A1628;border:2px solid #1E3A5F;border-radius:14px;padding:30px;margin:20px 0}
+.prompt-box pre{color:#E2E8F0;font-family:'JetBrains Mono','Courier New',monospace;font-size:0.85rem;line-height:1.8;white-space:pre-wrap;word-wrap:break-word;margin:0}
+.prompt-box .highlight{color:#00D4FF;font-weight:500}
+.prompt-box .var{color:#F59E0B;font-weight:600}
+.prompt-box .section-marker{color:#22D3EE;font-weight:700;font-size:0.95rem}
+.prompt-box .comment{color:#64748B;font-style:italic}
+.copy-btn{position:absolute;top:12px;right:12px;background:linear-gradient(135deg,#00D4FF,#00A8CC);color:#0A1628;border:none;padding:8px 18px;border-radius:8px;font-size:0.82rem;font-weight:700;cursor:pointer;z-index:10;transition:all 0.2s}
+.copy-btn:hover{transform:scale(1.05)}
+.copy-btn.copied{background:#059669;color:#fff}
+.btn-print{position:fixed;bottom:30px;right:30px;background:linear-gradient(135deg,#00D4FF,#00A8CC);color:#fff;border:none;padding:14px 28px;border-radius:50px;font-size:1rem;font-weight:600;cursor:pointer;box-shadow:0 4px 15px rgba(0,212,255,0.4);z-index:100}
+</style>
+</head>
+<body>
+<button class="btn-print no-print" onclick="window.print()">📄 Print PDF</button>
+<div class="container"><div class="doc">
+
+<div class="hdr">
+<div class="logo">AI<span>Growth</span>Labs</div>
+<p>AI SEO AGENCY OS — Level 2 Professional DNA Audit (Credentials Required)</p>
+</div>
+
+<h1>DNA SEO Audit — Level 2: Professional Audit Prompt</h1>
+<p><span class="badge b-orange">Credentials Required</span> <span class="badge b-purple">Deep Intelligence Mode</span></p>
+<p>This prompt unlocks deep audit capabilities using Google Search Console, Google Analytics, and CMS access. Use AFTER client shares credentials for a professional-grade analysis with real ranking data, traffic patterns, and actionable fixes.</p>
+
+<h2>CREDENTIALS NEEDED BEFORE USING</h2>
+<div class="card c-cyan">
+<table>
+<tr><th>Platform</th><th>Access Level Needed</th><th>What It Unlocks</th></tr>
+<tr><td><strong>Google Search Console</strong></td><td>Full User access</td><td>Real keyword rankings, impressions, CTR, indexed pages, coverage errors, sitemap status, crawl stats</td></tr>
+<tr><td><strong>Google Analytics (GA4)</strong></td><td>Viewer access minimum</td><td>Traffic sources, bounce rate, session duration, conversions, user flow, engagement metrics, top landing pages</td></tr>
+<tr><td><strong>WordPress/CMS</strong></td><td>Editor or Admin access</td><td>Content audit, plugin analysis, theme speed, internal link structure, draft pages, redirect rules</td></tr>
+<tr><td><strong>Google Business Profile</strong></td><td>Manager access</td><td>GBP insights (searches, views, calls, directions), post performance, review details, Q&A management</td></tr>
+<tr><td><strong>Semrush/Ahrefs</strong></td><td>API key or shared project</td><td>Backlink database, keyword gap analysis, competitor rankings, SERP tracking, toxic link detection</td></tr>
+</table>
+</div>
+
+<div class="info"><strong>How to Get Client Access:</strong> Ask the client to add your agency email as a user in each platform. Never ask for their password — always request proper delegated access (Google accounts use email-based sharing).</div>
+
+<h2>PROMPT A: GOOGLE SEARCH CONSOLE DEEP AUDIT</h2>
+<p>Use when you have GSC data exported or when using AI tools connected to GSC.</p>
+
+<div class="prompt-box">
+<button class="copy-btn no-print" onclick="copyPrompt('prompt-gsc',this)">📋 Copy Prompt</button>
+<pre id="prompt-gsc">
+<span class="section-marker">═══════════════════════════════════════════════════</span>
+<span class="section-marker">  GOOGLE SEARCH CONSOLE — DNA DEEP AUDIT</span>
+<span class="section-marker">═══════════════════════════════════════════════════</span>
+
+You are a senior SEO strategist. I'm giving you Google Search Console data for my client's website. Perform a PROFESSIONAL-GRADE analysis.
+
+<span class="var">🔗 WEBSITE: [WEBSITE_URL]</span>
+<span class="var">📊 GSC DATA PERIOD: Last 3 months (or 6/12/16 months if available)</span>
+
+I will paste or upload the following GSC data:
+1. Performance Report (Queries tab) — top keywords with impressions, clicks, CTR, position
+2. Performance Report (Pages tab) — top pages with traffic data
+3. Coverage/Indexing Report — indexed, excluded, errors
+4. Sitemaps status
+5. Core Web Vitals report
+6. Mobile Usability report
+
+<span class="section-marker">═══ ANALYZE THE FOLLOWING: ═══</span>
+
+<span class="highlight">1. KEYWORD INTELLIGENCE</span>
+From the Queries data:
+- Identify TOP 20 money keywords (commercial intent, driving leads)
+- Identify TOP 20 opportunity keywords (position 5-20, high impressions, low CTR)
+- Identify DECLINING keywords (position dropping month-over-month)
+- Identify QUICK WINS (position 4-10, just need small push to page 1)
+- Calculate: which keywords have abnormally low CTR for their position? (title/meta issue)
+- Group keywords by: service type, location, intent
+
+For each opportunity keyword, provide:
+| Keyword | Impressions | Clicks | CTR | Position | Opportunity Type | Fix |
+|---------|------------|--------|-----|----------|-----------------|-----|
+
+<span class="highlight">2. PAGE PERFORMANCE ANALYSIS</span>
+From the Pages data:
+- TOP 10 performing pages (traffic drivers)
+- UNDERPERFORMING pages (high impressions, low clicks = bad titles/metas)
+- DEAD pages (zero or near-zero traffic — fix or remove?)
+- Pages losing traffic month-over-month (content decay)
+- Pages with high CTR (what makes them work? replicate pattern)
+- CANNIBALIZATION check: are multiple pages competing for same keywords?
+
+<span class="highlight">3. INDEXING HEALTH</span>
+From Coverage/Indexing data:
+- Total indexed pages vs total pages on site
+- Excluded pages — WHY? (noindex, crawl anomaly, redirect, duplicate, soft 404)
+- Error pages — list every error with fix recommendation
+- Are important pages missing from the index?
+- Index bloat: are unimportant pages being indexed? (tags, categories, parameters)
+- Sitemap coverage: submitted vs indexed
+
+<span class="highlight">4. TECHNICAL HEALTH FROM GSC</span>
+- Core Web Vitals pass/fail rates (mobile + desktop)
+- Mobile usability issues list with fix recommendations
+- Crawl stats analysis (if available): pages crawled/day, response time, size
+- Security issues flagged
+- Manual actions (if any)
+
+<span class="highlight">5. CTR OPTIMIZATION PLAN</span>
+For every keyword in position 1-10 with below-average CTR:
+| Keyword | Position | Current CTR | Expected CTR | Gap | Current Title | Recommended Title |
+|---------|----------|-------------|-------------|-----|--------------|-------------------|
+
+<span class="highlight">6. CONTENT STRATEGY FROM DATA</span>
+Based on keyword data:
+- What topics should the client create content for NEXT?
+- What existing content should be UPDATED/EXPANDED?
+- What content should be MERGED (cannibalization fixes)?
+- What content should be REMOVED (thin, no traffic, hurting quality)?
+
+<span class="highlight">7. 90-DAY PRIORITY ROADMAP</span>
+Based on ALL GSC findings, create:
+Month 1: [Quick wins + critical fixes]
+Month 2: [Content optimization + gap filling]
+Month 3: [Authority building + expansion]
+
+Each item should have: task, keyword/page affected, estimated traffic impact.
+
+<span class="section-marker">═══════════════════════════════════════════════════</span>
+<span class="section-marker">  FORMAT: Use tables wherever possible. Be specific with page URLs</span>
+<span class="section-marker">  and keyword names. This report goes directly to the client.</span>
+<span class="section-marker">═══════════════════════════════════════════════════</span>
+</pre>
+</div>
+
+<h2>PROMPT B: GOOGLE ANALYTICS (GA4) DEEP AUDIT</h2>
+
+<div class="prompt-box">
+<button class="copy-btn no-print" onclick="copyPrompt('prompt-ga4',this)">📋 Copy Prompt</button>
+<pre id="prompt-ga4">
+<span class="section-marker">═══════════════════════════════════════════════════</span>
+<span class="section-marker">  GOOGLE ANALYTICS (GA4) — TRAFFIC & BEHAVIOR AUDIT</span>
+<span class="section-marker">═══════════════════════════════════════════════════</span>
+
+You are a senior digital marketing analyst. Analyze this GA4 data for my client's website and provide a professional report.
+
+<span class="var">🔗 WEBSITE: [WEBSITE_URL]</span>
+<span class="var">📊 GA4 DATA PERIOD: Last 3 months</span>
+
+I will paste or upload GA4 data including:
+1. Overview metrics (users, sessions, engagement rate, conversions)
+2. Traffic Acquisition (channels: organic, direct, referral, social, paid)
+3. User Acquisition (new vs returning)
+4. Engagement (pages/session, average engagement time, events)
+5. Top Landing Pages (sessions, engagement, conversions per page)
+6. Demographics (if available: age, gender, location)
+7. Tech (devices: mobile/desktop/tablet split)
+8. Conversion events (form submissions, calls, bookings)
+
+<span class="section-marker">═══ ANALYZE THE FOLLOWING: ═══</span>
+
+<span class="highlight">1. TRAFFIC HEALTH ANALYSIS</span>
+- Overall traffic trend (growing, stable, declining?)
+- Traffic channel breakdown with percentages
+- Which channel is underperforming vs potential?
+- Month-over-month comparison for each channel
+- Identify: where are the BIGGEST growth opportunities?
+
+<span class="highlight">2. USER BEHAVIOR INTELLIGENCE</span>
+- Engagement rate (above or below 50% benchmark?)
+- Average engagement time (above or below 1 minute benchmark?)
+- Pages per session (above or below 2 benchmark?)
+- Bounce risk pages (low engagement, high exit rate)
+- High-value pages (long engagement, high conversion)
+- Device split analysis — is mobile experience hurting conversions?
+
+<span class="highlight">3. CONVERSION ANALYSIS</span>
+- Total conversions by type (calls, forms, bookings, etc.)
+- Conversion rate by channel (which channel converts best?)
+- Conversion rate by device (mobile vs desktop gap?)
+- Conversion rate by landing page (which pages convert best?)
+- Conversion funnel: where are users dropping off?
+- Cost per conversion estimate (if paid data available)
+
+<span class="highlight">4. LANDING PAGE PERFORMANCE</span>
+- Top 10 landing pages by traffic + engagement + conversions
+- Worst performing landing pages (fix or redirect?)
+- Pages with high traffic but low conversion (UX/CTA issue)
+- Pages with low traffic but high conversion (need more visibility)
+
+<span class="highlight">5. AUDIENCE INSIGHTS</span>
+- Geographic hotspots (which cities/regions drive most traffic?)
+- Device breakdown and impact on conversion
+- New vs returning user behavior differences
+- Peak traffic times (when should content/ads be published?)
+
+<span class="highlight">6. CHANNEL-SPECIFIC RECOMMENDATIONS</span>
+For each traffic channel, provide:
+- Current performance summary
+- Growth opportunity
+- Specific action items
+
+<span class="highlight">7. DATA-DRIVEN STRATEGY</span>
+Based on ALL GA4 findings:
+- Top 5 most impactful changes to make
+- Content/pages to prioritize
+- UX improvements needed
+- Conversion optimization recommendations
+- 90-day growth plan tied to data
+
+<span class="section-marker">═══════════════════════════════════════════════════</span>
+<span class="section-marker">  FORMAT: Professional report with tables and charts descriptions.</span>
+<span class="section-marker">  All recommendations must be tied to specific data points.</span>
+<span class="section-marker">═══════════════════════════════════════════════════</span>
+</pre>
+</div>
+
+<h2>PROMPT C: CMS / WORDPRESS DEEP AUDIT</h2>
+
+<div class="prompt-box">
+<button class="copy-btn no-print" onclick="copyPrompt('prompt-cms',this)">📋 Copy Prompt</button>
+<pre id="prompt-cms">
+<span class="section-marker">═══════════════════════════════════════════════════</span>
+<span class="section-marker">  WORDPRESS / CMS — TECHNICAL & CONTENT AUDIT</span>
+<span class="section-marker">═══════════════════════════════════════════════════</span>
+
+You are a WordPress/CMS expert and SEO specialist. I have access to this client's WordPress admin. Guide me through a complete audit with exact steps.
+
+<span class="var">🔗 WEBSITE: [WEBSITE_URL]</span>
+<span class="var">🔑 CMS: WordPress / Wix / Squarespace / Shopify (specify)</span>
+
+<span class="section-marker">═══ AUDIT CHECKLIST (check each item): ═══</span>
+
+<span class="highlight">1. WORDPRESS CORE HEALTH</span>
+☐ WordPress version (is it latest?)
+☐ PHP version (7.4+ minimum, 8.1+ recommended)
+☐ Theme — name, version, last updated, responsive?
+☐ Active plugins count (too many = slow site)
+☐ Plugin conflicts or outdated plugins (security risk)
+☐ Database optimization needed?
+☐ wp-config.php security settings
+☐ File permissions correct?
+☐ Debug mode disabled?
+
+<span class="highlight">2. SEO PLUGIN AUDIT</span>
+☐ SEO plugin installed? (Rank Math / Yoast / All-in-One SEO)
+☐ Sitemap generated and submitted to GSC?
+☐ Schema markup settings configured?
+☐ Default title/meta templates optimized?
+☐ Social media preview (OG tags) configured?
+☐ Breadcrumbs enabled?
+☐ Redirect manager — any redirects set up?
+☐ 404 monitoring active?
+☐ Robots.txt configured correctly?
+
+<span class="highlight">3. SPEED & PERFORMANCE</span>
+☐ Caching plugin installed? (WP Rocket, W3 Total Cache, LiteSpeed)
+☐ Image optimization plugin? (ShortPixel, Imagify, Smush)
+☐ Lazy loading enabled for images?
+☐ CSS/JS minification active?
+☐ CDN connected? (Cloudflare, BunnyCDN)
+☐ Database cleanup scheduled?
+☐ Unused themes/plugins removed?
+☐ Hosting quality (shared vs VPS vs managed?)
+
+<span class="highlight">4. CONTENT AUDIT</span>
+☐ Total published pages count
+☐ Total published posts count
+☐ Draft/unpublished content worth publishing?
+☐ Thin content pages (under 300 words)
+☐ Duplicate content issues
+☐ Missing featured images
+☐ Missing categories/tags structure
+☐ Author pages — optimized or noindex?
+☐ Archive pages — useful or bloating index?
+
+<span class="highlight">5. INTERNAL LINKING STRUCTURE</span>
+☐ Menu navigation — logical, keyword-optimized?
+☐ Footer links — important pages linked?
+☐ Sidebar widgets — relevant internal links?
+☐ In-content links — pages linking to each other?
+☐ Orphan pages — pages with zero internal links to them?
+☐ Broken internal links?
+
+<span class="highlight">6. SECURITY CHECK</span>
+☐ SSL certificate active and not expiring soon?
+☐ Security plugin installed? (Wordfence, Sucuri, iThemes)
+☐ Login URL changed from default /wp-admin?
+☐ Two-factor authentication enabled?
+☐ Automatic backups running? (UpdraftPlus, BlogVault)
+☐ File editing disabled in wp-config?
+☐ Comment spam protection?
+
+<span class="highlight">7. FIXES TO IMPLEMENT</span>
+Based on findings, create a prioritized fix list:
+| # | Issue | Severity | Fix Instructions | Time Needed |
+|---|-------|----------|-----------------|-------------|
+| 1 | | Critical/High/Medium/Low | Step-by-step | |
+
+Include exact plugin recommendations and settings to change.
+
+<span class="section-marker">═══════════════════════════════════════════════════</span>
+<span class="section-marker">  PROVIDE EXACT CLICK-BY-CLICK INSTRUCTIONS for each fix.</span>
+<span class="section-marker">  Assume the user is not a developer — guide them simply.</span>
+<span class="section-marker">═══════════════════════════════════════════════════</span>
+</pre>
+</div>
+
+<h2>PROMPT D: GOOGLE BUSINESS PROFILE DEEP AUDIT</h2>
+
+<div class="prompt-box">
+<button class="copy-btn no-print" onclick="copyPrompt('prompt-gbp',this)">📋 Copy Prompt</button>
+<pre id="prompt-gbp">
+<span class="section-marker">═══════════════════════════════════════════════════</span>
+<span class="section-marker">  GOOGLE BUSINESS PROFILE — COMPLETE DEEP AUDIT</span>
+<span class="section-marker">═══════════════════════════════════════════════════</span>
+
+You are a Local SEO expert. I have manager access to this client's Google Business Profile. Perform a complete audit.
+
+<span class="var">🔗 BUSINESS: [BUSINESS_NAME]</span>
+<span class="var">📍 LOCATION: [CITY, STATE]</span>
+
+I will share GBP Insights data including:
+- Search queries used to find the business
+- Direct vs Discovery searches
+- Website clicks, phone calls, direction requests
+- Photo views and quantity
+- Review count, rating, and recent reviews
+- Post engagement data
+
+<span class="section-marker">═══ ANALYZE AND REPORT: ═══</span>
+
+<span class="highlight">1. PROFILE COMPLETENESS SCORE</span>
+Rate each section 0-100%:
+| Section | Status | Score | Fix Needed |
+|---------|--------|-------|------------|
+| Business Name | | /100 | |
+| Primary Category | | /100 | |
+| Secondary Categories | | /100 | |
+| Description (750 chars) | | /100 | |
+| Address | | /100 | |
+| Phone | | /100 | |
+| Website URL (with UTM?) | | /100 | |
+| Hours | | /100 | |
+| Special Hours | | /100 | |
+| Services/Products Listed | | /100 | |
+| Attributes | | /100 | |
+| Photos (count + quality) | | /100 | |
+| Videos | | /100 | |
+| Google Posts (last 4 weeks) | | /100 | |
+| Q&A (seeded?) | | /100 | |
+| Review Response Rate | | /100 | |
+| TOTAL COMPLETENESS | | /100 | |
+
+<span class="highlight">2. GBP INSIGHTS ANALYSIS</span>
+- Search type breakdown (direct vs discovery vs branded)
+- Are discovery searches growing? (= SEO working)
+- Which search queries drive the most views?
+- Actions analysis: calls vs website vs directions trends
+- Photo views vs competitor average
+- Month-over-month trends
+
+<span class="highlight">3. REVIEW INTELLIGENCE</span>
+- Total reviews and average rating
+- Review velocity (how many per month?)
+- Sentiment analysis of last 20 reviews:
+  | Theme | Positive Mentions | Negative Mentions |
+  |-------|------------------|-------------------|
+  | Service Quality | | |
+  | Staff/Team | | |
+  | Wait Times | | |
+  | Pricing | | |
+  | Facility | | |
+  | Communication | | |
+- Are all reviews responded to? Quality of responses?
+- Identify fake/spam reviews to flag
+- Competitor review comparison (count + rating)
+
+<span class="highlight">4. COMPETITOR GBP COMPARISON</span>
+Compare this GBP to top 3 competitors:
+| Factor | Client | Competitor 1 | Competitor 2 | Competitor 3 |
+|--------|--------|-------------|-------------|-------------|
+| Reviews | | | | |
+| Rating | | | | |
+| Photos | | | | |
+| Posts (last month) | | | | |
+| Categories | | | | |
+| Map Pack Rank | | | | |
+
+<span class="highlight">5. 30-DAY GBP ACTION PLAN</span>
+Week 1: [Immediate optimizations]
+Week 2: [Content + photos]
+Week 3: [Review generation push]
+Week 4: [Q&A + posts + monitoring]
+
+<span class="section-marker">═══════════════════════════════════════════════════</span>
+<span class="section-marker">  Include specific text for: rewritten description, categories to</span>
+<span class="section-marker">  add, post content for next 4 weeks, and Q&As to seed.</span>
+<span class="section-marker">═══════════════════════════════════════════════════</span>
+</pre>
+</div>
+
+<h2>PROMPT E: COMPETITOR INTELLIGENCE DEEP DIVE</h2>
+
+<div class="prompt-box">
+<button class="copy-btn no-print" onclick="copyPrompt('prompt-comp',this)">📋 Copy Prompt</button>
+<pre id="prompt-comp">
+<span class="section-marker">═══════════════════════════════════════════════════</span>
+<span class="section-marker">  COMPETITOR DNA INTELLIGENCE — DEEP ANALYSIS</span>
+<span class="section-marker">═══════════════════════════════════════════════════</span>
+
+You are a competitive intelligence analyst specializing in SEO. Perform a DNA-level comparison between my client and their competitors.
+
+<span class="var">🔗 CLIENT WEBSITE: [CLIENT_URL]</span>
+<span class="var">🔗 COMPETITOR 1: [COMPETITOR_1_URL]</span>
+<span class="var">🔗 COMPETITOR 2: [COMPETITOR_2_URL]</span>
+<span class="var">🔗 COMPETITOR 3: [COMPETITOR_3_URL]</span>
+<span class="var">📍 TARGET MARKET: [CITY/REGION]</span>
+<span class="var">🏢 INDUSTRY: [NICHE]</span>
+
+<span class="section-marker">═══ ANALYZE THESE 10 DIMENSIONS: ═══</span>
+
+<span class="highlight">1. AUTHORITY GAP</span>
+Compare domain strength, estimated backlink profiles, brand recognition.
+Who has the strongest authority and why?
+
+<span class="highlight">2. CONTENT GAP</span>
+Visit each competitor's blog/content section.
+What topics do competitors cover that the client does NOT?
+Create a content gap list with priority (high/medium/low).
+
+<span class="highlight">3. KEYWORD GAP</span>
+Based on page titles, content, and structure:
+What keywords are competitors targeting that the client is NOT?
+Group by: service keywords, location keywords, informational keywords.
+
+<span class="highlight">4. ENTITY GAP</span>
+What semantic entities/topics do competitors cover more deeply?
+Map the entity universe for each competitor vs client.
+
+<span class="highlight">5. UX GAP</span>
+Compare user experience:
+- Design quality (1-10)
+- Mobile experience (1-10)
+- Page speed perception (1-10)
+- Navigation clarity (1-10)
+- CTA effectiveness (1-10)
+Who has the best UX and what specifically makes it better?
+
+<span class="highlight">6. CONVERSION GAP</span>
+Compare conversion elements:
+- Lead capture forms
+- Phone number visibility
+- Trust signals (reviews, badges, certifications)
+- Offer/incentive strength
+- Chat/messaging availability
+Who would YOU choose as a customer and why?
+
+<span class="highlight">7. LOCAL SEO GAP</span>
+Compare Google Business Profiles:
+- Review count and rating
+- Post frequency
+- Photo count and quality
+- Category optimization
+- Local content (city pages, area-specific content)
+
+<span class="highlight">8. SOCIAL MEDIA GAP</span>
+Compare social presence across all platforms:
+- Which platforms are competitors active on?
+- Follower counts
+- Engagement rates
+- Content quality and consistency
+- What social strategies are working for competitors?
+
+<span class="highlight">9. TOPICAL DEPTH GAP</span>
+Who covers their niche more comprehensively?
+Compare: number of pages, depth of content, range of topics covered.
+Is any competitor building topical authority while others have surface content?
+
+<span class="highlight">10. AI VISIBILITY GAP</span>
+Search for "[service] in [city]" and "[service type] recommendations [city]" on:
+- ChatGPT
+- Perplexity
+Which competitors get cited by AI? Why? What can the client do to get cited?
+
+<span class="section-marker">═══ FINAL OUTPUT: ═══</span>
+
+<span class="highlight">COMPETITIVE SCORECARD</span>
+| Dimension | Client /10 | Comp 1 /10 | Comp 2 /10 | Comp 3 /10 |
+|-----------|-----------|-----------|-----------|-----------|
+| Authority | | | | |
+| Content | | | | |
+| Keywords | | | | |
+| Entity | | | | |
+| UX | | | | |
+| Conversion | | | | |
+| Local SEO | | | | |
+| Social Media | | | | |
+| Topical Depth | | | | |
+| AI Visibility | | | | |
+| TOTAL | /100 | /100 | /100 | /100 |
+
+<span class="highlight">TOP 10 COMPETITIVE ADVANTAGES TO BUILD</span>
+Based on ALL gaps found, what are the 10 most impactful things the client should do to beat their competitors? Order by impact.
+
+<span class="highlight">WHAT TO COPY FROM EACH COMPETITOR</span>
+For each competitor, identify 2-3 specific things worth copying/adapting.
+
+<span class="highlight">90-DAY COMPETITIVE STRATEGY</span>
+Month 1: [Close critical gaps]
+Month 2: [Build advantages]
+Month 3: [Establish dominance]
+
+<span class="section-marker">═══════════════════════════════════════════════════</span>
+<span class="section-marker">  Be specific. Use actual page names, content topics, and</span>
+<span class="section-marker">  measurable factors. This report is for a paying client.</span>
+<span class="section-marker">═══════════════════════════════════════════════════</span>
+</pre>
+</div>
+
+</div></div>
+
+<script>
+function copyPrompt(id,btn){
+  const text = document.getElementById(id).innerText;
+  navigator.clipboard.writeText(text).then(()=>{
+    btn.textContent='Copied!';
+    btn.classList.add('copied');
+    setTimeout(()=>{btn.textContent='📋 Copy Prompt';btn.classList.remove('copied')},2000);
+  });
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,122 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Inter',sans-serif;background:#020617;color:#CBD5E1;min-height:100vh;display:flex}
+a{color:#22D3EE;text-decoration:none}
+button{cursor:pointer;font-family:inherit}
+
+/* Sidebar */
+.sidebar{width:260px;background:#0F172A;border-right:1px solid #1E3A5F;min-height:100vh;position:fixed;left:0;top:0;display:flex;flex-direction:column;z-index:100}
+.sidebar-logo{padding:20px 24px;font-size:1.2rem;font-weight:800;color:#fff;border-bottom:1px solid #1E3A5F}.sidebar-logo span{color:#22D3EE}
+.sidebar-nav{flex:1;padding:16px 12px;overflow-y:auto}
+.sidebar-section{font-size:.72rem;color:#475569;text-transform:uppercase;letter-spacing:1px;font-weight:600;padding:12px 12px 6px;margin-top:8px}
+.sidebar-link{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:8px;color:#94A3B8;font-size:.88rem;font-weight:500;transition:all .2s;margin-bottom:2px}
+.sidebar-link:hover{background:rgba(6,182,212,.05);color:#22D3EE}
+.sidebar-link.active{background:rgba(6,182,212,.1);color:#22D3EE;font-weight:600}
+.sidebar-link .icon{font-size:1.1rem;width:24px;text-align:center}
+.sidebar-user{padding:16px 20px;border-top:1px solid #1E3A5F;display:flex;align-items:center;gap:10px}
+.sidebar-avatar{width:36px;height:36px;background:linear-gradient(135deg,#0891B2,#06B6D4);border-radius:50%;display:flex;align-items:center;justify-content:center;color:#020617;font-weight:700;font-size:.85rem;flex-shrink:0}
+.sidebar-user-info .name{color:#F1F5F9;font-size:.85rem;font-weight:600}
+.sidebar-user-info .role{color:#64748B;font-size:.72rem;text-transform:capitalize}
+
+/* Main */
+.main{flex:1;margin-left:260px;padding:24px 32px}
+.main-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:28px}
+.main-header h1{font-size:1.6rem;font-weight:800;color:#F1F5F9}
+.main-header .subtitle{color:#64748B;font-size:.88rem}
+.header-actions{display:flex;gap:12px;align-items:center}
+.header-btn{background:rgba(6,182,212,.1);border:1px solid rgba(6,182,212,.2);color:#22D3EE;padding:8px 18px;border-radius:8px;font-size:.82rem;font-weight:600;display:flex;align-items:center;gap:6px;transition:all .2s}
+.header-btn:hover{background:rgba(6,182,212,.2)}
+.header-btn.primary{background:linear-gradient(135deg,#0891B2,#06B6D4);color:#020617;border:none}
+
+/* Stats Grid */
+.stats-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:16px;margin-bottom:28px}
+.stat-card{background:#0F172A;border:1px solid #1E3A5F;border-radius:12px;padding:20px}
+.stat-label{color:#64748B;font-size:.78rem;font-weight:600;text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px}
+.stat-value{font-size:1.8rem;font-weight:800;color:#F1F5F9}
+.stat-value.cyan{color:#22D3EE}
+.stat-value.green{color:#34D399}
+.stat-value.yellow{color:#FBBF24}
+.stat-value.red{color:#EF4444}
+.stat-sub{color:#475569;font-size:.75rem;margin-top:4px}
+
+/* Cards & Tables */
+.card{background:#0F172A;border:1px solid #1E3A5F;border-radius:12px;margin-bottom:20px;overflow:hidden}
+.card-header{padding:16px 20px;border-bottom:1px solid #1E3A5F;display:flex;justify-content:space-between;align-items:center}
+.card-header h3{color:#F1F5F9;font-size:1rem;font-weight:700}
+.card-body{padding:16px 20px}
+table{width:100%;border-collapse:collapse}
+th{text-align:left;color:#64748B;font-size:.75rem;font-weight:600;text-transform:uppercase;letter-spacing:.5px;padding:10px 12px;border-bottom:1px solid #1E3A5F}
+td{padding:12px;border-bottom:1px solid rgba(30,58,95,.3);font-size:.85rem;color:#CBD5E1}
+tr:hover td{background:rgba(6,182,212,.02)}
+
+/* Status badges */
+.badge{display:inline-block;padding:3px 10px;border-radius:50px;font-size:.72rem;font-weight:600;text-transform:capitalize}
+.badge-active,.badge-paid,.badge-completed,.badge-won,.badge-published{background:rgba(52,211,153,.1);color:#34D399;border:1px solid rgba(52,211,153,.2)}
+.badge-pending,.badge-scheduled,.badge-prospect,.badge-new,.badge-proposal_sent,.badge-contacted{background:rgba(251,191,36,.1);color:#FBBF24;border:1px solid rgba(251,191,36,.2)}
+.badge-in_progress,.badge-negotiating{background:rgba(96,165,250,.1);color:#60A5FA;border:1px solid rgba(96,165,250,.2)}
+.badge-overdue,.badge-urgent,.badge-churned,.badge-lost,.badge-blocked,.badge-failed{background:rgba(239,68,68,.1);color:#EF4444;border:1px solid rgba(239,68,68,.2)}
+.badge-draft,.badge-lead,.badge-paused{background:rgba(148,163,184,.1);color:#94A3B8;border:1px solid rgba(148,163,184,.2)}
+.badge-review,.badge-qualified{background:rgba(168,85,247,.1);color:#A855F7;border:1px solid rgba(168,85,247,.2)}
+
+/* Progress bar */
+.progress-bar{height:8px;background:#1E293B;border-radius:50px;overflow:hidden}
+.progress-fill{height:100%;background:linear-gradient(90deg,#0891B2,#22D3EE);border-radius:50px;transition:width .5s}
+.progress-text{font-size:.78rem;color:#64748B;margin-top:4px}
+
+/* Notifications */
+.notif-list{max-height:300px;overflow-y:auto}
+.notif-item{padding:12px 16px;border-bottom:1px solid rgba(30,58,95,.3);display:flex;gap:10px;align-items:start}
+.notif-item.unread{background:rgba(6,182,212,.03);border-left:3px solid #0891B2}
+.notif-icon{font-size:1.2rem;flex-shrink:0}
+.notif-content .title{color:#F1F5F9;font-size:.85rem;font-weight:600}
+.notif-content .msg{color:#94A3B8;font-size:.78rem;margin-top:2px}
+.notif-content .time{color:#475569;font-size:.7rem;margin-top:4px}
+
+/* Kanban board */
+.kanban-board{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:20px}
+.kanban-col{background:#0F172A;border:1px solid #1E3A5F;border-radius:12px;min-height:200px}
+.kanban-col-header{padding:14px 16px;border-bottom:1px solid #1E3A5F;font-size:.82rem;font-weight:700;color:#F1F5F9;display:flex;justify-content:space-between;align-items:center}
+.kanban-col-header .count{background:#1E293B;padding:2px 10px;border-radius:50px;font-size:.72rem;color:#64748B}
+.kanban-cards{padding:12px}
+.kanban-card{background:#1E293B;border:1px solid #334155;border-radius:8px;padding:12px;margin-bottom:8px;cursor:grab}
+.kanban-card:hover{border-color:#0891B2}
+.kanban-card .k-title{color:#F1F5F9;font-size:.82rem;font-weight:600;margin-bottom:4px}
+.kanban-card .k-project{color:#22D3EE;font-size:.72rem}
+.kanban-card .k-priority{font-size:.68rem;margin-top:6px}
+
+/* Grid layouts */
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+.grid-3{display:grid;grid-template-columns:2fr 1fr;gap:20px}
+@media(max-width:1200px){.grid-2,.grid-3{grid-template-columns:1fr}}
+
+/* Modal */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:1000;display:none;align-items:center;justify-content:center}
+.modal-overlay.open{display:flex}
+.modal{background:#0F172A;border:1px solid #1E3A5F;border-radius:16px;padding:32px;width:90%;max-width:500px;max-height:80vh;overflow-y:auto}
+.modal h3{color:#F1F5F9;font-size:1.1rem;font-weight:700;margin-bottom:20px}
+.modal-group{margin-bottom:16px}
+.modal-group label{display:block;color:#94A3B8;font-size:.82rem;font-weight:600;margin-bottom:4px}
+.modal-group input,.modal-group select,.modal-group textarea{width:100%;background:#1E293B;border:1px solid #334155;border-radius:8px;padding:10px 14px;color:#F1F5F9;font-size:.88rem;font-family:inherit;outline:none}
+.modal-group input:focus,.modal-group select:focus,.modal-group textarea:focus{border-color:#0891B2}
+.modal-actions{display:flex;gap:12px;margin-top:24px}
+.modal-actions button{flex:1;padding:10px;border-radius:8px;font-weight:600;font-size:.88rem;border:none}
+.modal-actions .save{background:linear-gradient(135deg,#0891B2,#06B6D4);color:#020617}
+.modal-actions .cancel{background:#1E293B;color:#94A3B8;border:1px solid #334155}
+
+/* Audit Panel */
+.audit-panel{background:#0F172A;border:1px solid #1E3A5F;border-radius:12px;padding:24px;margin-bottom:20px}
+.audit-panel h3{color:#F1F5F9;font-weight:700;margin-bottom:16px}
+.audit-input-group{display:flex;gap:12px;margin-bottom:16px}
+.audit-input-group input{flex:1;background:#1E293B;border:1px solid #334155;border-radius:8px;padding:10px 14px;color:#F1F5F9;font-size:.88rem;outline:none}
+.audit-input-group input:focus{border-color:#0891B2}
+.audit-input-group select{background:#1E293B;border:1px solid #334155;border-radius:8px;padding:10px 14px;color:#F1F5F9;font-size:.88rem;outline:none;min-width:160px}
+.audit-btn{background:linear-gradient(135deg,#0891B2,#06B6D4);color:#020617;padding:10px 24px;border-radius:8px;font-weight:700;font-size:.88rem;border:none}
+
+/* Responsive */
+@media(max-width:900px){
+.sidebar{width:60px}.sidebar-link span,.sidebar-section,.sidebar-user-info,.sidebar-logo{display:none}
+.sidebar-logo{padding:16px;text-align:center}.sidebar-link{justify-content:center;padding:12px}
+.main{margin-left:60px;padding:16px}
+.kanban-board{grid-template-columns:1fr 1fr}
+.stats-grid{grid-template-columns:1fr 1fr}
+}

@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Client Onboarding Form — AI Growth Labs</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Inter',sans-serif;color:#1E293B;line-height:1.7;background:#f8fafc}
+.container{max-width:900px;margin:0 auto;padding:20px}
+.doc{background:#fff;padding:60px;border-radius:16px;box-shadow:0 4px 20px rgba(0,0,0,0.08);margin:20px auto}
+@media print{.doc{box-shadow:none;padding:40px;margin:0}.no-print{display:none!important}body{background:#fff}}
+.header-bar{background:linear-gradient(135deg,#0A1628,#112240);color:#fff;padding:40px;border-radius:12px;margin-bottom:40px;position:relative;overflow:hidden}
+.header-bar::after{content:'';position:absolute;top:-50%;right:-20%;width:300px;height:300px;background:rgba(0,212,255,0.1);border-radius:50%}
+.logo{font-size:1.6rem;font-weight:800;margin-bottom:4px}.logo span{color:#00D4FF}
+.header-bar p{color:#94A3B8;font-size:0.9rem}
+h1{font-size:2rem;color:#0A1628;margin:20px 0 10px;font-weight:800}
+h2{font-size:1.3rem;color:#0A1628;margin:30px 0 15px;padding-bottom:8px;border-bottom:2px solid #00D4FF;font-weight:700}
+h3{font-size:1.05rem;color:#112240;margin:18px 0 10px;font-weight:600}
+p{margin-bottom:12px;color:#475569}
+.meta{color:#64748B;font-size:0.9rem;margin-bottom:30px}
+.form-group{margin-bottom:16px}
+.form-group label{display:block;font-weight:600;color:#334155;margin-bottom:4px;font-size:0.9rem}
+.form-group .hint{color:#94A3B8;font-size:0.8rem;margin-bottom:4px}
+.field{width:100%;border:1.5px solid #E2E8F0;border-radius:8px;padding:10px 14px;font-size:0.95rem;font-family:inherit;color:#1E293B;background:#FAFBFC;transition:border 0.2s}
+.field:focus{outline:none;border-color:#00D4FF;background:#fff}
+textarea.field{min-height:80px;resize:vertical}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+@media(max-width:600px){.row{grid-template-columns:1fr}}
+.section-card{background:#F8FAFC;border:1px solid #E2E8F0;border-radius:12px;padding:24px;margin:20px 0}
+.section-card.cyan{border-left:4px solid #00D4FF}
+.check-group{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:10px 0}
+.check-item{display:flex;align-items:center;gap:8px;font-size:0.9rem;color:#475569}
+.check-item input[type="checkbox"]{width:18px;height:18px;accent-color:#00D4FF}
+.badge{display:inline-block;background:#F0FDFF;color:#00A8CC;padding:4px 12px;border-radius:20px;font-size:0.8rem;font-weight:600}
+.important{background:#FFF7ED;border:1px solid #FDBA74;border-radius:8px;padding:14px 18px;margin:15px 0;font-size:0.9rem;color:#9A3412}
+.btn-print{position:fixed;bottom:30px;right:30px;background:linear-gradient(135deg,#00D4FF,#00A8CC);color:#fff;border:none;padding:14px 28px;border-radius:50px;font-size:1rem;font-weight:600;cursor:pointer;box-shadow:0 4px 15px rgba(0,212,255,0.4);z-index:100}
+.btn-print:hover{transform:translateY(-2px)}
+</style>
+</head>
+<body>
+<button class="btn-print no-print" onclick="window.print()">📄 Download / Print PDF</button>
+
+<div class="container">
+<div class="doc">
+
+<div class="header-bar">
+<div class="logo">AI<span>Growth</span>Labs</div>
+<p>Client Onboarding Form — Please Complete All Sections</p>
+</div>
+
+<h1>Client Onboarding Form</h1>
+<p class="meta">Please fill out this form completely so we can begin working on your project immediately. All information is kept strictly confidential.</p>
+
+<div class="important">⚠️ <strong>Important:</strong> The more complete your information, the faster we can launch your campaigns. Incomplete information may delay your project start.</div>
+
+<!-- SECTION 1: BUSINESS INFO -->
+<h2>1. Business Information</h2>
+
+<div class="row">
+<div class="form-group"><label>Legal Business Name *</label><input type="text" class="field" placeholder="Exactly as it appears on Google"></div>
+<div class="form-group"><label>DBA / Brand Name (if different)</label><input type="text" class="field" placeholder="Public-facing name"></div>
+</div>
+<div class="row">
+<div class="form-group"><label>Business Address *</label><input type="text" class="field" placeholder="Full street address"></div>
+<div class="form-group"><label>City, State, ZIP *</label><input type="text" class="field" placeholder="e.g., New York, NY 10001"></div>
+</div>
+<div class="row">
+<div class="form-group"><label>Primary Phone Number *</label><div class="hint">This will be used across all listings</div><input type="tel" class="field" placeholder="(555) 123-4567"></div>
+<div class="form-group"><label>Secondary Phone (if any)</label><input type="tel" class="field" placeholder="(555) 987-6543"></div>
+</div>
+<div class="row">
+<div class="form-group"><label>Business Email *</label><input type="email" class="field" placeholder="info@yourbusiness.com"></div>
+<div class="form-group"><label>Website URL *</label><input type="url" class="field" placeholder="https://yourbusiness.com"></div>
+</div>
+<div class="row">
+<div class="form-group"><label>Year Established</label><input type="text" class="field" placeholder="e.g., 2015"></div>
+<div class="form-group"><label>Number of Locations</label><input type="text" class="field" placeholder="e.g., 1, 2, 3"></div>
+</div>
+<div class="form-group"><label>Business Description (2-3 sentences) *</label><div class="hint">Brief description of what your business does. We'll use this for directory listings.</div><textarea class="field" placeholder="e.g., SmileCare NYC is a family and cosmetic dental practice in Manhattan providing teeth whitening, dental implants, Invisalign, and emergency dental services since 2015."></textarea></div>
+<div class="form-group"><label>Business Hours *</label><textarea class="field" placeholder="Monday-Friday: 9:00 AM - 6:00 PM&#10;Saturday: 10:00 AM - 2:00 PM&#10;Sunday: Closed"></textarea></div>
+<div class="form-group"><label>Services / Products Offered (list all) *</label><textarea class="field" placeholder="1. General Dentistry&#10;2. Teeth Whitening&#10;3. Dental Implants&#10;4. Invisalign&#10;5. Emergency Dental Care&#10;6. Root Canal&#10;7. Dental Crowns"></textarea></div>
+<div class="form-group"><label>Service Areas / Cities Served *</label><div class="hint">All cities/neighborhoods where you want to be found</div><textarea class="field" placeholder="Manhattan, Brooklyn, Queens, Upper East Side, Midtown, SoHo..."></textarea></div>
+
+<!-- SECTION 2: CONTACT PERSON -->
+<h2>2. Primary Contact Person</h2>
+<div class="row">
+<div class="form-group"><label>Full Name *</label><input type="text" class="field" placeholder="First and Last name"></div>
+<div class="form-group"><label>Title / Role *</label><input type="text" class="field" placeholder="e.g., Owner, Marketing Manager"></div>
+</div>
+<div class="row">
+<div class="form-group"><label>Direct Email *</label><input type="email" class="field" placeholder="personal@email.com"></div>
+<div class="form-group"><label>Direct Phone / Cell *</label><input type="tel" class="field" placeholder="(555) 123-4567"></div>
+</div>
+<div class="form-group"><label>Preferred Communication Method *</label>
+<div class="check-group">
+<label class="check-item"><input type="checkbox"> Email</label>
+<label class="check-item"><input type="checkbox"> Phone Call</label>
+<label class="check-item"><input type="checkbox"> Text / SMS</label>
+<label class="check-item"><input type="checkbox"> WhatsApp</label>
+<label class="check-item"><input type="checkbox"> Slack</label>
+<label class="check-item"><input type="checkbox"> Zoom</label>
+</div>
+</div>
+
+<!-- SECTION 3: LOGINS & ACCESS -->
+<h2>3. Account Access & Logins</h2>
+<div class="important">🔒 <strong>Security Note:</strong> We recommend sharing access via manager/editor roles rather than sharing passwords. Instructions are provided below each item.</div>
+
+<div class="section-card cyan">
+<h3>Google Business Profile *</h3>
+<div class="hint">Add us as a Manager: GBP Dashboard → Users → Invite: hello@aigrowthlabs.com → Role: Manager</div>
+<div class="row">
+<div class="form-group"><label>GBP Email</label><input type="text" class="field" placeholder="Email associated with your GBP"></div>
+<div class="form-group"><label>Access Status</label><select class="field"><option>Not yet shared</option><option>Manager access granted</option><option>Need help setting up</option></select></div>
+</div>
+</div>
+
+<div class="section-card cyan">
+<h3>Google Analytics *</h3>
+<div class="hint">Admin → Account Access Management → Add user: hello@aigrowthlabs.com → Role: Editor</div>
+<div class="row">
+<div class="form-group"><label>GA Property URL</label><input type="text" class="field" placeholder="analytics.google.com property ID or URL"></div>
+<div class="form-group"><label>Access Status</label><select class="field"><option>Not yet shared</option><option>Editor access granted</option><option>Not set up yet</option><option>Need help</option></select></div>
+</div>
+</div>
+
+<div class="section-card cyan">
+<h3>Google Search Console *</h3>
+<div class="hint">Settings → Users and permissions → Add user: hello@aigrowthlabs.com → Full access</div>
+<div class="form-group"><label>Access Status</label><select class="field"><option>Not yet shared</option><option>Full access granted</option><option>Not set up yet</option><option>Need help</option></select></div>
+</div>
+
+<div class="section-card cyan">
+<h3>Website CMS (WordPress/Wix/Squarespace/etc.)</h3>
+<div class="hint">We need editor access to optimize pages, add Schema markup, and publish content.</div>
+<div class="row">
+<div class="form-group"><label>CMS Platform</label><select class="field"><option>WordPress</option><option>Wix</option><option>Squarespace</option><option>Shopify</option><option>Custom</option><option>Other</option></select></div>
+<div class="form-group"><label>Login URL</label><input type="text" class="field" placeholder="e.g., yoursite.com/wp-admin"></div>
+</div>
+<div class="row">
+<div class="form-group"><label>Username / Email</label><input type="text" class="field" placeholder="CMS login email"></div>
+<div class="form-group"><label>Password</label><input type="password" class="field" placeholder="We recommend creating a separate admin account for us"></div>
+</div>
+</div>
+
+<div class="section-card cyan">
+<h3>Facebook / Meta Business</h3>
+<div class="hint">Business Settings → People → Add → hello@aigrowthlabs.com → Employee access + Page management</div>
+<div class="row">
+<div class="form-group"><label>Facebook Page URL</label><input type="text" class="field" placeholder="facebook.com/yourpage"></div>
+<div class="form-group"><label>Access Status</label><select class="field"><option>Not yet shared</option><option>Access granted</option><option>No Facebook page</option><option>Need help</option></select></div>
+</div>
+</div>
+
+<div class="section-card cyan">
+<h3>Instagram Business</h3>
+<div class="row">
+<div class="form-group"><label>Instagram Handle</label><input type="text" class="field" placeholder="@yourbusiness"></div>
+<div class="form-group"><label>Connected to Facebook?</label><select class="field"><option>Yes</option><option>No</option><option>Not sure</option></select></div>
+</div>
+</div>
+
+<div class="section-card cyan">
+<h3>Google Ads (if applicable)</h3>
+<div class="hint">Tools → Access and security → Add user: hello@aigrowthlabs.com → Standard access</div>
+<div class="row">
+<div class="form-group"><label>Google Ads Account ID</label><input type="text" class="field" placeholder="e.g., 123-456-7890"></div>
+<div class="form-group"><label>Access Status</label><select class="field"><option>Not yet shared</option><option>Access granted</option><option>No Google Ads account</option><option>Need help</option></select></div>
+</div>
+</div>
+
+<div class="section-card">
+<h3>Other Accounts (Yelp, TripAdvisor, etc.)</h3>
+<textarea class="field" placeholder="List any other platform logins or profiles you have:&#10;&#10;Yelp: yelp.com/biz/yourbusiness&#10;TripAdvisor: tripadvisor.com/...&#10;BBB: bbb.org/...&#10;Healthgrades: healthgrades.com/..."></textarea>
+</div>
+
+<!-- SECTION 4: BRANDING -->
+<h2>4. Branding & Visual Assets</h2>
+<div class="form-group"><label>Brand Colors</label><input type="text" class="field" placeholder="e.g., Navy Blue (#0A1628), Cyan (#00D4FF), White"></div>
+<div class="form-group"><label>Logo Files</label><div class="hint">Please email high-resolution logo files (PNG, SVG, AI) to hello@aigrowthlabs.com</div><select class="field"><option>Will email separately</option><option>Already emailed</option><option>Need help with logo</option></select></div>
+<div class="form-group"><label>Business Photos (20-30 recommended)</label><div class="hint">Interior, exterior, team, products/services, behind-the-scenes. Email or share via Google Drive.</div><select class="field"><option>Will share via Google Drive/Email</option><option>Already shared</option><option>Need professional photography help</option><option>Don't have photos yet</option></select></div>
+<div class="form-group"><label>Brand Voice / Tone</label><select class="field"><option>Professional & Trustworthy</option><option>Friendly & Approachable</option><option>Modern & Innovative</option><option>Luxury & Premium</option><option>Fun & Casual</option><option>Other (describe below)</option></select></div>
+
+<!-- SECTION 5: GOALS -->
+<h2>5. Goals & Expectations</h2>
+<div class="form-group"><label>Top 3 Business Goals *</label><textarea class="field" placeholder="1. Get more phone calls from Google&#10;2. Increase Google reviews to 100+&#10;3. Rank #1 for 'dentist [city]'"></textarea></div>
+<div class="form-group"><label>Target Keywords (if you have any in mind)</label><textarea class="field" placeholder="e.g., dentist near me, teeth whitening nyc, best dental implants manhattan"></textarea></div>
+<div class="form-group"><label>Who are your top 3 competitors? *</label><textarea class="field" placeholder="1. Competitor Name — website URL&#10;2. Competitor Name — website URL&#10;3. Competitor Name — website URL"></textarea></div>
+<div class="form-group"><label>Have you worked with any SEO/marketing agency before?</label><textarea class="field" placeholder="If yes, who? What worked? What didn't? Why did you stop?"></textarea></div>
+<div class="form-group"><label>Monthly Marketing Budget</label><select class="field"><option>Under $1,000/month</option><option>$1,000 - $2,500/month</option><option>$2,500 - $5,000/month</option><option>$5,000 - $10,000/month</option><option>$10,000+/month</option></select></div>
+<div class="form-group"><label>Timeline Expectations</label><select class="field"><option>Need results ASAP (1-3 months)</option><option>Understand SEO takes time (3-6 months)</option><option>Long-term growth focus (6-12 months)</option></select></div>
+
+<!-- SECTION 6: ADDITIONAL -->
+<h2>6. Additional Information</h2>
+<div class="form-group"><label>Any special promotions or offers you're currently running?</label><textarea class="field" placeholder="e.g., Free consultation for new patients, 20% off first visit"></textarea></div>
+<div class="form-group"><label>Insurance / Payment Methods Accepted</label><textarea class="field" placeholder="e.g., Delta Dental, Cigna, Aetna, Cash, Credit Card, Financing Available"></textarea></div>
+<div class="form-group"><label>Anything else we should know about your business?</label><textarea class="field" placeholder="Any special requirements, seasonal trends, upcoming events, new services launching, etc."></textarea></div>
+
+<!-- CONFIRMATION -->
+<div class="section-card" style="background:#F0FDFF;border-color:#00D4FF;text-align:center;margin-top:30px">
+<h3 style="margin-top:0">✅ Submission Confirmation</h3>
+<p>By completing this form, you confirm that the information provided is accurate and you authorize AI Growth Labs to access the accounts listed above for the purpose of delivering the agreed-upon services.</p>
+<p style="margin-bottom:0"><strong>Client Signature:</strong> _________________________________ &nbsp;&nbsp; <strong>Date:</strong> _____________</p>
+</div>
+
+</div>
+</div>
+</body>
+</html>

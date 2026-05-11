@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Social Media Dashboard — AI Growth Labs OS</title>
+<link rel="stylesheet" href="/static/css/dashboard.css">
+</head>
+<body>
+<aside class="sidebar">
+<div class="sidebar-logo">AI Growth<span>Labs</span></div>
+<nav class="sidebar-nav">
+<div class="sidebar-section">Social Media</div>
+<a href="/dashboard" class="sidebar-link active"><span class="icon">📊</span><span>Dashboard</span></a>
+<a href="#posts-section" class="sidebar-link"><span class="icon">📝</span><span>Posts</span></a>
+<a href="#schedule-section" class="sidebar-link"><span class="icon">📅</span><span>Schedule</span></a>
+<a href="#clients-section" class="sidebar-link"><span class="icon">👥</span><span>Clients</span></a>
+<div class="sidebar-section">Create</div>
+<a href="#create-section" class="sidebar-link"><span class="icon">✍️</span><span>New Post</span></a>
+</nav>
+<div class="sidebar-user">
+<div class="sidebar-avatar">{{ user.full_name[:2].upper() }}</div>
+<div class="sidebar-user-info"><div class="name">{{ user.full_name }}</div><div class="role">Social Media</div></div>
+</div>
+</aside>
+
+<main class="main">
+<div class="main-header">
+<div><h1>Social Media Dashboard</h1><div class="subtitle">Content Creation, Scheduling & Management</div></div>
+<div class="header-actions">
+<button class="header-btn primary" onclick="openModal('createPost')">+ Create Post</button>
+<a href="/logout" class="header-btn">Logout</a>
+</div>
+</div>
+
+<!-- Stats -->
+<div class="stats-grid">
+<div class="stat-card"><div class="stat-label">Total Posts</div><div class="stat-value">{{ stats.total_posts }}</div></div>
+<div class="stat-card"><div class="stat-label">Published</div><div class="stat-value green">{{ stats.published }}</div></div>
+<div class="stat-card"><div class="stat-label">Scheduled</div><div class="stat-value cyan">{{ stats.scheduled }}</div></div>
+<div class="stat-card"><div class="stat-label">Drafts</div><div class="stat-value yellow">{{ stats.drafts }}</div></div>
+</div>
+
+<!-- Client Social Accounts -->
+<div class="card" id="clients-section">
+<div class="card-header"><h3>👥 Client Social Accounts</h3></div>
+<div class="card-body">
+<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:16px">
+{% for c in clients %}
+<div style="background:#1E293B;border:1px solid #334155;border-radius:12px;padding:20px">
+<h4 style="color:#F1F5F9;font-weight:700;margin-bottom:8px">{{ c.business_name }}</h4>
+<div style="color:#22D3EE;font-size:.82rem;margin-bottom:12px">{{ c.industry or '' }} — {{ c.location or '' }}</div>
+<div style="display:flex;gap:8px;flex-wrap:wrap">
+<span style="background:rgba(59,130,246,.1);border:1px solid rgba(59,130,246,.2);color:#3B82F6;padding:3px 10px;border-radius:6px;font-size:.72rem">📘 Facebook</span>
+<span style="background:rgba(236,72,153,.1);border:1px solid rgba(236,72,153,.2);color:#EC4899;padding:3px 10px;border-radius:6px;font-size:.72rem">📸 Instagram</span>
+<span style="background:rgba(168,85,247,.1);border:1px solid rgba(168,85,247,.2);color:#A855F7;padding:3px 10px;border-radius:6px;font-size:.72rem">🎵 TikTok</span>
+<span style="background:rgba(96,165,250,.1);border:1px solid rgba(96,165,250,.2);color:#60A5FA;padding:3px 10px;border-radius:6px;font-size:.72rem">💼 LinkedIn</span>
+</div>
+<div style="margin-top:12px;display:flex;gap:8px">
+<button style="background:rgba(6,182,212,.1);border:1px solid rgba(6,182,212,.2);color:#22D3EE;padding:6px 14px;border-radius:6px;font-size:.78rem;cursor:pointer" onclick="document.getElementById('postClient').value='{{ c.id }}';openModal('createPost')">Create Post</button>
+</div>
+</div>
+{% endfor %}
+</div>
+</div>
+</div>
+
+<!-- Content Calendar -->
+<div class="card" id="schedule-section">
+<div class="card-header"><h3>📅 Content Calendar</h3></div>
+<div class="card-body">
+<div style="display:grid;grid-template-columns:repeat(7,1fr);gap:8px;margin-bottom:16px">
+{% for day in ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'] %}
+<div style="text-align:center;padding:8px;background:#1E293B;border-radius:8px;color:#64748B;font-size:.78rem;font-weight:600">{{ day }}</div>
+{% endfor %}
+</div>
+<p style="color:#475569;font-size:.85rem;text-align:center">Calendar view will show scheduled posts by date. Create posts above and schedule them.</p>
+</div>
+</div>
+
+<!-- Posts List -->
+<div class="card" id="posts-section">
+<div class="card-header"><h3>📝 All Posts</h3></div>
+<div class="card-body">
+{% if posts %}
+<table>
+<thead><tr><th>Client</th><th>Platform</th><th>Content Preview</th><th>Status</th><th>Scheduled</th></tr></thead>
+<tbody>
+{% for p in posts %}
+<tr>
+<td>{{ p.business_name or '-' }}</td>
+<td>{{ p.platform }}</td>
+<td style="max-width:300px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ p.content or '-' }}</td>
+<td><span class="badge badge-{{ p.status }}">{{ p.status }}</span></td>
+<td style="color:#475569;font-size:.78rem">{{ p.scheduled_date or '-' }}</td>
+</tr>
+{% endfor %}
+</tbody>
+</table>
+{% else %}
+<div style="text-align:center;padding:40px;color:#475569">
+<div style="font-size:2rem;margin-bottom:12px">📱</div>
+<p>No posts yet. Click "Create Post" to get started.</p>
+</div>
+{% endif %}
+</div>
+</div>
+
+<!-- AI Content Generator -->
+<div class="audit-panel" id="create-section">
+<h3>🤖 AI Content Generator</h3>
+<p style="color:#94A3B8;font-size:.85rem;margin-bottom:16px">Use AI prompts to generate social media content. Select a content type and let AI create the post for you.</p>
+<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:12px">
+<div style="background:#1E293B;border:1px solid #334155;border-radius:10px;padding:14px;text-align:center;cursor:pointer"><div style="font-size:1.2rem;margin-bottom:6px">📝</div><div style="color:#F1F5F9;font-size:.82rem;font-weight:600">Engagement Post</div></div>
+<div style="background:#1E293B;border:1px solid #334155;border-radius:10px;padding:14px;text-align:center;cursor:pointer"><div style="font-size:1.2rem;margin-bottom:6px">💡</div><div style="color:#F1F5F9;font-size:.82rem;font-weight:600">Tips & Advice</div></div>
+<div style="background:#1E293B;border:1px solid #334155;border-radius:10px;padding:14px;text-align:center;cursor:pointer"><div style="font-size:1.2rem;margin-bottom:6px">⭐</div><div style="color:#F1F5F9;font-size:.82rem;font-weight:600">Testimonial</div></div>
+<div style="background:#1E293B;border:1px solid #334155;border-radius:10px;padding:14px;text-align:center;cursor:pointer"><div style="font-size:1.2rem;margin-bottom:6px">🎉</div><div style="color:#F1F5F9;font-size:.82rem;font-weight:600">Promotion</div></div>
+<div style="background:#1E293B;border:1px solid #334155;border-radius:10px;padding:14px;text-align:center;cursor:pointer"><div style="font-size:1.2rem;margin-bottom:6px">📊</div><div style="color:#F1F5F9;font-size:.82rem;font-weight:600">Industry Stats</div></div>
+<div style="background:#1E293B;border:1px solid #334155;border-radius:10px;padding:14px;text-align:center;cursor:pointer"><div style="font-size:1.2rem;margin-bottom:6px">🎬</div><div style="color:#F1F5F9;font-size:.82rem;font-weight:600">Video Script</div></div>
+</div>
+<p style="color:#475569;font-size:.78rem;margin-top:12px">AI content generation requires API key configuration.</p>
+</div>
+</main>
+
+<!-- Create Post Modal -->
+<div class="modal-overlay" id="createPost">
+<div class="modal">
+<h3>Create Social Media Post</h3>
+<div class="modal-group"><label>Client</label><select id="postClient">{% for c in clients %}<option value="{{ c.id }}">{{ c.business_name }}</option>{% endfor %}</select></div>
+<div class="modal-group"><label>Platform</label><select id="postPlatform"><option value="facebook">Facebook</option><option value="instagram">Instagram</option><option value="tiktok">TikTok</option><option value="linkedin">LinkedIn</option><option value="twitter">Twitter</option><option value="pinterest">Pinterest</option></select></div>
+<div class="modal-group"><label>Content</label><textarea id="postContent" rows="4" placeholder="Write your post content..."></textarea></div>
+<div class="modal-group"><label>Status</label><select id="postStatus"><option value="draft">Draft</option><option value="scheduled">Scheduled</option></select></div>
+<div class="modal-group"><label>Schedule Date</label><input type="datetime-local" id="postDate"></div>
+<div class="modal-actions"><button class="cancel" onclick="closeModal('createPost')">Cancel</button><button class="save" onclick="savePost()">Create Post</button></div>
+</div>
+</div>
+
+<script>
+function openModal(id){document.getElementById(id).classList.add('open')}
+function closeModal(id){document.getElementById(id).classList.remove('open')}
+document.querySelectorAll('.modal-overlay').forEach(m=>m.addEventListener('click',e=>{if(e.target===m)m.classList.remove('open')}));
+
+async function savePost(){
+  await fetch('/api/social-posts',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({client_id:parseInt(document.getElementById('postClient').value),platform:document.getElementById('postPlatform').value,content:document.getElementById('postContent').value,status:document.getElementById('postStatus').value,scheduled_date:document.getElementById('postDate').value||null})});
+  location.reload();
+}
+</script>
+</body>
+</html>
