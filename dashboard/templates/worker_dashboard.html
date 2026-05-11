@@ -1,202 +1,108 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
 <title>Worker Dashboard — AI Growth Labs OS</title>
-<link rel="stylesheet" href="/static/css/dashboard.css">
-</head>
-<body>
-<aside class="sidebar">
-<div class="sidebar-logo">AI Growth<span>Labs</span></div>
-<nav class="sidebar-nav">
-<div class="sidebar-section">My Work</div>
-<a href="/dashboard" class="sidebar-link active"><span class="icon">📊</span><span>Dashboard</span></a>
-<a href="#tasks-section" class="sidebar-link"><span class="icon">✅</span><span>My Tasks</span></a>
-<a href="#projects-section" class="sidebar-link"><span class="icon">📋</span><span>My Projects</span></a>
-<div class="sidebar-section">Tools</div>
-<a href="#audit-section" class="sidebar-link"><span class="icon">🔍</span><span>SEO Audit</span></a>
-<a href="#notifications-section" class="sidebar-link"><span class="icon">🔔</span><span>Notifications</span></a>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/static/css/dashboard.css"></head><body>
+<aside class="sidebar"><div class="sidebar-brand">AI Growth<span>Labs</span></div>
+<nav><div class="nav-section">Main</div><a href="/dashboard" class="active">📊Dashboard</a>
+<a href="#tasks-section">✅My Tasks</a>
+<a href="#projects-section">📋My Projects</a>
+<a href="#notif-section">🔔Notifications</a>
+<a href="#audit-section">🔍SEO Audit</a>
+<a href="#suggestions-section">💡Suggestions</a>
+<a href="/team-chat">💬Team Chat</a>
 </nav>
-<div class="sidebar-user">
-<div class="sidebar-avatar">{{ user.full_name[:2].upper() }}</div>
-<div class="sidebar-user-info"><div class="name">{{ user.full_name }}</div><div class="role">{{ user.role.replace('_', ' ').title() }}</div></div>
-</div>
-</aside>
-
+<div class="sidebar-user"><div class="user-avatar">{{ user.full_name[:2]|upper }}</div>
+<div><strong>{{ user.full_name }}</strong><small>{{ user.role|replace("_"," ")|title }}</small></div></div></aside>
 <main class="main">
-<div class="main-header">
-<div><h1>Welcome, {{ user.full_name.split()[0] }}!</h1><div class="subtitle">{{ user.role.replace('_', ' ').title() }} Dashboard</div></div>
-<div class="header-actions"><a href="/logout" class="header-btn">Logout</a></div>
-</div>
+<div class="header-bar"><h1>{{ user.full_name }} — Dashboard</h1><span>{{ user.role|replace('_',' ')|title }} | {{ user.rank|title }}</span>
+<div class="header-actions">
+{% if unread_chats > 0 %}<a href="/team-chat" class="btn btn-warning">💬 {{ unread_chats }} New Messages</a>{% endif %}
+<button class="btn btn-secondary" onclick="openModal('addSuggestionModal')">💡 Add Suggestion</button>
+<a href="/logout" class="btn btn-outline">Logout</a></div></div>
 
-<!-- Stats -->
 <div class="stats-grid">
 <div class="stat-card"><div class="stat-label">Total Tasks</div><div class="stat-value">{{ stats.total_tasks }}</div></div>
 <div class="stat-card"><div class="stat-label">Completed</div><div class="stat-value green">{{ stats.completed_tasks }}</div></div>
-<div class="stat-card"><div class="stat-label">Pending</div><div class="stat-value yellow">{{ stats.pending_tasks }}</div></div>
-<div class="stat-card"><div class="stat-label">Completion Rate</div><div class="stat-value cyan">{{ stats.completion_pct }}%</div><div class="progress-bar" style="margin-top:8px"><div class="progress-fill" style="width:{{ stats.completion_pct }}%"></div></div></div>
+<div class="stat-card"><div class="stat-label">Pending</div><div class="stat-value orange">{{ stats.pending_tasks }}</div></div>
+<div class="stat-card"><div class="stat-label">Completion Rate</div><div class="stat-value cyan">{{ stats.completion_pct }}%</div></div>
 <div class="stat-card"><div class="stat-label">Active Projects</div><div class="stat-value">{{ stats.active_projects }}</div></div>
 </div>
 
-<!-- Task Kanban Board -->
-<div class="card" id="tasks-section">
-<div class="card-header"><h3>✅ My Tasks — Kanban Board</h3></div>
-<div class="card-body">
+<div class="card" id="tasks-section"><h3>✅ My Tasks — Kanban Board</h3>
 <div class="kanban-board">
-<div class="kanban-col">
-<div class="kanban-col-header">📋 Pending <span class="count">{{ my_tasks|selectattr('status','eq','pending')|list|length }}</span></div>
-<div class="kanban-cards">
+<div class="kanban-col"><h4>⏳ Pending</h4>
 {% for t in my_tasks if t.status == 'pending' %}
-<div class="kanban-card" data-id="{{ t.id }}">
-<div class="k-title">{{ t.title }}</div>
-<div class="k-project">{{ t.business_name or t.project_title or '' }}</div>
-<div class="k-priority"><span class="badge badge-{{ t.priority }}">{{ t.priority }}</span></div>
-<button style="margin-top:8px;background:rgba(6,182,212,.1);border:1px solid rgba(6,182,212,.2);color:#22D3EE;padding:4px 12px;border-radius:6px;font-size:.72rem;cursor:pointer" onclick="updateTask({{ t.id }},'in_progress')">Start →</button>
-</div>
-{% endfor %}
-</div>
-</div>
-<div class="kanban-col">
-<div class="kanban-col-header">🔄 In Progress <span class="count">{{ my_tasks|selectattr('status','eq','in_progress')|list|length }}</span></div>
-<div class="kanban-cards">
+<div class="kanban-card"><div class="kanban-card-header"><span class="badge badge-{{ t.priority }}">{{ t.priority }}</span>
+{% if t.is_automated %}<span class="badge badge-auto">🤖 Auto</span>{% endif %}</div>
+<h5>{{ t.title }}</h5><small>{{ t.business_name }} — {{ t.project_title }}</small>
+<div class="kanban-actions">
+<button class="btn btn-sm btn-primary" onclick="moveTask({{ t.id }},'in_progress')">Start →</button>
+{% if t.is_automated %}<button class="btn btn-sm btn-warning" onclick="runAutoTask({{ t.id }})">🤖 Run AI</button>{% endif %}
+</div></div>{% endfor %}</div>
+<div class="kanban-col"><h4>🔄 In Progress</h4>
 {% for t in my_tasks if t.status == 'in_progress' %}
-<div class="kanban-card" data-id="{{ t.id }}">
-<div class="k-title">{{ t.title }}</div>
-<div class="k-project">{{ t.business_name or t.project_title or '' }}</div>
-<div class="k-priority"><span class="badge badge-{{ t.priority }}">{{ t.priority }}</span></div>
-<button style="margin-top:8px;background:rgba(52,211,153,.1);border:1px solid rgba(52,211,153,.2);color:#34D399;padding:4px 12px;border-radius:6px;font-size:.72rem;cursor:pointer" onclick="updateTask({{ t.id }},'completed')">Complete ✓</button>
-</div>
-{% endfor %}
-</div>
-</div>
-<div class="kanban-col">
-<div class="kanban-col-header">🚫 Blocked <span class="count">{{ my_tasks|selectattr('status','eq','blocked')|list|length }}</span></div>
-<div class="kanban-cards">
+<div class="kanban-card active"><div class="kanban-card-header"><span class="badge badge-{{ t.priority }}">{{ t.priority }}</span></div>
+<h5>{{ t.title }}</h5><small>{{ t.business_name }} — {{ t.project_title }}</small>
+<div class="kanban-actions"><button class="btn btn-sm btn-warning" onclick="moveTask({{ t.id }},'blocked')">Block</button>
+<button class="btn btn-sm btn-success" onclick="moveTask({{ t.id }},'completed')">Complete ✓</button></div></div>{% endfor %}</div>
+<div class="kanban-col"><h4>🚫 Blocked</h4>
 {% for t in my_tasks if t.status == 'blocked' %}
-<div class="kanban-card" data-id="{{ t.id }}">
-<div class="k-title">{{ t.title }}</div>
-<div class="k-project">{{ t.business_name or t.project_title or '' }}</div>
-<div class="k-priority"><span class="badge badge-{{ t.priority }}">{{ t.priority }}</span></div>
-</div>
-{% endfor %}
-</div>
-</div>
-<div class="kanban-col">
-<div class="kanban-col-header">✅ Completed <span class="count">{{ my_tasks|selectattr('status','eq','completed')|list|length }}</span></div>
-<div class="kanban-cards">
+<div class="kanban-card blocked"><div class="kanban-card-header"><span class="badge badge-urgent">blocked</span></div>
+<h5>{{ t.title }}</h5><small>{{ t.business_name }} — {{ t.project_title }}</small>
+<div class="kanban-actions"><button class="btn btn-sm btn-primary" onclick="moveTask({{ t.id }},'in_progress')">Resume →</button></div></div>{% endfor %}</div>
+<div class="kanban-col"><h4>✅ Completed</h4>
 {% for t in my_tasks if t.status == 'completed' %}
-<div class="kanban-card" data-id="{{ t.id }}">
-<div class="k-title">{{ t.title }}</div>
-<div class="k-project">{{ t.business_name or t.project_title or '' }}</div>
-</div>
-{% endfor %}
-</div>
-</div>
-</div>
-</div>
-</div>
+<div class="kanban-card completed"><h5>{{ t.title }}</h5><small>{{ t.business_name }} — {{ t.project_title }}</small></div>{% endfor %}</div>
+</div></div>
 
-<!-- Projects -->
-<div class="grid-3">
-<div class="card" id="projects-section">
-<div class="card-header"><h3>📋 My Projects</h3></div>
-<div class="card-body">
-{% for p in my_projects %}
-<div style="padding:16px 0;border-bottom:1px solid rgba(30,58,95,.3)">
-<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
-<div>
-<strong style="color:#F1F5F9">{{ p.title }}</strong>
-<div style="color:#22D3EE;font-size:.78rem">{{ p.business_name or '' }} — {{ p.industry or '' }}</div>
-</div>
-<span class="badge badge-{{ p.status }}">{{ p.status.replace('_', ' ') }}</span>
-</div>
-<div class="progress-bar"><div class="progress-fill" style="width:{{ p.progress }}%"></div></div>
-<div class="progress-text">{{ p.progress }}% complete</div>
-<div style="color:#64748B;font-size:.78rem;margin-top:4px">{{ p.website or '' }} • {{ p.location or '' }}</div>
-</div>
-{% endfor %}
-</div>
-</div>
+<div class="card" id="projects-section"><h3>📋 My Projects</h3>
+<div class="project-grid">{% for p in my_projects %}
+<div class="project-card"><div class="project-header"><h4>{{ p.business_name }}</h4><span class="badge badge-{{ p.status|replace(' ','_') }}">{{ p.status }}</span></div>
+<p>{{ p.title }}</p><small>{{ p.industry }} | {{ p.location }} | Package: {{ p.package or 'N/A' }}</small>
+<div class="progress-bar"><div class="progress-fill" style="width:{{ p.progress }}%"></div></div><span>{{ p.progress }}% Complete</span>
+<div style="margin-top:8px"><a href="/client/{{ p.client_id }}" class="btn btn-sm btn-primary">View Client Details</a></div>
+</div>{% endfor %}</div></div>
 
-<div>
-<!-- Notifications -->
-<div class="card" id="notifications-section">
-<div class="card-header"><h3>🔔 Notifications</h3></div>
-<div class="notif-list">
+<div class="card" id="notif-section"><h3>🔔 Notifications</h3>
 {% for n in notifications %}
-<div class="notif-item {{ 'unread' if not n.is_read else '' }}" onclick="markRead({{ n.id }})">
-<span class="notif-icon">{{ '🔴' if n.type == 'urgent' else '📋' if n.type == 'task' else '✅' if n.type == 'success' else 'ℹ️' }}</span>
-<div class="notif-content">
-<div class="title">{{ n.title }}</div>
-<div class="msg">{{ n.message or '' }}</div>
-<div class="time">{{ n.created_at }}</div>
-</div>
-</div>
-{% endfor %}
-{% if not notifications %}<div style="padding:20px;text-align:center;color:#475569">No notifications</div>{% endif %}
-</div>
-</div>
-</div>
-</div>
+<div class="notif-item {{ 'unread' if not n.is_read else '' }}"><span class="badge badge-{{ n.type }}">{{ n.type }}</span>
+<strong>{{ n.title }}</strong> — {{ n.message }} <small>{{ n.created_at }}</small>
+{% if not n.is_read %}<button class="btn btn-sm" onclick="markRead({{ n.id }})">Mark Read</button>{% endif %}</div>
+{% endfor %}</div>
 
-<!-- SEO Audit Tool -->
-<div class="audit-panel" id="audit-section">
-<h3>🔍 SEO DNA Audit Tool</h3>
-<p style="color:#94A3B8;font-size:.85rem;margin-bottom:16px">Paste a client website URL to run a complete DNA-level SEO audit. Select an AI provider for analysis.</p>
-<div class="audit-input-group">
-<input type="url" id="auditUrl" placeholder="https://clientwebsite.com">
-<select id="auditProvider">
-<option value="claude">Claude Sonnet</option>
-<option value="chatgpt">ChatGPT 4.5</option>
-<option value="gemini">Google Gemini</option>
-</select>
-<button class="audit-btn" onclick="runAudit()">Run DNA Audit →</button>
-</div>
-<p style="color:#475569;font-size:.78rem">Results will include: Technical SEO, On-Page, Content, Entity SEO, Local SEO, Competitor Analysis, and 90-day roadmap.</p>
-</div>
+<div class="card" id="suggestions-section"><h3>💡 My Suggestions</h3>
+<table><thead><tr><th>Suggestion</th><th>Project</th><th>Status</th><th>Admin Response</th></tr></thead><tbody>
+{% for s in suggestions %}
+<tr><td><strong>{{ s.title }}</strong><br><small>{{ s.description[:100] }}</small></td><td>{{ s.project_title or '-' }}</td>
+<td><span class="badge badge-{{ s.status }}">{{ s.status }}</span></td><td>{{ s.admin_response or 'Waiting...' }}</td></tr>
+{% endfor %}</tbody></table></div>
 
-<!-- Recent Audits -->
-{% if audits %}
-<div class="card">
-<div class="card-header"><h3>📊 Recent Audits</h3></div>
-<div class="card-body">
-<table>
-<thead><tr><th>Client</th><th>Website</th><th>Score</th><th>Provider</th><th>Status</th><th>Date</th></tr></thead>
-<tbody>
-{% for a in audits %}
-<tr>
-<td>{{ a.business_name or '-' }}</td>
-<td style="color:#22D3EE;font-size:.82rem">{{ a.website_url }}</td>
-<td><strong>{{ a.overall_score or '-' }}</strong>/120</td>
-<td>{{ a.ai_provider or '-' }}</td>
-<td><span class="badge badge-{{ a.status }}">{{ a.status }}</span></td>
-<td style="color:#475569;font-size:.78rem">{{ a.created_at }}</td>
-</tr>
-{% endfor %}
-</tbody>
-</table>
-</div>
-</div>
-{% endif %}
-</main>
+<div class="card" id="audit-section"><h3>🔍 SEO DNA Audit Tool</h3>
+<p>Run a DNA-level audit on any client website. Results are auto-generated using AI.</p>
+<div class="form-row"><input type="url" id="auditUrl" placeholder="https://clientwebsite.com" class="form-input">
+<select id="auditProvider" class="form-select"><option value="claude">Claude Sonnet</option><option value="chatgpt">ChatGPT 4.5</option><option value="gemini">Google Gemini</option></select>
+<button class="btn btn-primary" onclick="runAudit()">Run Audit →</button></div>
+{% if audits|length > 0 %}<h4 style="margin-top:16px">Recent Audits</h4>
+<table><thead><tr><th>Client</th><th>URL</th><th>Provider</th><th>Score</th><th>Status</th><th>Date</th></tr></thead><tbody>
+{% for a in audits %}<tr><td>{{ a.business_name or '-' }}</td><td>{{ a.website_url }}</td><td>{{ a.ai_provider }}</td>
+<td>{{ a.overall_score or '-' }}/100</td><td><span class="badge badge-{{ a.status }}">{{ a.status }}</span></td><td>{{ a.created_at }}</td></tr>{% endfor %}</tbody></table>{% endif %}</div>
+
+<!-- Add Suggestion Modal -->
+<div class="modal-overlay" id="addSuggestionModal"><div class="modal"><div class="modal-header"><h3>💡 Submit Suggestion</h3><button onclick="closeModal('addSuggestionModal')" class="modal-close">×</button></div>
+<div class="modal-body">
+<select id="sg_project" class="form-select"><option value="">General Suggestion</option>{% for p in my_projects %}<option value="{{ p.id }}">{{ p.title }} ({{ p.business_name }})</option>{% endfor %}</select>
+<input id="sg_title" placeholder="Suggestion Title" class="form-input">
+<textarea id="sg_desc" placeholder="Describe your suggestion in detail..." class="form-input" rows="4"></textarea>
+<button class="btn btn-primary btn-full" onclick="addSuggestion()">Submit Suggestion</button></div></div></div>
 
 <script>
-async function updateTask(id,status){
-  await fetch('/api/tasks/'+id+'/status',{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({status})});
-  location.reload();
-}
-async function markRead(id){
-  await fetch('/api/notifications/'+id+'/read',{method:'POST'});
-  event.currentTarget.classList.remove('unread');
-}
-async function runAudit(){
-  const url=document.getElementById('auditUrl').value;
-  if(!url){alert('Enter a website URL');return;}
-  const r=await fetch('/api/audit',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({website_url:url,ai_provider:document.getElementById('auditProvider').value})});
-  const d=await r.json();
-  alert(d.message||'Audit started');
-  location.reload();
-}
+function openModal(id){document.getElementById(id).classList.add('show')}
+function closeModal(id){document.getElementById(id).classList.remove('show')}
+function api(url,data){return fetch(url,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(data)}).then(r=>r.json())}
+function moveTask(id,status){fetch('/api/tasks/'+id+'/status',{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({status:status})}).then(()=>location.reload())}
+function runAutoTask(id){api('/api/tasks/'+id+'/run-auto',{}).then(r=>{alert(r.message||r.error)})}
+function markRead(id){api('/api/notifications/'+id+'/read',{}).then(()=>location.reload())}
+function runAudit(){api('/api/audit',{website_url:document.getElementById('auditUrl').value,ai_provider:document.getElementById('auditProvider').value}).then(r=>{alert(r.message||r.error)})}
+function addSuggestion(){api('/api/suggestions',{project_id:document.getElementById('sg_project').value||null,title:document.getElementById('sg_title').value,description:document.getElementById('sg_desc').value}).then(()=>{closeModal('addSuggestionModal');location.reload()})}
 </script>
-</body>
-</html>
+</main></body></html>

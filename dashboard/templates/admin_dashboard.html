@@ -1,258 +1,156 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
 <title>Super Admin — AI Growth Labs OS</title>
-<link rel="stylesheet" href="/static/css/dashboard.css">
-</head>
-<body>
-<aside class="sidebar">
-<div class="sidebar-logo">AI Growth<span>Labs</span></div>
-<nav class="sidebar-nav">
-<div class="sidebar-section">Main</div>
-<a href="/dashboard" class="sidebar-link active"><span class="icon">📊</span><span>Dashboard</span></a>
-<div class="sidebar-section">Management</div>
-<a href="#clients-section" class="sidebar-link"><span class="icon">👥</span><span>Clients</span></a>
-<a href="#projects-section" class="sidebar-link"><span class="icon">📋</span><span>Projects</span></a>
-<a href="#tasks-section" class="sidebar-link"><span class="icon">✅</span><span>Tasks</span></a>
-<a href="#workers-section" class="sidebar-link"><span class="icon">👷</span><span>Workers</span></a>
-<div class="sidebar-section">Finance</div>
-<a href="#payments-section" class="sidebar-link"><span class="icon">💰</span><span>Payments</span></a>
-<div class="sidebar-section">Tools</div>
-<a href="#audit-section" class="sidebar-link"><span class="icon">🔍</span><span>SEO Audit</span></a>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/static/css/dashboard.css"></head><body>
+<aside class="sidebar"><div class="sidebar-brand">AI Growth<span>Labs</span></div>
+<nav><div class="nav-section">Main</div><a href="/dashboard" class="active">📊Dashboard</a>
+<a href="#clients-section">👥Clients</a>
+<a href="#projects-section">📋Projects</a>
+<a href="#tasks-section">✅Tasks</a>
+<a href="#workers-section">👷Workers</a>
+<a href="#payments-section">💰Payments</a>
+<a href="#audit-section">🔍SEO Audit</a>
+<a href="/monitor">📡Team Monitor</a>
+<a href="/team-chat">💬Team Chat</a>
+<a href="/settings">⚙️API Settings</a>
 </nav>
-<div class="sidebar-user">
-<div class="sidebar-avatar">{{ user.full_name[:2].upper() }}</div>
-<div class="sidebar-user-info"><div class="name">{{ user.full_name }}</div><div class="role">{{ user.role.replace('_', ' ') }}</div></div>
-</div>
-</aside>
-
+<div class="sidebar-user"><div class="user-avatar">{{ user.full_name[:2]|upper }}</div>
+<div><strong>{{ user.full_name }}</strong><small>{{ user.role }}</small></div></div></aside>
 <main class="main">
-<div class="main-header">
-<div><h1>Super Admin Dashboard</h1><div class="subtitle">Agency Operating System — Complete Overview</div></div>
+<div class="header-bar"><h1>Super Admin Dashboard</h1><span>Agency Operating System — Complete Overview</span>
 <div class="header-actions">
-<button class="header-btn" onclick="openModal('addClient')">+ Add Client</button>
-<button class="header-btn" onclick="openModal('addProject')">+ New Project</button>
-<button class="header-btn" onclick="openModal('addWorker')">+ Add Worker</button>
-<a href="/logout" class="header-btn">Logout</a>
-</div>
-</div>
+<button class="btn btn-primary" onclick="openModal('addClientModal')">+ Add Client</button>
+<button class="btn btn-secondary" onclick="openModal('addProjectModal')">+ New Project</button>
+<button class="btn btn-secondary" onclick="openModal('addWorkerModal')">+ Add Worker</button>
+{% if unread_chats > 0 %}<a href="/team-chat" class="btn btn-warning">💬 {{ unread_chats }} New Messages</a>{% endif %}
+{% if chat_requests|length > 0 %}<a href="/monitor" class="btn btn-warning">🔔 {{ chat_requests|length }} Chat Requests</a>{% endif %}
+<a href="/logout" class="btn btn-outline">Logout</a></div></div>
 
-<!-- Stats -->
 <div class="stats-grid">
 <div class="stat-card"><div class="stat-label">Monthly Revenue</div><div class="stat-value cyan">${{ "{:,.0f}".format(stats.monthly_recurring) }}</div><div class="stat-sub">Active MRR</div></div>
 <div class="stat-card"><div class="stat-label">Total Collected</div><div class="stat-value green">${{ "{:,.0f}".format(stats.total_revenue) }}</div><div class="stat-sub">All time payments</div></div>
-<div class="stat-card"><div class="stat-label">Pending Revenue</div><div class="stat-value yellow">${{ "{:,.0f}".format(stats.pending_revenue) }}</div><div class="stat-sub">Outstanding payments</div></div>
+<div class="stat-card"><div class="stat-label">Pending Revenue</div><div class="stat-value orange">${{ "{:,.0f}".format(stats.pending_revenue) }}</div><div class="stat-sub">Outstanding payments</div></div>
 <div class="stat-card"><div class="stat-label">Active Clients</div><div class="stat-value">{{ stats.active_clients }}</div><div class="stat-sub">Currently active</div></div>
 <div class="stat-card"><div class="stat-label">Active Projects</div><div class="stat-value">{{ stats.active_projects }}</div><div class="stat-sub">In progress</div></div>
-<div class="stat-card"><div class="stat-label">Task Completion</div><div class="stat-value cyan">{{ stats.task_completion }}%</div><div class="stat-sub">{{ stats.completed_tasks }}/{{ stats.total_tasks }} tasks</div></div>
+<div class="stat-card"><div class="stat-label">Task Completion</div><div class="stat-value">{{ stats.task_completion }}%</div><div class="stat-sub">{{ stats.completed_tasks }}/{{ stats.total_tasks }} tasks</div></div>
 </div>
 
-<!-- Projects Kanban -->
-<div class="card" id="projects-section">
-<div class="card-header"><h3>📋 All Projects</h3></div>
-<div class="card-body">
-<table>
-<thead><tr><th>Client</th><th>Project</th><th>Service</th><th>Worker</th><th>Team Lead</th><th>Progress</th><th>Priority</th><th>Status</th><th>Upsell</th></tr></thead>
-<tbody>
+{% if suggestions|length > 0 %}
+<div class="card" id="suggestions-section"><h3>💡 Team Suggestions</h3>
+<table><thead><tr><th>From</th><th>Project</th><th>Suggestion</th><th>Status</th><th>Action</th></tr></thead><tbody>
+{% for s in suggestions %}
+<tr><td>{{ s.author_name }}</td><td>{{ s.project_title or '-' }}</td><td><strong>{{ s.title }}</strong><br><small>{{ s.description[:80] }}...</small></td>
+<td><span class="badge badge-{{ s.status }}">{{ s.status }}</span></td>
+<td>{% if s.status == 'pending' %}<button class="btn btn-sm btn-primary" onclick="updateSuggestion({{ s.id }}, 'approved')">Approve</button>
+<button class="btn btn-sm btn-danger" onclick="updateSuggestion({{ s.id }}, 'rejected')">Reject</button>{% else %}{{ s.admin_response or '-' }}{% endif %}</td></tr>
+{% endfor %}</tbody></table></div>
+{% endif %}
+
+<div class="card" id="projects-section"><h3>📋 All Projects</h3>
+<table><thead><tr><th>Client</th><th>Project</th><th>Service</th><th>Worker</th><th>Team Lead</th><th>Progress</th><th>Priority</th><th>Status</th><th>Upsell</th></tr></thead><tbody>
 {% for p in projects %}
-<tr>
-<td><strong>{{ p.business_name or 'N/A' }}</strong></td>
-<td>{{ p.title }}</td>
-<td>{{ p.service_type or '-' }}</td>
-<td>{{ p.worker_name or 'Unassigned' }}</td>
-<td>{{ p.leader_name or '-' }}</td>
-<td style="min-width:120px"><div class="progress-bar"><div class="progress-fill" style="width:{{ p.progress }}%"></div></div><div class="progress-text">{{ p.progress }}%</div></td>
-<td><span class="badge badge-{{ p.priority }}">{{ p.priority }}</span></td>
-<td><span class="badge badge-{{ p.status }}">{{ p.status.replace('_', ' ') }}</span></td>
-<td>{{ p.upsell_opportunities or '—' }}</td>
-</tr>
-{% endfor %}
-</tbody>
-</table>
-</div>
-</div>
+<tr><td><a href="/client/{{ p.client_id }}">{{ p.business_name }}</a></td><td>{{ p.title }}</td><td>{{ p.service_type }}</td><td>{{ p.worker_name }}</td><td>{{ p.leader_name }}</td>
+<td><div class="progress-bar"><div class="progress-fill" style="width:{{ p.progress }}%"></div></div>{{ p.progress }}%</td>
+<td><span class="badge badge-{{ p.priority }}">{{ p.priority }}</span></td><td><span class="badge badge-active">{{ p.status }}</span></td><td>—</td></tr>
+{% endfor %}</tbody></table></div>
 
-<!-- Clients -->
-<div class="card" id="clients-section">
-<div class="card-header"><h3>👥 All Clients</h3></div>
-<div class="card-body">
-<table>
-<thead><tr><th>Business</th><th>Contact</th><th>Industry</th><th>Location</th><th>Package</th><th>Payment</th><th>Status</th></tr></thead>
-<tbody>
+<div class="card" id="clients-section"><h3>👥 All Clients</h3>
+<table><thead><tr><th>Business</th><th>Contact</th><th>Industry</th><th>Location</th><th>Package</th><th>Payment</th><th>Status</th><th>Details</th></tr></thead><tbody>
 {% for c in clients %}
-<tr>
-<td><strong>{{ c.business_name }}</strong><br><span style="color:#64748B;font-size:.75rem">{{ c.website or '' }}</span></td>
-<td>{{ c.contact_name or '-' }}<br><span style="color:#64748B;font-size:.75rem">{{ c.email or '' }}</span></td>
-<td>{{ c.industry or '-' }}</td>
-<td>{{ c.location or '-' }}</td>
-<td>{{ c.package or 'None' }}</td>
-<td>{{ '${:,.0f}/mo'.format(c.monthly_payment) if c.monthly_payment else '-' }}</td>
+<tr><td><strong>{{ c.business_name }}</strong><br><small>{{ c.website }}</small></td><td>{{ c.contact_name }}<br><small>{{ c.email }}</small></td>
+<td>{{ c.industry }}</td><td>{{ c.location }}</td><td>{{ c.package or '-' }}</td>
+<td>{% if c.monthly_payment %}${{ "{:,.0f}".format(c.monthly_payment) }}/mo{% else %}-{% endif %}</td>
 <td><span class="badge badge-{{ c.status }}">{{ c.status }}</span></td>
-</tr>
-{% endfor %}
-</tbody>
-</table>
-</div>
-</div>
+<td><a href="/client/{{ c.id }}" class="btn btn-sm btn-primary">View</a></td></tr>
+{% endfor %}</tbody></table></div>
 
-<!-- Workers & Tasks -->
-<div class="grid-2">
-<div class="card" id="workers-section">
-<div class="card-header"><h3>👷 Team Members</h3></div>
-<div class="card-body">
-<table>
-<thead><tr><th>Name</th><th>Role</th><th>Rank</th><th>Salary</th><th>Status</th></tr></thead>
-<tbody>
+<div class="card" id="workers-section"><h3>👷 Team Members</h3>
+<table><thead><tr><th>Name</th><th>Role</th><th>Rank</th><th>Salary</th><th>Status</th></tr></thead><tbody>
 {% for w in workers %}
-<tr>
-<td><strong>{{ w.full_name }}</strong><br><span style="color:#64748B;font-size:.75rem">@{{ w.username }}</span></td>
-<td>{{ w.role.replace('_', ' ').title() }}</td>
-<td><span class="badge badge-active">{{ w.rank }}</span></td>
-<td>${{ "{:,.0f}".format(w.salary) }}</td>
-<td><span class="badge badge-{{ 'active' if w.is_active else 'paused' }}">{{ 'Active' if w.is_active else 'Inactive' }}</span></td>
-</tr>
-{% endfor %}
-</tbody>
-</table>
-</div>
-</div>
+<tr><td><strong>{{ w.full_name }}</strong><br><small>@{{ w.username }}</small></td><td>{{ w.role|replace('_',' ')|title }}</td><td>{{ w.rank }}</td>
+<td>${{ "{:,.0f}".format(w.salary) }}</td><td><span class="badge badge-active">Active</span></td></tr>
+{% endfor %}</tbody></table></div>
 
-<div class="card" id="tasks-section">
-<div class="card-header"><h3>✅ Recent Tasks</h3></div>
-<div class="card-body">
-<table>
-<thead><tr><th>Task</th><th>Project</th><th>Assigned</th><th>Priority</th><th>Status</th></tr></thead>
-<tbody>
-{% for t in tasks[:15] %}
-<tr>
-<td>{{ t.title }}</td>
-<td>{{ t.project_title or '-' }}</td>
-<td>{{ t.assigned_name or 'Unassigned' }}</td>
+<div class="card" id="tasks-section"><h3>✅ Recent Tasks</h3>
+<table><thead><tr><th>Task</th><th>Project</th><th>Assigned</th><th>Priority</th><th>Status</th></tr></thead><tbody>
+{% for t in tasks %}
+<tr><td>{{ t.title }}</td><td>{{ t.project_title }}</td><td>{{ t.assigned_name }}</td>
 <td><span class="badge badge-{{ t.priority }}">{{ t.priority }}</span></td>
-<td><span class="badge badge-{{ t.status }}">{{ t.status.replace('_', ' ') }}</span></td>
-</tr>
-{% endfor %}
-</tbody>
-</table>
-</div>
-</div>
-</div>
+<td><span class="badge badge-{{ t.status|replace(' ','_') }}">{{ t.status }}</span></td></tr>
+{% endfor %}</tbody></table></div>
 
-<!-- Payments -->
-<div class="card" id="payments-section">
-<div class="card-header"><h3>💰 Payment Records</h3></div>
-<div class="card-body">
-<table>
-<thead><tr><th>Invoice</th><th>Client</th><th>Amount</th><th>Due Date</th><th>Paid Date</th><th>Status</th></tr></thead>
-<tbody>
+<div class="card" id="payments-section"><h3>💰 Payment Records</h3>
+<table><thead><tr><th>Invoice</th><th>Client</th><th>Amount</th><th>Due Date</th><th>Paid Date</th><th>Status</th><th>Report</th></tr></thead><tbody>
 {% for p in payments %}
-<tr>
-<td>{{ p.invoice_number or '-' }}</td>
-<td>{{ p.business_name or '-' }}</td>
-<td><strong>${{ "{:,.0f}".format(p.amount) }}</strong></td>
-<td>{{ p.due_date or '-' }}</td>
-<td>{{ p.paid_date or '-' }}</td>
+<tr><td>{{ p.invoice_number }}</td><td>{{ p.business_name }}</td><td><strong>${{ "{:,.0f}".format(p.amount) }}</strong></td>
+<td>{{ p.due_date }}</td><td>{{ p.paid_date or '-' }}</td>
 <td><span class="badge badge-{{ p.status }}">{{ p.status }}</span></td>
-</tr>
-{% endfor %}
-</tbody>
-</table>
-</div>
-</div>
+<td><button class="btn btn-sm btn-primary" onclick="generateReport({{ p.client_id }})">📄 Generate</button></td></tr>
+{% endfor %}</tbody></table></div>
 
-<!-- SEO Audit Panel -->
-<div class="audit-panel" id="audit-section">
-<h3>🔍 Run SEO DNA Audit</h3>
-<p style="color:#94A3B8;font-size:.85rem;margin-bottom:16px">Paste a client's website URL and select an AI provider to run a complete DNA-level audit.</p>
-<div class="audit-input-group">
-<input type="url" id="auditUrl" placeholder="https://clientwebsite.com">
-<select id="auditProvider">
-<option value="claude">Claude Sonnet</option>
-<option value="chatgpt">ChatGPT 4.5</option>
-<option value="gemini">Google Gemini</option>
-</select>
-<button class="audit-btn" onclick="runAudit()">Run Audit →</button>
-</div>
-<p style="color:#475569;font-size:.78rem">Note: AI API key must be configured in environment for audits to process.</p>
-</div>
-</main>
+<div class="card" id="audit-section"><h3>🔍 Run SEO DNA Audit</h3>
+<p>Paste a client's website URL and select an AI provider to run a complete DNA-level audit.</p>
+<div class="form-row"><input type="url" id="auditUrl" placeholder="https://clientwebsite.com" class="form-input">
+<select id="auditProvider" class="form-select"><option value="claude">Claude Sonnet</option><option value="chatgpt">ChatGPT 4.5</option><option value="gemini">Google Gemini</option></select>
+<button class="btn btn-primary" onclick="runAudit()">Run Audit →</button></div>
+<p class="text-muted">Note: AI API key must be configured in <a href="/settings">Settings</a> for audits to process.</p></div>
 
 <!-- Add Client Modal -->
-<div class="modal-overlay" id="addClient">
-<div class="modal">
-<h3>Add New Client</h3>
-<div class="modal-group"><label>Business Name *</label><input type="text" id="cl_name"></div>
-<div class="modal-group"><label>Contact Person</label><input type="text" id="cl_contact"></div>
-<div class="modal-group"><label>Email</label><input type="email" id="cl_email"></div>
-<div class="modal-group"><label>Phone</label><input type="tel" id="cl_phone"></div>
-<div class="modal-group"><label>Website</label><input type="url" id="cl_website"></div>
-<div class="modal-group"><label>Industry</label><input type="text" id="cl_industry"></div>
-<div class="modal-group"><label>Location</label><input type="text" id="cl_location"></div>
-<div class="modal-group"><label>Package</label><select id="cl_package"><option value="">Select...</option><option>Growth Starter</option><option>Growth Pro</option><option>Growth Elite</option></select></div>
-<div class="modal-group"><label>Monthly Payment</label><input type="number" id="cl_payment" placeholder="0"></div>
-<div class="modal-group"><label>Status</label><select id="cl_status"><option value="lead">Lead</option><option value="prospect">Prospect</option><option value="active">Active</option></select></div>
-<div class="modal-actions"><button class="cancel" onclick="closeModal('addClient')">Cancel</button><button class="save" onclick="saveClient()">Save Client</button></div>
-</div>
-</div>
+<div class="modal-overlay" id="addClientModal"><div class="modal"><div class="modal-header"><h3>Add New Client</h3><button onclick="closeModal('addClientModal')" class="modal-close">×</button></div>
+<div class="modal-body"><input id="nc_business" placeholder="Business Name" class="form-input"><input id="nc_contact" placeholder="Contact Name" class="form-input">
+<input id="nc_email" placeholder="Email" class="form-input"><input id="nc_phone" placeholder="Phone" class="form-input">
+<input id="nc_website" placeholder="Website URL" class="form-input"><input id="nc_industry" placeholder="Industry" class="form-input">
+<input id="nc_location" placeholder="Location (City, ST)" class="form-input">
+<select id="nc_package" class="form-select"><option value="">Select Package</option><option value="Growth Starter">Growth Starter - $997/mo</option><option value="Growth Pro">Growth Pro - $2,997/mo</option><option value="Growth Elite">Growth Elite - $6,997/mo</option></select>
+<select id="nc_status" class="form-select"><option value="lead">Lead</option><option value="prospect">Prospect</option><option value="active">Active</option></select>
+<button class="btn btn-primary btn-full" onclick="addClient()">Add Client</button></div></div></div>
 
 <!-- Add Project Modal -->
-<div class="modal-overlay" id="addProject">
-<div class="modal">
-<h3>Create New Project</h3>
-<div class="modal-group"><label>Client</label><select id="pj_client">{% for c in clients %}<option value="{{ c.id }}">{{ c.business_name }}</option>{% endfor %}</select></div>
-<div class="modal-group"><label>Title *</label><input type="text" id="pj_title"></div>
-<div class="modal-group"><label>Service Type</label><select id="pj_service"><option>Local SEO</option><option>GBP Optimization</option><option>Reputation Management</option><option>AI SEO</option><option>Paid Advertising</option><option>Social Media</option><option>Content Creation</option></select></div>
-<div class="modal-group"><label>Assign Worker</label><select id="pj_worker"><option value="">Select...</option>{% for w in workers %}<option value="{{ w.id }}">{{ w.full_name }} ({{ w.role.replace('_', ' ') }})</option>{% endfor %}</select></div>
-<div class="modal-group"><label>Priority</label><select id="pj_priority"><option value="medium">Medium</option><option value="high">High</option><option value="urgent">Urgent</option><option value="low">Low</option></select></div>
-<div class="modal-group"><label>Description</label><textarea id="pj_desc" rows="3"></textarea></div>
-<div class="modal-actions"><button class="cancel" onclick="closeModal('addProject')">Cancel</button><button class="save" onclick="saveProject()">Create Project</button></div>
-</div>
-</div>
+<div class="modal-overlay" id="addProjectModal"><div class="modal"><div class="modal-header"><h3>New Project</h3><button onclick="closeModal('addProjectModal')" class="modal-close">×</button></div>
+<div class="modal-body"><select id="np_client" class="form-select">{% for c in clients %}<option value="{{ c.id }}">{{ c.business_name }}</option>{% endfor %}</select>
+<input id="np_title" placeholder="Project Title" class="form-input"><textarea id="np_desc" placeholder="Description" class="form-input"></textarea>
+<select id="np_service" class="form-select"><option>Local SEO</option><option>AI SEO</option><option>GBP Optimization</option><option>Reputation Management</option><option>Content Creation</option><option>Social Media</option><option>Paid Advertising</option></select>
+<select id="np_worker" class="form-select">{% for w in workers %}<option value="{{ w.id }}">{{ w.full_name }} ({{ w.role }})</option>{% endfor %}</select>
+<button class="btn btn-primary btn-full" onclick="addProject()">Create Project</button></div></div></div>
 
 <!-- Add Worker Modal -->
-<div class="modal-overlay" id="addWorker">
-<div class="modal">
-<h3>Add Team Member</h3>
-<div class="modal-group"><label>Username *</label><input type="text" id="usr_username"></div>
-<div class="modal-group"><label>Full Name *</label><input type="text" id="usr_name"></div>
-<div class="modal-group"><label>Email</label><input type="email" id="usr_email"></div>
-<div class="modal-group"><label>Role *</label><select id="usr_role"><option value="worker">Worker</option><option value="tech_seo">Tech SEO</option><option value="social_media">Social Media</option><option value="sales">Sales</option><option value="finance">Finance</option></select></div>
-<div class="modal-group"><label>Rank</label><select id="usr_rank"><option value="junior">Junior</option><option value="mid">Mid</option><option value="senior">Senior</option><option value="lead">Lead</option></select></div>
-<div class="modal-group"><label>Salary</label><input type="number" id="usr_salary" placeholder="0"></div>
-<div class="modal-group"><label>Password</label><input type="text" id="usr_password" value="changeme123"></div>
-<div class="modal-actions"><button class="cancel" onclick="closeModal('addWorker')">Cancel</button><button class="save" onclick="saveWorker()">Add Member</button></div>
-</div>
-</div>
+<div class="modal-overlay" id="addWorkerModal"><div class="modal"><div class="modal-header"><h3>Add Worker</h3><button onclick="closeModal('addWorkerModal')" class="modal-close">×</button></div>
+<div class="modal-body"><input id="nw_username" placeholder="Username" class="form-input"><input id="nw_name" placeholder="Full Name" class="form-input">
+<input id="nw_email" placeholder="Email" class="form-input"><input id="nw_password" placeholder="Password" class="form-input" type="password">
+<select id="nw_role" class="form-select"><option value="worker">Worker</option><option value="tech_seo">Tech SEO</option><option value="sales">Sales</option><option value="social_media">Social Media</option><option value="finance">Finance</option></select>
+<select id="nw_rank" class="form-select"><option value="junior">Junior</option><option value="mid">Mid</option><option value="senior">Senior</option><option value="lead">Lead</option></select>
+<input id="nw_salary" placeholder="Monthly Salary" type="number" class="form-input">
+<button class="btn btn-primary btn-full" onclick="addWorker()">Add Worker</button></div></div></div>
 
 <script>
-function openModal(id){document.getElementById(id).classList.add('open')}
-function closeModal(id){document.getElementById(id).classList.remove('open')}
-document.querySelectorAll('.modal-overlay').forEach(m=>m.addEventListener('click',e=>{if(e.target===m)m.classList.remove('open')}));
+function openModal(id){document.getElementById(id).classList.add('show')}
+function closeModal(id){document.getElementById(id).classList.remove('show')}
+function api(url,data){return fetch(url,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(data)}).then(r=>r.json())}
+function apiPut(url,data){return fetch(url,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(data)}).then(r=>r.json())}
 
-async function api(url,data){
-  const r=await fetch(url,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(data)});
-  return r.json();
-}
+function addClient(){
+    const pkg=document.getElementById('nc_package').value;
+    const pmts={'Growth Starter':997,'Growth Pro':2997,'Growth Elite':6997};
+    api('/api/clients',{business_name:document.getElementById('nc_business').value,contact_name:document.getElementById('nc_contact').value,
+        email:document.getElementById('nc_email').value,phone:document.getElementById('nc_phone').value,website:document.getElementById('nc_website').value,
+        industry:document.getElementById('nc_industry').value,location:document.getElementById('nc_location').value,
+        package:pkg,monthly_payment:pmts[pkg]||0,status:document.getElementById('nc_status').value}).then(()=>location.reload())}
 
-async function saveClient(){
-  await api('/api/clients',{business_name:document.getElementById('cl_name').value,contact_name:document.getElementById('cl_contact').value,email:document.getElementById('cl_email').value,phone:document.getElementById('cl_phone').value,website:document.getElementById('cl_website').value,industry:document.getElementById('cl_industry').value,location:document.getElementById('cl_location').value,package:document.getElementById('cl_package').value,monthly_payment:parseFloat(document.getElementById('cl_payment').value)||0,status:document.getElementById('cl_status').value});
-  location.reload();
-}
-async function saveProject(){
-  await api('/api/projects',{client_id:parseInt(document.getElementById('pj_client').value),title:document.getElementById('pj_title').value,description:document.getElementById('pj_desc').value,service_type:document.getElementById('pj_service').value,assigned_worker_id:parseInt(document.getElementById('pj_worker').value)||null,priority:document.getElementById('pj_priority').value});
-  location.reload();
-}
-async function saveWorker(){
-  await api('/api/users',{username:document.getElementById('usr_username').value,full_name:document.getElementById('usr_name').value,email:document.getElementById('usr_email').value,role:document.getElementById('usr_role').value,rank:document.getElementById('usr_rank').value,salary:parseFloat(document.getElementById('usr_salary').value)||0,password:document.getElementById('usr_password').value});
-  location.reload();
-}
-async function runAudit(){
-  const url=document.getElementById('auditUrl').value;
-  if(!url){alert('Please enter a website URL');return;}
-  const r=await api('/api/audit',{website_url:url,ai_provider:document.getElementById('auditProvider').value});
-  alert(r.message||'Audit queued');
-}
+function addProject(){api('/api/projects',{client_id:parseInt(document.getElementById('np_client').value),title:document.getElementById('np_title').value,
+    description:document.getElementById('np_desc').value,service_type:document.getElementById('np_service').value,
+    assigned_worker_id:parseInt(document.getElementById('np_worker').value)}).then(()=>location.reload())}
+
+function addWorker(){api('/api/users',{username:document.getElementById('nw_username').value,full_name:document.getElementById('nw_name').value,
+    email:document.getElementById('nw_email').value,password:document.getElementById('nw_password').value,
+    role:document.getElementById('nw_role').value,rank:document.getElementById('nw_rank').value,
+    salary:parseFloat(document.getElementById('nw_salary').value)||0}).then(()=>location.reload())}
+
+function runAudit(){api('/api/audit',{website_url:document.getElementById('auditUrl').value,ai_provider:document.getElementById('auditProvider').value})
+    .then(r=>{alert(r.message||r.error);location.reload()})}
+
+function generateReport(clientId){api('/api/reports/generate',{client_id:clientId,report_type:'monthly'})
+    .then(r=>{if(r.id){window.open('/api/reports/'+r.id+'/download','_blank')}else{alert(r.error||'Error')}})}
+
+function updateSuggestion(id,status){apiPut('/api/suggestions/'+id,{status:status,admin_response:status=='approved'?'Approved by admin':'Rejected'}).then(()=>location.reload())}
 </script>
-</body>
-</html>
+</main></body></html>

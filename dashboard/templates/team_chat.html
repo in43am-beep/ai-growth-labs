@@ -1,0 +1,70 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Team Chat — AI Growth Labs OS</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/static/css/dashboard.css"></head><body>
+<aside class="sidebar"><div class="sidebar-brand">AI Growth<span>Labs</span></div>
+<nav><div class="nav-section">Main</div><a href="/dashboard">📊Dashboard</a>
+<a href="/team-chat" class="active">💬Team Chat</a>
+</nav>
+<div class="sidebar-user"><div class="user-avatar">{{ user.full_name[:2]|upper }}</div>
+<div><strong>{{ user.full_name }}</strong><small>{{ user.role|replace("_"," ")|title }}</small></div></div></aside>
+<main class="main">
+<div class="header-bar"><h1>💬 Team Chat</h1><span>Real-time messaging with team members</span>
+<div class="header-actions"><a href="/dashboard" class="btn btn-outline">← Back to Dashboard</a></div></div>
+
+<div class="chat-layout">
+<div class="chat-sidebar">
+<h4>Team Members</h4>
+{% for m in team_members %}
+<div class="chat-member" onclick="openChat({{ m.id }},'{{ m.full_name }}')">
+<div class="user-avatar small">{{ m.full_name[:2]|upper }}</div>
+<div><strong>{{ m.full_name }}</strong><br><small>{{ m.role|replace('_',' ')|title }}</small></div>
+</div>{% endfor %}
+{% if user.role != 'super_admin' %}
+<div style="margin-top:16px;padding:12px">
+<h4>Request Chat</h4><p style="font-size:12px;color:#94A3B8">Request approval from Super Admin to start a chat session.</p>
+<select id="chat_request_to" class="form-select">{% for m in team_members %}<option value="{{ m.id }}">{{ m.full_name }}</option>{% endfor %}</select>
+<button class="btn btn-primary btn-full" onclick="requestChat()" style="margin-top:8px">Send Request</button>
+</div>{% endif %}
+</div>
+<div class="chat-main">
+<div class="chat-header" id="chatHeader"><h4>Select a team member to chat</h4></div>
+<div class="chat-messages" id="chatMessages"><div class="chat-empty">Select a team member from the left panel to start chatting.</div></div>
+<div class="chat-input" id="chatInput" style="display:none">
+<input type="text" id="msgInput" placeholder="Type your message..." class="form-input" onkeypress="if(event.key==='Enter')sendMsg()">
+<button class="btn btn-primary" onclick="sendMsg()">Send</button>
+</div></div></div>
+
+<script>
+let currentChatUser=null;
+function openChat(userId,name){
+    currentChatUser=userId;
+    document.getElementById('chatHeader').innerHTML='<h4>Chat with '+name+'</h4>';
+    document.getElementById('chatInput').style.display='flex';
+    loadMessages(userId);
+}
+function loadMessages(userId){
+    fetch('/api/chat-messages/'+userId).then(r=>r.json()).then(data=>{
+        const container=document.getElementById('chatMessages');
+        if(!data.messages||data.messages.length===0){container.innerHTML='<div class="chat-empty">No messages yet. Start the conversation!</div>';return}
+        container.innerHTML=data.messages.map(m=>'<div class="chat-msg '+(m.from_user_id=={{ user.id }}?'sent':'received')+'"><strong>'+m.sender_name+'</strong><p>'+m.message+'</p><small>'+m.created_at+'</small></div>').join('');
+        container.scrollTop=container.scrollHeight;
+    });
+}
+function sendMsg(){
+    const msg=document.getElementById('msgInput').value;
+    if(!msg||!currentChatUser)return;
+    fetch('/api/chat-messages',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({to_user_id:currentChatUser,message:msg})})
+    .then(()=>{document.getElementById('msgInput').value='';loadMessages(currentChatUser)});
+}
+function requestChat(){
+    const toId=document.getElementById('chat_request_to').value;
+    fetch('/api/chat-request',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({to_user_id:parseInt(toId)})})
+    .then(r=>r.json()).then(r=>alert(r.message));
+}
+{% if approved_chats|length > 0 %}document.addEventListener('DOMContentLoaded',function(){
+    // Auto-refresh messages every 5 seconds
+    setInterval(function(){if(currentChatUser)loadMessages(currentChatUser)},5000);
+});{% endif %}
+</script>
+</main></body></html>

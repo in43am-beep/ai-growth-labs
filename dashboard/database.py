@@ -1,8 +1,8 @@
-"""Database module using SQLite for the Agency OS"""
+"""Database module using SQLite for the Agency OS v2"""
 import sqlite3
 import json
 import os
-from datetime import datetime
+from datetime import datetime, timedelta
 from passlib.hash import bcrypt
 
 DB_PATH = os.environ.get("DB_PATH", os.path.join(os.path.dirname(__file__), "agency.db"))
@@ -18,7 +18,7 @@ def init_db():
     conn = get_db()
     c = conn.cursor()
     
-    # Users table with role-based access
+    # Users table
     c.execute('''CREATE TABLE IF NOT EXISTS users (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         username TEXT UNIQUE NOT NULL,
@@ -50,6 +50,21 @@ def init_db():
         source TEXT,
         created_at TEXT DEFAULT (datetime('now')),
         updated_at TEXT DEFAULT (datetime('now'))
+    )''')
+    
+    # Client credentials table (NEW)
+    c.execute('''CREATE TABLE IF NOT EXISTS client_credentials (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        client_id INTEGER REFERENCES clients(id),
+        credential_type TEXT NOT NULL CHECK(credential_type IN ('gsc','ga4','cms','gbp','ahrefs','semrush','social_fb','social_ig','social_tt','social_li','hosting','other')),
+        label TEXT,
+        username TEXT,
+        password_enc TEXT,
+        api_key TEXT,
+        access_url TEXT,
+        notes TEXT,
+        added_by INTEGER REFERENCES users(id),
+        created_at TEXT DEFAULT (datetime('now'))
     )''')
     
     # Projects table
@@ -84,6 +99,8 @@ def init_db():
         due_date TEXT,
         completed_date TEXT,
         order_num INTEGER DEFAULT 0,
+        is_automated INTEGER DEFAULT 0,
+        auto_result TEXT,
         created_at TEXT DEFAULT (datetime('now'))
     )''')
     
@@ -93,7 +110,7 @@ def init_db():
         user_id INTEGER REFERENCES users(id),
         title TEXT NOT NULL,
         message TEXT,
-        type TEXT DEFAULT 'info' CHECK(type IN ('info','warning','success','task','urgent')),
+        type TEXT DEFAULT 'info' CHECK(type IN ('info','warning','success','task','urgent','chat_request')),
         is_read INTEGER DEFAULT 0,
         link TEXT,
         created_at TEXT DEFAULT (datetime('now'))
@@ -125,7 +142,7 @@ def init_db():
         created_at TEXT DEFAULT (datetime('now'))
     )''')
     
-    # Payments table (client payments)
+    # Payments table
     c.execute('''CREATE TABLE IF NOT EXISTS payments (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         client_id INTEGER REFERENCES clients(id),
@@ -172,7 +189,7 @@ def init_db():
         created_at TEXT DEFAULT (datetime('now'))
     )''')
     
-    # Chat messages (from website chatbot)
+    # Chat messages (website chatbot)
     c.execute('''CREATE TABLE IF NOT EXISTS chat_messages (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         session_id TEXT NOT NULL,
@@ -190,6 +207,65 @@ def init_db():
         updated_at TEXT DEFAULT (datetime('now'))
     )''')
     
+    # Team chat system (NEW)
+    c.execute('''CREATE TABLE IF NOT EXISTS team_chats (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        from_user_id INTEGER REFERENCES users(id),
+        to_user_id INTEGER REFERENCES users(id),
+        message TEXT NOT NULL,
+        is_read INTEGER DEFAULT 0,
+        created_at TEXT DEFAULT (datetime('now'))
+    )''')
+    
+    # Chat requests (NEW)
+    c.execute('''CREATE TABLE IF NOT EXISTS chat_requests (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        from_user_id INTEGER REFERENCES users(id),
+        to_user_id INTEGER REFERENCES users(id),
+        status TEXT DEFAULT 'pending' CHECK(status IN ('pending','approved','rejected','ended')),
+        created_at TEXT DEFAULT (datetime('now')),
+        resolved_at TEXT
+    )''')
+    
+    # Suggestions (NEW)
+    c.execute('''CREATE TABLE IF NOT EXISTS suggestions (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        user_id INTEGER REFERENCES users(id),
+        project_id INTEGER REFERENCES projects(id),
+        title TEXT NOT NULL,
+        description TEXT,
+        status TEXT DEFAULT 'pending' CHECK(status IN ('pending','approved','rejected','implemented')),
+        admin_response TEXT,
+        created_at TEXT DEFAULT (datetime('now'))
+    )''')
+    
+    # API Settings (NEW)
+    c.execute('''CREATE TABLE IF NOT EXISTS api_settings (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        provider TEXT UNIQUE NOT NULL CHECK(provider IN ('claude','chatgpt','gemini','twilio','smtp')),
+        api_key TEXT,
+        is_active INTEGER DEFAULT 0,
+        config_json TEXT,
+        updated_by INTEGER REFERENCES users(id),
+        updated_at TEXT DEFAULT (datetime('now'))
+    )''')
+    
+    # Client reports (NEW)
+    c.execute('''CREATE TABLE IF NOT EXISTS client_reports (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        client_id INTEGER REFERENCES clients(id),
+        project_id INTEGER REFERENCES projects(id),
+        report_type TEXT DEFAULT 'monthly' CHECK(report_type IN ('weekly','monthly','audit','custom')),
+        title TEXT,
+        report_data TEXT,
+        pdf_path TEXT,
+        sent_to_client INTEGER DEFAULT 0,
+        sent_date TEXT,
+        sent_by INTEGER REFERENCES users(id),
+        created_by INTEGER REFERENCES users(id),
+        created_at TEXT DEFAULT (datetime('now'))
+    )''')
+    
     # Activity log
     c.execute('''CREATE TABLE IF NOT EXISTS activity_log (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -201,7 +277,19 @@ def init_db():
         created_at TEXT DEFAULT (datetime('now'))
     )''')
     
-    # Create default super admin user
+    # Package task templates (NEW)
+    c.execute('''CREATE TABLE IF NOT EXISTS package_tasks (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        package TEXT NOT NULL CHECK(package IN ('Growth Starter','Growth Pro','Growth Elite')),
+        category TEXT NOT NULL,
+        title TEXT NOT NULL,
+        description TEXT,
+        is_automated INTEGER DEFAULT 0,
+        dna_prompt TEXT,
+        order_num INTEGER DEFAULT 0
+    )''')
+    
+    # Create default super admin
     try:
         admin_hash = bcrypt.hash("admin123")
         c.execute('''INSERT OR IGNORE INTO users (username, password_hash, full_name, email, role, rank, salary) 
@@ -210,16 +298,84 @@ def init_db():
     except Exception:
         pass
     
-    # Insert demo data
     _insert_demo_data(c)
+    _insert_package_tasks(c)
     
     conn.commit()
     conn.close()
 
+def _insert_package_tasks(c):
+    """Insert DNA-level package task templates"""
+    try:
+        c.execute("SELECT COUNT(*) FROM package_tasks")
+        if c.fetchone()[0] > 0:
+            return
+        
+        starter_tasks = [
+            ('Technical SEO', 'Site Speed Audit', 'Check Core Web Vitals: LCP, CLS, INP, TTFB', 1, 'Analyze website speed: Check LCP (should be <2.5s), CLS (<0.1), INP (<200ms), TTFB (<800ms). Test on Google PageSpeed Insights. Report all issues with fix priorities.'),
+            ('Technical SEO', 'Mobile Responsiveness Check', 'Test mobile layout, tap targets, viewport', 1, 'Test mobile-friendliness: Check responsive design, tap target sizes (min 48x48px), viewport configuration, font readability. Screenshot issues.'),
+            ('Technical SEO', 'Crawlability Audit', 'Check robots.txt, sitemap, crawl errors', 1, 'Audit crawlability: Review robots.txt rules, XML sitemap validity, check for orphan pages, broken links, redirect chains (max 2 hops). Report blocked resources.'),
+            ('Technical SEO', 'SSL & Security Check', 'Verify HTTPS, mixed content, security headers', 1, 'Check security: Verify SSL certificate valid, no mixed content warnings, check security headers (HSTS, CSP, X-Frame-Options). Report vulnerabilities.'),
+            ('On-Page SEO', 'Title Tag Optimization', 'Optimize all page title tags with target keywords', 0, None),
+            ('On-Page SEO', 'Meta Description Optimization', 'Write CTR-optimized meta descriptions', 0, None),
+            ('On-Page SEO', 'Header Structure (H1-H3)', 'Fix heading hierarchy, add keywords naturally', 0, None),
+            ('On-Page SEO', 'Image Alt Text Audit', 'Check all images have descriptive alt text', 1, 'Scan all images on the website. Report images missing alt text, images with generic alt text ("image1.jpg"), oversized images (>200KB). Provide optimized alt text suggestions with target keywords.'),
+            ('On-Page SEO', 'Schema Markup Setup', 'Add LocalBusiness, FAQ, Service schema', 0, None),
+            ('Local SEO', 'GBP Profile Setup', 'Create/claim and optimize Google Business Profile', 0, None),
+            ('Local SEO', 'NAP Consistency Check', 'Verify Name, Address, Phone across web', 1, 'Check NAP (Name, Address, Phone) consistency across top 20 directories. Report mismatches. Provide list of directories needing updates.'),
+            ('Local SEO', 'Citation Building (20 dirs)', 'Submit to 20 core business directories', 0, None),
+            ('Content', 'Blog Posts (4/month)', 'Create 4 SEO-optimized blog posts per month', 0, None),
+            ('Reputation', 'Review Monitoring Setup', 'Set up Google review monitoring alerts', 0, None),
+            ('Reporting', 'Monthly Report', 'Generate and send monthly progress report', 0, None),
+        ]
+        
+        pro_tasks = starter_tasks + [
+            ('AI SEO', 'Entity SEO Analysis', 'Map semantic entities for the business niche', 1, 'Analyze the business niche entities: Map primary entity, related entities, semantic relationships. Compare entity coverage vs top 3 competitors. Identify entity gaps. Create entity optimization roadmap.'),
+            ('AI SEO', 'Search Intent Analysis', 'Classify all target keywords by search intent', 1, 'Classify target keywords: Informational, Commercial, Transactional, Navigational. Map content to intent. Identify intent mismatches. Recommend content restructuring.'),
+            ('AI SEO', 'Competitor DNA Analysis', 'Deep analysis of top 5 competitors across 12 pillars', 1, 'Analyze top 5 competitors for this niche+location: Compare Technical SEO scores, Content depth, Backlink profiles, Entity coverage, Local signals, Social presence, Review counts, Page speed, Schema usage, Content freshness, Topical authority, UX signals. Generate competitive gap report with priority actions.'),
+            ('AI SEO', 'NLP Content Optimization', 'Optimize content for semantic search and NLP', 1, 'Analyze content for NLP optimization: Check semantic keyword coverage, entity mentions, topic depth score, content helpfulness signals. Compare with top-ranking pages. Suggest semantic enrichments.'),
+            ('On-Page SEO', 'Internal Linking Strategy', 'Build topical silo structure with contextual links', 0, None),
+            ('Content', 'Blog Posts (8/month)', 'Create 8 SEO-optimized blog posts per month', 0, None),
+            ('Content', 'Topical Authority Map', 'Create content cluster strategy for niche dominance', 1, 'Build topical authority map: Identify pillar topics, cluster subtopics, map content relationships. Create internal linking plan. Identify content gaps vs competitors.'),
+            ('GBP', 'Weekly GBP Posts', 'Create and publish weekly Google Business posts', 0, None),
+            ('GBP', 'Q&A Seeding', 'Seed relevant Q&A on Google Business Profile', 0, None),
+            ('Reputation', 'Review Generation System', 'Set up automated review request system', 0, None),
+            ('Social Media', 'Social Media Management (3)', 'Manage 3 social media platforms', 0, None),
+            ('Ads', 'Google Ads Campaign Setup', 'Set up and optimize Google Ads campaigns', 0, None),
+            ('Reporting', 'Bi-Weekly Strategy Calls', 'Schedule and conduct strategy calls', 0, None),
+        ]
+        
+        elite_tasks = pro_tasks + [
+            ('AI SEO', 'Full DNA-Level Audit', 'Complete 100+ factor audit across 12 DNA pillars', 1, 'Run complete DNA-level SEO audit covering all 12 pillars (100+ factors): Technical SEO (crawlability, indexability, speed, mobile, architecture, security, structured data), On-Page (titles, metas, headers, keywords, content quality, media, internal links, UX), Content (topic coverage, semantic SEO, intent match, freshness, helpfulness, E-E-A-T, depth), Entity SEO, Internal Linking, Off-Page (backlinks, referring domains, brand mentions, citations, social signals), Local SEO (GBP, NAP, local citations, geo relevance), User Behavior (CTR, bounce rate, dwell time, engagement), Conversion (CTA, trust, forms), Competitor DNA (authority, content gap, keyword gap, entity gap, UX gap, topical depth gap), Indexing (crawl budget, canonical, duplicates), AI/Programmatic SEO. Score each pillar 0-10. Generate priority roadmap.'),
+            ('AI SEO', 'Programmatic SEO Setup', 'Create scalable page templates for city/service combos', 1, 'Design programmatic SEO strategy: Identify scalable page patterns (city+service, service+niche). Create template structures. Plan internal linking between programmatic pages. Estimate traffic potential per template.'),
+            ('AI SEO', 'Predictive SEO Analysis', 'Forecast ranking opportunities using AI trends', 1, 'Analyze search trends for the niche: Identify rising keywords, seasonal patterns, emerging topics. Predict ranking opportunities for next 90 days. Recommend content calendar based on trend predictions.'),
+            ('Content', 'AI Content Engine (20+/mo)', 'Generate 20+ optimized content pieces monthly', 0, None),
+            ('Content', 'Video Content Scripts', 'Create video scripts for YouTube/social platforms', 0, None),
+            ('Reputation', 'Full Reputation Management', 'Complete reputation monitoring and response system', 0, None),
+            ('Social Media', 'All Platform Management', 'Manage all social media platforms (6+)', 0, None),
+            ('Ads', 'Facebook + Google Ads ($5K+)', 'Full ad management with $5K+ monthly budget', 0, None),
+            ('Off-Page', 'Link Building Campaign', 'Strategic outreach for high-authority backlinks', 0, None),
+            ('Off-Page', 'Backlink Structure File', 'Create detailed backlink acquisition plan document', 1, 'Generate backlink strategy: Identify 50+ link opportunities (guest posts, directories, resource pages, broken links, competitor backlinks). Prioritize by DA, relevance, difficulty. Create outreach templates for each type.'),
+            ('Reporting', 'Weekly Strategy Calls', 'Weekly client strategy calls with reports', 0, None),
+        ]
+        
+        for cat, title, desc, auto, prompt in starter_tasks:
+            c.execute('INSERT INTO package_tasks (package, category, title, description, is_automated, dna_prompt, order_num) VALUES (?,?,?,?,?,?,?)',
+                      ('Growth Starter', cat, title, desc, auto, prompt, 0))
+        
+        for cat, title, desc, auto, prompt in pro_tasks:
+            c.execute('INSERT INTO package_tasks (package, category, title, description, is_automated, dna_prompt, order_num) VALUES (?,?,?,?,?,?,?)',
+                      ('Growth Pro', cat, title, desc, auto, prompt, 0))
+        
+        for cat, title, desc, auto, prompt in elite_tasks:
+            c.execute('INSERT INTO package_tasks (package, category, title, description, is_automated, dna_prompt, order_num) VALUES (?,?,?,?,?,?,?)',
+                      ('Growth Elite', cat, title, desc, auto, prompt, 0))
+    except Exception as e:
+        print(f"Package tasks error: {e}")
+
 def _insert_demo_data(c):
     """Insert demo data for showcase"""
     try:
-        # Check if demo data already exists
         c.execute("SELECT COUNT(*) FROM clients")
         if c.fetchone()[0] > 0:
             return
@@ -253,6 +409,18 @@ def _insert_demo_data(c):
             c.execute('INSERT INTO clients (business_name, contact_name, email, phone, website, industry, location, status, package, monthly_payment) VALUES (?,?,?,?,?,?,?,?,?,?)',
                       (biz, contact, email, phone, web, ind, loc, status, pkg, pmt))
         
+        # Demo credentials
+        creds = [
+            (1, 'gsc', 'Google Search Console', 'robert@smilebright.com', None, None, 'https://search.google.com/search-console', 'Verified property'),
+            (1, 'ga4', 'Google Analytics GA4', 'robert@smilebright.com', None, None, 'https://analytics.google.com', 'Property ID: 123456789'),
+            (1, 'cms', 'WordPress Admin', 'admin', 'wp_pass_demo', None, 'https://smilebright-dental.com/wp-admin', 'WordPress 6.4'),
+            (2, 'gsc', 'Google Search Console', 'sarah@martinezlegal.com', None, None, 'https://search.google.com/search-console', 'Verified'),
+            (2, 'gbp', 'Google Business Profile', 'sarah@martinezlegal.com', None, None, 'https://business.google.com', 'Primary owner'),
+        ]
+        for cid, ctype, label, uname, pwd, akey, url, notes in creds:
+            c.execute('INSERT INTO client_credentials (client_id, credential_type, label, username, password_enc, api_key, access_url, notes, added_by) VALUES (?,?,?,?,?,?,?,?,1)',
+                      (cid, ctype, label, uname, pwd, akey, url, notes))
+        
         # Demo projects
         projects = [
             (1, 'Local SEO Campaign', 'Complete local SEO optimization for SmileBright Dental', 'Local SEO', 'in_progress', 'high', 2, 3, 68),
@@ -269,13 +437,13 @@ def _insert_demo_data(c):
         # Demo tasks
         tasks = [
             (1, 'Keyword Research', 'Research local dental keywords for Austin market', 'completed', 2, 'high', 1),
-            (1, 'GBP Optimization', 'Optimize Google Business Profile - categories, description, photos', 'completed', 2, 'high', 2),
+            (1, 'GBP Optimization', 'Optimize Google Business Profile', 'completed', 2, 'high', 2),
             (1, 'Citation Building', 'Build citations across 50+ directories', 'in_progress', 2, 'medium', 3),
-            (1, 'On-Page SEO', 'Optimize title tags, meta descriptions, schema markup', 'in_progress', 2, 'high', 4),
-            (1, 'Content Calendar', 'Create 3-month content calendar for dental blog', 'pending', 4, 'medium', 5),
-            (1, 'Link Building', 'Outreach to local dental associations and health blogs', 'pending', 2, 'medium', 6),
-            (2, 'Legal Keyword Analysis', 'Deep keyword research for personal injury terms in Dallas', 'completed', 3, 'urgent', 1),
-            (2, 'Technical SEO Audit', 'Complete technical audit of martinezlegal.com', 'completed', 3, 'high', 2),
+            (1, 'On-Page SEO', 'Optimize title tags, meta descriptions, schema', 'in_progress', 2, 'high', 4),
+            (1, 'Content Calendar', 'Create 3-month content calendar', 'pending', 4, 'medium', 5),
+            (1, 'Link Building', 'Outreach to local associations and blogs', 'pending', 2, 'medium', 6),
+            (2, 'Legal Keyword Analysis', 'Deep keyword research for PI terms in Dallas', 'completed', 3, 'urgent', 1),
+            (2, 'Technical SEO Audit', 'Complete technical audit', 'completed', 3, 'high', 2),
             (2, 'Google Ads Setup', 'Set up search campaigns for PI keywords', 'in_progress', 6, 'urgent', 3),
             (2, 'Landing Page Creation', 'Create conversion-optimized landing pages', 'in_progress', 4, 'high', 4),
             (2, 'Content Strategy', 'Plan legal blog content for topical authority', 'pending', 4, 'medium', 5),
@@ -330,6 +498,38 @@ def _insert_demo_data(c):
         for biz, contact, email, phone, web, ind, loc, src, status in leads:
             c.execute('INSERT INTO sales_leads (business_name, contact_name, email, phone, website, industry, location, source, status, assigned_to) VALUES (?,?,?,?,?,?,?,?,?,?)',
                       (biz, contact, email, phone, web, ind, loc, src, status, 6))
+        
+        # Demo social posts with engagement data
+        social_posts = [
+            (1, 'instagram', '5 Tips for Maintaining Your Smile Between Dental Visits', 'published', '2026-05-01', json.dumps({"likes": 142, "comments": 23, "shares": 18, "reach": 3200})),
+            (1, 'facebook', 'Meet Dr. Chen - Your Austin Dental Expert', 'published', '2026-05-03', json.dumps({"likes": 89, "comments": 15, "shares": 12, "reach": 2100})),
+            (3, 'instagram', 'Fresh pasta made daily at Bellas Italian!', 'published', '2026-05-02', json.dumps({"likes": 234, "comments": 45, "shares": 67, "reach": 5600})),
+            (3, 'tiktok', 'Behind the scenes: Making our famous tiramisu', 'published', '2026-05-04', json.dumps({"likes": 1200, "comments": 89, "shares": 156, "reach": 15000})),
+            (5, 'facebook', 'HVAC Maintenance Tips for Arizona Summer', 'scheduled', '2026-05-15', None),
+        ]
+        for cid, platform, content, status, date, engagement in social_posts:
+            c.execute('INSERT INTO social_posts (client_id, platform, content, status, scheduled_date, engagement_data, created_by) VALUES (?,?,?,?,?,?,7)',
+                      (cid, platform, content, status, date, engagement))
+        
+        # Demo suggestions
+        suggestions = [
+            (2, 1, 'Add FAQ Schema to dental pages', 'The SmileBright site could benefit from FAQ schema markup on service pages. This would help with featured snippets.', 'approved', 'Good suggestion, implement it.'),
+            (3, 2, 'Consider video testimonials', 'Martinez Legal could get better conversion with video testimonials from past clients on their PI landing page.', 'pending', None),
+        ]
+        for uid, pid, title, desc, status, response in suggestions:
+            c.execute('INSERT INTO suggestions (user_id, project_id, title, description, status, admin_response) VALUES (?,?,?,?,?,?)',
+                      (uid, pid, title, desc, status, response))
+        
+        # Demo API settings
+        api_settings = [
+            ('claude', None, 0, json.dumps({"model": "claude-sonnet-4-20250514", "max_tokens": 4096})),
+            ('chatgpt', None, 0, json.dumps({"model": "gpt-4.5", "max_tokens": 4096})),
+            ('gemini', None, 0, json.dumps({"model": "gemini-pro", "max_tokens": 4096})),
+            ('smtp', None, 0, json.dumps({"host": "smtp.gmail.com", "port": 587, "from_email": ""})),
+        ]
+        for provider, key, active, config in api_settings:
+            c.execute('INSERT OR IGNORE INTO api_settings (provider, api_key, is_active, config_json) VALUES (?,?,?,?)',
+                      (provider, key, active, config))
         
     except Exception as e:
         print(f"Demo data error: {e}")

@@ -1,0 +1,62 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Team Monitor — AI Growth Labs OS</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/static/css/dashboard.css"></head><body>
+<aside class="sidebar"><div class="sidebar-brand">AI Growth<span>Labs</span></div>
+<nav><div class="nav-section">Main</div><a href="/dashboard">📊Dashboard</a>
+<a href="/monitor" class="active">📡Team Monitor</a>
+<a href="/team-chat">💬Team Chat</a>
+<a href="/settings">⚙️Settings</a>
+</nav>
+<div class="sidebar-user"><div class="user-avatar">{{ user.full_name[:2]|upper }}</div>
+<div><strong>{{ user.full_name }}</strong><small>Super Admin</small></div></div></aside>
+<main class="main">
+<div class="header-bar"><h1>📡 Team Monitor</h1><span>One-click view of all team activity</span>
+<div class="header-actions"><a href="/dashboard" class="btn btn-outline">← Back to Dashboard</a></div></div>
+
+{% if chat_requests|length > 0 %}
+<div class="card"><h3>🔔 Pending Chat Requests</h3>
+{% for cr in chat_requests %}
+<div class="notif-item"><strong>{{ cr.from_name }}</strong> wants to chat <small>{{ cr.created_at }}</small>
+<button class="btn btn-sm btn-primary" onclick="handleChatReq({{ cr.id }},'approved')">Approve</button>
+<button class="btn btn-sm btn-danger" onclick="handleChatReq({{ cr.id }},'rejected')">Reject</button></div>
+{% endfor %}</div>{% endif %}
+
+{% if suggestions|length > 0 %}
+<div class="card"><h3>💡 Team Suggestions</h3>
+<table><thead><tr><th>From</th><th>Project</th><th>Suggestion</th><th>Status</th><th>Action</th></tr></thead><tbody>
+{% for s in suggestions %}
+<tr><td>{{ s.author_name }}</td><td>{{ s.project_title or '-' }}</td><td><strong>{{ s.title }}</strong></td>
+<td><span class="badge badge-{{ s.status }}">{{ s.status }}</span></td>
+<td>{% if s.status == 'pending' %}<button class="btn btn-sm btn-primary" onclick="handleSugg({{ s.id }},'approved')">Approve</button>
+<button class="btn btn-sm btn-danger" onclick="handleSugg({{ s.id }},'rejected')">Reject</button>{% else %}Done{% endif %}</td></tr>
+{% endfor %}</tbody></table></div>{% endif %}
+
+<div class="card"><h3>👷 Team Activity Overview</h3>
+<div class="monitor-grid">
+{% for w in workers %}
+<div class="monitor-card">
+<div class="monitor-header"><div class="user-avatar">{{ w.full_name[:2]|upper }}</div>
+<div><strong>{{ w.full_name }}</strong><br><small>{{ w.role|replace('_',' ')|title }} | {{ w.rank }}</small></div></div>
+<div class="monitor-stats">
+<div class="mini-stat"><span class="mini-num green">{{ w.active_tasks }}</span><span>Active</span></div>
+<div class="mini-stat"><span class="mini-num orange">{{ w.pending_tasks }}</span><span>Pending</span></div>
+<div class="mini-stat"><span class="mini-num cyan">{{ w.completed_tasks }}</span><span>Done</span></div>
+<div class="mini-stat"><span class="mini-num">{{ w.total_tasks }}</span><span>Total</span></div>
+</div>
+{% if w.projects %}
+<div class="monitor-projects"><h5>Projects:</h5>
+{% for p in w.projects %}
+<div class="mini-project"><span>{{ p.business_name }} — {{ p.title }}</span>
+<div class="progress-bar"><div class="progress-fill" style="width:{{ p.progress }}%"></div></div><small>{{ p.progress }}%</small></div>
+{% endfor %}</div>{% endif %}
+<div style="margin-top:8px"><a href="/team-chat" class="btn btn-sm btn-primary">💬 Chat</a></div>
+</div>
+{% endfor %}
+</div></div>
+
+<script>
+function handleChatReq(id,status){fetch('/api/chat-request/'+id,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({status:status})}).then(()=>location.reload())}
+function handleSugg(id,status){fetch('/api/suggestions/'+id,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({status:status,admin_response:status=='approved'?'Approved':'Rejected'})}).then(()=>location.reload())}
+</script>
+</main></body></html>

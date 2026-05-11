@@ -1,0 +1,43 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Settings — AI Growth Labs OS</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/static/css/dashboard.css"></head><body>
+<aside class="sidebar"><div class="sidebar-brand">AI Growth<span>Labs</span></div>
+<nav><div class="nav-section">Main</div><a href="/dashboard">📊Dashboard</a>
+<a href="/settings" class="active">⚙️API Settings</a>
+<a href="/monitor">📡Team Monitor</a>
+<a href="/team-chat">💬Team Chat</a>
+</nav>
+<div class="sidebar-user"><div class="user-avatar">{{ user.full_name[:2]|upper }}</div>
+<div><strong>{{ user.full_name }}</strong><small>Super Admin</small></div></div></aside>
+<main class="main">
+<div class="header-bar"><h1>⚙️ API Settings</h1><span>Configure AI providers and integrations</span>
+<div class="header-actions"><a href="/dashboard" class="btn btn-outline">← Back to Dashboard</a></div></div>
+
+<div class="settings-grid">
+{% for s in api_settings %}
+<div class="card setting-card"><h3>
+{% if s.provider == 'claude' %}🟣 Claude Sonnet{% elif s.provider == 'chatgpt' %}🟢 ChatGPT{% elif s.provider == 'gemini' %}🔵 Google Gemini{% elif s.provider == 'smtp' %}📧 Email (SMTP){% else %}🔧 {{ s.provider }}{% endif %}
+</h3>
+<div class="setting-status">Status: {% if s.is_active %}<span class="badge badge-active">Active</span>{% else %}<span class="badge badge-pending">Not Configured</span>{% endif %}</div>
+<input id="api_key_{{ s.provider }}" type="password" value="{{ s.api_key or '' }}" placeholder="Paste API Key here..." class="form-input">
+<button class="btn btn-primary btn-full" onclick="saveApiKey('{{ s.provider }}')">Save & Activate</button>
+</div>
+{% endfor %}
+</div>
+
+<div class="card"><h3>📋 How It Works</h3>
+<div class="info-grid">
+<div class="info-item"><h4>1. Paste API Key</h4><p>Get your API key from Claude, ChatGPT, or Gemini and paste it above.</p></div>
+<div class="info-item"><h4>2. System Activates</h4><p>Once saved, the AI provider becomes available for all automated tasks.</p></div>
+<div class="info-item"><h4>3. Auto DNA Audits</h4><p>Workers can run automated SEO audits using the configured AI provider.</p></div>
+<div class="info-item"><h4>4. Task Automation</h4><p>Tasks marked as "automated" will use AI to analyze and generate results.</p></div>
+</div></div>
+
+<script>
+function saveApiKey(provider){
+    const key=document.getElementById('api_key_'+provider).value;
+    fetch('/api/settings/api',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({provider:provider,api_key:key})})
+    .then(r=>r.json()).then(r=>{alert(r.message||r.error);location.reload()})}
+</script>
+</main></body></html>
