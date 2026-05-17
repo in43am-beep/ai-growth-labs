@@ -1,0 +1,147 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Client Portal — AI Growth Labs</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/static/css/dashboard.css"></head><body>
+<aside class="sidebar"><div class="sidebar-brand">AI Growth<span>Labs</span></div>
+<nav><div class="nav-section">My Portal</div>
+<a href="/client-portal" class="active">📊 Dashboard</a>
+<a href="#projects-section">📋 Projects</a>
+<a href="#rankings-section">📈 Rankings</a>
+<a href="#reports-section">📄 Reports</a>
+<a href="#invoices-section">💰 Invoices</a>
+<a href="#approvals-section">✅ Approvals</a>
+</nav>
+<div class="sidebar-user"><div class="user-avatar">{{ user.full_name[:2]|upper }}</div>
+<div><strong>{{ user.full_name }}</strong><small>Client</small></div></div></aside>
+<main class="main">
+<div class="header-bar"><h1>Welcome, {{ user.full_name }}</h1>
+<span>{% if client %}{{ client.business_name }} — {{ client.package or 'No Package' }}{% else %}Client Portal{% endif %}</span>
+<div class="header-actions">
+<button class="btn btn-secondary" onclick="openModal('changePwModal')">🔒 Change Password</button>
+<a href="/logout" class="btn btn-outline">Logout</a></div></div>
+
+{% if not client %}
+<div class="card"><h3>⚠️ Account Not Linked</h3><p>Your account is not linked to a client profile yet. Please contact the agency to set up your portal access.</p></div>
+{% else %}
+
+<div class="stats-grid">
+<div class="stat-card"><div class="stat-label">Active Projects</div><div class="stat-value cyan">{{ stats.total_projects }}</div></div>
+<div class="stat-card"><div class="stat-label">Tasks Completed</div><div class="stat-value green">{{ stats.completed_tasks }}/{{ stats.total_tasks }}</div></div>
+<div class="stat-card"><div class="stat-label">Completion Rate</div><div class="stat-value">{{ stats.completion_pct }}%</div></div>
+<div class="stat-card"><div class="stat-label">Package</div><div class="stat-value" style="font-size:1rem">{{ client.package or 'Custom' }}</div></div>
+<div class="stat-card"><div class="stat-label">Pending Approvals</div><div class="stat-value orange">{{ stats.pending_approvals }}</div></div>
+</div>
+
+<!-- Projects Section -->
+<div class="card" id="projects-section"><h3>📋 Your Projects</h3>
+{% if projects %}
+<div class="project-grid">
+{% for p in projects %}
+<div class="project-card">
+<div class="project-header"><h4>{{ p.title }}</h4><span class="badge badge-{{ p.status }}">{{ p.status }}</span></div>
+<p>{{ p.description or '' }}</p>
+<p><strong>Service:</strong> {{ p.service_type or '-' }}</p>
+{% if p.worker_name %}<p><strong>Assigned To:</strong> {{ p.worker_name }}</p>{% endif %}
+<div class="progress-bar"><div class="progress-fill" style="width:{{ p.progress }}%"></div></div>
+<small>{{ p.progress }}% Complete{% if p.due_date %} | Due: {{ p.due_date }}{% endif %}</small>
+</div>
+{% endfor %}
+</div>
+{% else %}<p style="color:#64748B">No projects yet.</p>{% endif %}</div>
+
+<!-- Task Progress -->
+<div class="card"><h3>✅ Task Progress</h3>
+{% if tasks %}
+<table><thead><tr><th>Task</th><th>Priority</th><th>Status</th><th>Due Date</th></tr></thead><tbody>
+{% for t in tasks %}
+<tr><td>{{ t.title }}</td><td><span class="badge badge-{{ t.priority }}">{{ t.priority }}</span></td>
+<td><span class="badge badge-{{ t.status|replace(' ','_') }}">{{ t.status }}</span></td>
+<td>{{ t.due_date or '-' }}</td></tr>
+{% endfor %}</tbody></table>
+{% else %}<p style="color:#64748B">No tasks yet.</p>{% endif %}</div>
+
+<!-- Rankings Section -->
+<div class="card" id="rankings-section"><h3>📈 Keyword Rankings</h3>
+{% if rankings %}
+<table><thead><tr><th>Keyword</th><th>Position</th><th>Change</th><th>Search Volume</th><th>URL</th><th>Date</th></tr></thead><tbody>
+{% for r in rankings %}
+<tr><td><strong>{{ r.keyword }}</strong></td><td>{{ r.position }}</td>
+<td>{% if r.previous_position and r.previous_position > r.position %}<span style="color:#34D399">▲ {{ r.previous_position - r.position }}</span>
+{% elif r.previous_position and r.previous_position < r.position %}<span style="color:#EF4444">▼ {{ r.position - r.previous_position }}</span>
+{% elif r.previous_position == r.position %}<span style="color:#64748B">—</span>{% else %}<span style="color:#64748B">NEW</span>{% endif %}</td>
+<td>{{ r.search_volume }}</td><td><small>{{ r.url or '-' }}</small></td><td><small>{{ r.tracked_date }}</small></td></tr>
+{% endfor %}</tbody></table>
+{% else %}<p style="color:#64748B">No rankings tracked yet. Your SEO team will begin tracking keywords soon.</p>{% endif %}</div>
+
+<!-- Reports Section -->
+<div class="card" id="reports-section"><h3>📄 Reports</h3>
+{% if reports %}
+<table><thead><tr><th>Report</th><th>Type</th><th>Date</th><th>Download</th></tr></thead><tbody>
+{% for r in reports %}
+<tr><td>{{ r.title }}</td><td><span class="badge badge-{{ r.report_type }}">{{ r.report_type }}</span></td>
+<td>{{ r.created_at[:10] }}</td>
+<td><a href="/api/reports/{{ r.id }}/download" class="btn btn-sm btn-primary" target="_blank">📥 View</a></td></tr>
+{% endfor %}</tbody></table>
+{% else %}<p style="color:#64748B">No reports shared yet. Reports will appear here once your team generates them.</p>{% endif %}</div>
+
+<!-- Invoices Section -->
+<div class="card" id="invoices-section"><h3>💰 Invoices</h3>
+{% if invoices %}
+<table><thead><tr><th>Invoice #</th><th>Date</th><th>Due Date</th><th>Total</th><th>Status</th><th>View</th></tr></thead><tbody>
+{% for inv in invoices %}
+<tr><td>{{ inv.invoice_number }}</td><td>{{ inv.issue_date }}</td><td>{{ inv.due_date or '-' }}</td>
+<td><strong>${{ "{:,.2f}".format(inv.total) }}</strong></td>
+<td><span class="badge badge-{{ inv.status }}">{{ inv.status }}</span></td>
+<td><a href="/api/invoices/{{ inv.id }}/download" class="btn btn-sm btn-primary" target="_blank">📥 View</a></td></tr>
+{% endfor %}</tbody></table>
+{% else %}<p style="color:#64748B">No invoices yet.</p>{% endif %}</div>
+
+<!-- Approvals Section -->
+<div class="card" id="approvals-section"><h3>✅ Approval Requests</h3>
+{% if approvals %}
+<table><thead><tr><th>Title</th><th>Type</th><th>Status</th><th>Date</th><th>Action</th></tr></thead><tbody>
+{% for a in approvals %}
+<tr><td><strong>{{ a.title }}</strong><br><small>{{ a.description[:80] if a.description else '' }}</small></td>
+<td><span class="badge badge-{{ a.request_type }}">{{ a.request_type }}</span></td>
+<td><span class="badge badge-{{ a.status }}">{{ a.status }}</span></td>
+<td><small>{{ a.created_at[:10] }}</small></td>
+<td>{% if a.status == 'pending' %}
+<button class="btn btn-sm btn-success" onclick="respondApproval({{ a.id }}, 'approved')">Approve</button>
+<button class="btn btn-sm btn-danger" onclick="respondApproval({{ a.id }}, 'rejected')">Reject</button>
+{% else %}{{ a.review_notes or '-' }}{% endif %}</td></tr>
+{% endfor %}</tbody></table>
+{% else %}<p style="color:#64748B">No approval requests.</p>{% endif %}</div>
+
+{% endif %}
+
+<!-- Change Password Modal -->
+<div class="modal-overlay" id="changePwModal"><div class="modal"><div class="modal-header"><h3>Change Password</h3><button onclick="closeModal('changePwModal')" class="modal-close">&times;</button></div>
+<div class="modal-body">
+<input id="old_pw" type="password" placeholder="Current Password" class="form-input">
+<input id="new_pw" type="password" placeholder="New Password (min 8 chars)" class="form-input">
+<input id="confirm_pw" type="password" placeholder="Confirm New Password" class="form-input">
+<button class="btn btn-primary btn-full" onclick="changePassword()">Update Password</button>
+</div></div></div>
+
+<script>
+function openModal(id){document.getElementById(id).style.display='flex'}
+function closeModal(id){document.getElementById(id).style.display='none'}
+
+async function respondApproval(id, status) {
+    const notes = status === 'rejected' ? prompt('Reason for rejection:') : '';
+    const r = await fetch(`/api/approvals/${id}`, {method:'PUT', headers:{'Content-Type':'application/json'}, body:JSON.stringify({status, review_notes: notes})});
+    if(r.ok) location.reload(); else alert('Error updating approval');
+}
+
+async function changePassword() {
+    const old_pw = document.getElementById('old_pw').value;
+    const new_pw = document.getElementById('new_pw').value;
+    const confirm_pw = document.getElementById('confirm_pw').value;
+    if(new_pw !== confirm_pw) { alert('Passwords do not match'); return; }
+    if(new_pw.length < 8) { alert('Password must be at least 8 characters'); return; }
+    const r = await fetch('/api/change-password', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({old_password: old_pw, new_password: new_pw})});
+    const d = await r.json();
+    if(r.ok) { alert('Password changed!'); closeModal('changePwModal'); } else { alert(d.error || 'Error'); }
+}
+</script>
+</main></body></html>

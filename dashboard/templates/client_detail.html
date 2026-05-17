@@ -1,0 +1,164 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Client Detail — AI Growth Labs OS</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/static/css/dashboard.css"></head><body>
+<aside class="sidebar"><div class="sidebar-brand">AI Growth<span>Labs</span></div>
+<nav><div class="nav-section">Main</div><a href="/dashboard">📊Dashboard</a>
+<a href="#" class="active">👤Client</a>
+<a href="/rankings/{{ client.id }}">📈Rankings</a>
+<a href="#files-section">📁Files</a>
+<a href="#locations-section">📍Locations</a>
+</nav>
+<div class="sidebar-user"><div class="user-avatar">{{ user.full_name[:2]|upper }}</div>
+<div><strong>{{ user.full_name }}</strong><small>{{ user.role|replace("_"," ")|title }}</small></div></div></aside>
+<main class="main">
+<div class="header-bar"><h1>{{ client.business_name }}</h1><span>{{ client.industry }} | {{ client.location }} | {{ client.package or 'No Package' }}</span>
+<div class="header-actions"><a href="/dashboard" class="btn btn-outline">← Back</a>
+<button class="btn btn-primary" onclick="generateReport({{ client.id }})">📄 Generate Report</button>
+<button class="btn btn-secondary" onclick="generateWhiteLabelReport({{ client.id }})">🏷️ White-Label Report</button>
+<a href="/rankings/{{ client.id }}" class="btn btn-secondary">📈 Rankings Chart</a>
+{% if user.role in ('super_admin','finance') %}<button class="btn btn-secondary" onclick="sendReport()">📧 Send Report to Client</button>{% endif %}
+</div></div>
+
+<div class="stats-grid">
+<div class="stat-card"><div class="stat-label">Package</div><div class="stat-value">{{ client.package or 'None' }}</div></div>
+<div class="stat-card"><div class="stat-label">Monthly</div><div class="stat-value cyan">${{ "{:,.0f}".format(client.monthly_payment) }}</div></div>
+<div class="stat-card"><div class="stat-label">Status</div><div class="stat-value"><span class="badge badge-{{ client.status }}">{{ client.status }}</span></div></div>
+<div class="stat-card"><div class="stat-label">Projects</div><div class="stat-value">{{ projects|length }}</div></div>
+</div>
+
+<div class="card"><h3>📞 Contact Information</h3>
+<div class="info-grid">
+<div class="info-item"><strong>Contact:</strong> {{ client.contact_name }}</div>
+<div class="info-item"><strong>Email:</strong> {{ client.email }}</div>
+<div class="info-item"><strong>Phone:</strong> {{ client.phone }}</div>
+<div class="info-item"><strong>Website:</strong> <a href="{{ client.website }}" target="_blank">{{ client.website }}</a></div>
+</div></div>
+
+{% if credentials|length > 0 %}
+<div class="card"><h3>🔐 Client Credentials</h3>
+<table><thead><tr><th>Type</th><th>Label</th><th>Username</th><th>Access URL</th><th>Notes</th></tr></thead><tbody>
+{% for cr in credentials %}
+<tr><td><span class="badge badge-active">{{ cr.credential_type|upper }}</span></td><td>{{ cr.label }}</td>
+<td>{{ cr.username or '-' }}</td><td>{% if cr.access_url %}<a href="{{ cr.access_url }}" target="_blank">{{ cr.access_url[:40] }}...</a>{% else %}-{% endif %}</td>
+<td>{{ cr.notes or '-' }}</td></tr>
+{% endfor %}</tbody></table>
+<button class="btn btn-secondary" onclick="openModal('addCredModal')" style="margin-top:12px">+ Add Credential</button></div>
+{% else %}
+<div class="card"><h3>🔐 Client Credentials</h3><p>No credentials added yet.</p>
+<button class="btn btn-secondary" onclick="openModal('addCredModal')">+ Add Credential</button></div>
+{% endif %}
+
+{% if package_tasks|length > 0 %}
+<div class="card"><h3>📋 Package Tasks ({{ client.package }})</h3>
+<p>DNA-level tasks auto-generated based on the selected package.</p>
+<table><thead><tr><th>Category</th><th>Task</th><th>Description</th><th>Type</th></tr></thead><tbody>
+{% for pt in package_tasks %}
+<tr><td><span class="badge badge-active">{{ pt.category }}</span></td><td>{{ pt.title }}</td>
+<td>{{ pt.description[:80] }}</td><td>{% if pt.is_automated %}<span class="badge badge-auto">🤖 Auto</span>{% else %}<span class="badge badge-pending">Manual</span>{% endif %}</td></tr>
+{% endfor %}</tbody></table></div>
+{% endif %}
+
+{% for p in projects %}
+<div class="card"><h3>📋 {{ p.title }} <span class="badge badge-{{ p.status|replace(' ','_') }}">{{ p.status }}</span></h3>
+<div class="progress-bar"><div class="progress-fill" style="width:{{ p.progress }}%"></div></div><span>{{ p.progress }}% Complete | Worker: {{ p.worker_name or 'Unassigned' }} | Lead: {{ p.leader_name or '-' }}</span>
+{% if tasks_by_project.get(p.id) %}
+<table style="margin-top:12px"><thead><tr><th>Task</th><th>Assigned To</th><th>Priority</th><th>Status</th><th>Auto</th></tr></thead><tbody>
+{% for t in tasks_by_project[p.id] %}
+<tr><td>{{ t.title }}</td><td>{{ t.assigned_name or '-' }}</td><td><span class="badge badge-{{ t.priority }}">{{ t.priority }}</span></td>
+<td><span class="badge badge-{{ t.status|replace(' ','_') }}">{{ t.status }}</span></td>
+<td>{% if t.is_automated %}<span class="badge badge-auto">🤖</span>{% else %}-{% endif %}</td></tr>
+{% endfor %}</tbody></table>{% endif %}</div>
+{% endfor %}
+
+{% if reports|length > 0 %}
+<div class="card"><h3>📄 Generated Reports</h3>
+<table><thead><tr><th>Title</th><th>Type</th><th>Created</th><th>Sent</th><th>Action</th></tr></thead><tbody>
+{% for r in reports %}
+<tr><td>{{ r.title }}</td><td>{{ r.report_type }}</td><td>{{ r.created_at }}</td>
+<td>{% if r.sent_to_client %}<span class="badge badge-active">Sent {{ r.sent_date }}</span>{% else %}<span class="badge badge-pending">Not sent</span>{% endif %}</td>
+<td><a href="/api/reports/{{ r.id }}/download" target="_blank" class="btn btn-sm btn-primary">📄 View</a>
+{% if not r.sent_to_client and user.role in ('super_admin','finance') %}<button class="btn btn-sm btn-secondary" onclick="markSent({{ r.id }})">📧 Mark Sent</button>{% endif %}</td></tr>
+{% endfor %}</tbody></table></div>{% endif %}
+
+{% if payments|length > 0 %}
+<div class="card"><h3>💰 Payment History</h3>
+<table><thead><tr><th>Invoice</th><th>Amount</th><th>Due</th><th>Paid</th><th>Status</th></tr></thead><tbody>
+{% for p in payments %}
+<tr><td>{{ p.invoice_number }}</td><td><strong>${{ "{:,.0f}".format(p.amount) }}</strong></td><td>{{ p.due_date }}</td>
+<td>{{ p.paid_date or '-' }}</td><td><span class="badge badge-{{ p.status }}">{{ p.status }}</span></td></tr>
+{% endfor %}</tbody></table></div>{% endif %}
+
+<!-- File Uploads Section -->
+<div class="card" id="files-section"><h3>📁 File Attachments</h3>
+<form id="uploadForm" style="display:flex;gap:8px;align-items:center;margin-bottom:12px">
+<input type="file" id="fileInput" class="form-input" style="flex:1">
+<select id="fileType" class="form-select" style="width:140px"><option value="client">General</option><option value="report">Report</option><option value="contract">Contract</option><option value="invoice">Invoice</option></select>
+<button type="button" class="btn btn-primary" onclick="uploadFile()">📤 Upload</button>
+</form>
+<div id="files-list"><p style="color:#64748B">Loading files...</p></div></div>
+
+<!-- Locations Section -->
+<div class="card" id="locations-section"><h3>📍 Business Locations</h3>
+<div id="locations-list"><p style="color:#64748B">Loading...</p></div>
+<button class="btn btn-secondary" onclick="openModal('addLocationModal')" style="margin-top:8px">+ Add Location</button></div>
+
+<!-- Add Location Modal -->
+<div class="modal-overlay" id="addLocationModal"><div class="modal"><div class="modal-header"><h3>Add Location</h3><button onclick="closeModal('addLocationModal')" class="modal-close">&times;</button></div>
+<div class="modal-body">
+<input id="loc_name" placeholder="Location Name (e.g. Downtown Office)" class="form-input">
+<input id="loc_address" placeholder="Address" class="form-input">
+<div style="display:flex;gap:6px"><input id="loc_city" placeholder="City" class="form-input" style="flex:2"><input id="loc_state" placeholder="State" class="form-input" style="flex:1"><input id="loc_zip" placeholder="ZIP" class="form-input" style="flex:1"></div>
+<input id="loc_phone" placeholder="Phone" class="form-input">
+<input id="loc_gbp" placeholder="Google Business Profile URL" class="form-input">
+<button class="btn btn-primary btn-full" onclick="addLocation()">Add Location</button>
+</div></div></div>
+
+<!-- Add Credential Modal -->
+<div class="modal-overlay" id="addCredModal"><div class="modal"><div class="modal-header"><h3>Add Credential</h3><button onclick="closeModal('addCredModal')" class="modal-close">×</button></div>
+<div class="modal-body">
+<select id="cred_type" class="form-select"><option value="gsc">Google Search Console</option><option value="ga4">Google Analytics GA4</option><option value="cms">CMS/WordPress</option><option value="gbp">Google Business Profile</option><option value="social_fb">Facebook</option><option value="social_ig">Instagram</option><option value="social_tt">TikTok</option><option value="social_li">LinkedIn</option><option value="hosting">Hosting/Server</option><option value="ahrefs">Ahrefs</option><option value="semrush">Semrush</option><option value="other">Other</option></select>
+<input id="cred_label" placeholder="Label (e.g. WordPress Admin)" class="form-input">
+<input id="cred_user" placeholder="Username/Email" class="form-input">
+<input id="cred_pass" placeholder="Password" type="password" class="form-input">
+<input id="cred_url" placeholder="Access URL" class="form-input">
+<textarea id="cred_notes" placeholder="Notes..." class="form-input"></textarea>
+<button class="btn btn-primary btn-full" onclick="addCred()">Save Credential</button></div></div></div>
+
+<script>
+function openModal(id){document.getElementById(id).classList.add('show')}
+function closeModal(id){document.getElementById(id).classList.remove('show')}
+function addCred(){fetch('/api/client-credentials',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({
+    client_id:{{ client.id }},credential_type:document.getElementById('cred_type').value,label:document.getElementById('cred_label').value,
+    username:document.getElementById('cred_user').value,password_enc:document.getElementById('cred_pass').value,
+    access_url:document.getElementById('cred_url').value,notes:document.getElementById('cred_notes').value})}).then(()=>location.reload())}
+function generateReport(clientId){fetch('/api/reports/generate',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({client_id:clientId,report_type:'monthly'})})
+    .then(r=>r.json()).then(r=>{if(r.id){window.open('/api/reports/'+r.id+'/download','_blank')}else{alert(r.error||'Error')}})}
+function markSent(reportId){fetch('/api/reports/'+reportId+'/send',{method:'POST'}).then(()=>location.reload())}
+function sendReport(){generateReport({{ client.id }})}
+function generateWhiteLabelReport(clientId){fetch('/api/reports/white-label',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({client_id:clientId})}).then(r=>r.json()).then(r=>{if(r.id){window.open('/api/reports/'+r.id+'/white-label','_blank')}else{alert(r.error||'Error')}})}
+
+// File upload
+function uploadFile(){const input=document.getElementById('fileInput');if(!input.files.length){alert('Select a file');return}
+const fd=new FormData();fd.append('file',input.files[0]);fd.append('related_type',document.getElementById('fileType').value);fd.append('related_id',{{ client.id }});
+fetch('/api/upload',{method:'POST',body:fd}).then(r=>r.json()).then(r=>{if(r.filename){alert('File uploaded!');location.reload()}else{alert(r.detail||r.error||'Error')}})}
+// Load files
+fetch('/api/attachments/client/{{ client.id }}').then(r=>r.json()).then(d=>{const el=document.getElementById('files-list');
+if(!d.attachments||!d.attachments.length){el.innerHTML='<p style="color:#64748B">No files uploaded yet.</p>';return}
+let html='<table><thead><tr><th>File</th><th>Type</th><th>Size</th><th>Uploaded By</th><th>Date</th><th>Download</th></tr></thead><tbody>';
+d.attachments.forEach(f=>{html+='<tr><td>'+f.filename+'</td><td><span class="badge badge-active">'+f.related_type+'</span></td><td>'+(f.filesize/1024).toFixed(1)+' KB</td><td>'+(f.uploader_name||'-')+'</td><td>'+(f.created_at||'').slice(0,10)+'</td><td><a href="/uploads/'+f.filepath+'" target="_blank" class="btn btn-sm btn-primary">📥</a></td></tr>'});
+html+='</tbody></table>';el.innerHTML=html})
+
+// Load locations
+fetch('/api/locations/{{ client.id }}').then(r=>r.json()).then(d=>{const el=document.getElementById('locations-list');
+if(!d.locations||!d.locations.length){el.innerHTML='<p style="color:#64748B">No locations added yet.</p>';return}
+let html='<table><thead><tr><th>Name</th><th>Address</th><th>Phone</th><th>GBP</th></tr></thead><tbody>';
+d.locations.forEach(l=>{html+='<tr><td><strong>'+l.location_name+'</strong></td><td>'+(l.address||'')+', '+(l.city||'')+', '+(l.state||'')+' '+(l.zip_code||'')+'</td><td>'+(l.phone||'-')+'</td><td>'+(l.gbp_url?'<a href="'+l.gbp_url+'" target="_blank" class="btn btn-sm btn-primary">View</a>':'-')+'</td></tr>'});
+html+='</tbody></table>';el.innerHTML=html})
+
+function addLocation(){fetch('/api/locations',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({
+client_id:{{ client.id }},location_name:document.getElementById('loc_name').value,address:document.getElementById('loc_address').value,
+city:document.getElementById('loc_city').value,state:document.getElementById('loc_state').value,zip_code:document.getElementById('loc_zip').value,
+phone:document.getElementById('loc_phone').value,gbp_url:document.getElementById('loc_gbp').value})}).then(()=>{closeModal('addLocationModal');location.reload()})}
+</script>
+</main></body></html>

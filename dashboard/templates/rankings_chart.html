@@ -1,0 +1,122 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Rankings — {{ client.business_name }} — AI Growth Labs</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/static/css/dashboard.css">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+</head><body>
+<aside class="sidebar"><div class="sidebar-brand">AI Growth<span>Labs</span></div>
+<nav><div class="nav-section">Rankings</div>
+<a href="/dashboard">📊 Dashboard</a>
+<a href="/client/{{ client.id }}">👤 {{ client.business_name }}</a>
+<a href="#chart-section" class="active">📈 Rankings Chart</a>
+<a href="#table-section">📋 All Keywords</a>
+{% if locations %}<a href="#locations-section">📍 Locations</a>{% endif %}
+</nav>
+<div class="sidebar-user"><div class="user-avatar">{{ user.full_name[:2]|upper }}</div>
+<div><strong>{{ user.full_name }}</strong><small>{{ user.role|replace("_"," ")|title }}</small></div></div></aside>
+<main class="main">
+<div class="header-bar"><h1>📈 {{ client.business_name }} — Keyword Rankings</h1>
+<span>{{ client.industry }} | {{ client.location }}</span>
+<div class="header-actions">
+<a href="/client/{{ client.id }}" class="btn btn-secondary">← Back to Client</a>
+<a href="/dashboard" class="btn btn-outline">Dashboard</a></div></div>
+
+<div class="stats-grid">
+<div class="stat-card"><div class="stat-label">Keywords Tracked</div><div class="stat-value cyan">{{ keywords|length }}</div></div>
+<div class="stat-card"><div class="stat-label">Top 3 Positions</div><div class="stat-value green">{{ keywords.values()|selectattr('current','le',3)|list|length }}</div></div>
+<div class="stat-card"><div class="stat-label">Top 10 Positions</div><div class="stat-value">{{ keywords.values()|selectattr('current','le',10)|list|length }}</div></div>
+<div class="stat-card"><div class="stat-label">Avg Position</div>
+<div class="stat-value">{% if keywords %}{{ "%.1f"|format(keywords.values()|map(attribute='current')|sum / keywords|length) }}{% else %}—{% endif %}</div></div>
+</div>
+
+<!-- Chart Section -->
+<div class="card" id="chart-section"><h3>📈 Position Tracking Chart</h3>
+<div style="background:#0B1120;border-radius:10px;padding:20px;margin-top:8px">
+<canvas id="rankChart" height="100"></canvas>
+</div>
+<p style="color:#64748B;font-size:.75rem;margin-top:8px">Note: Lower position = better ranking. Position 1 is the top of Google search results.</p>
+</div>
+
+<!-- Keywords Table -->
+<div class="card" id="table-section"><h3>📋 All Keywords</h3>
+<table><thead><tr><th>Keyword</th><th>Current Position</th><th>Previous</th><th>Change</th><th>Search Volume</th><th>URL</th></tr></thead><tbody>
+{% for kw, data in keywords.items() %}
+<tr><td><strong>{{ kw }}</strong></td><td style="font-size:1.2rem;font-weight:700">{{ data.current }}</td>
+<td>{{ data.previous or '—' }}</td>
+<td>{% if data.previous and data.previous > data.current %}<span style="color:#34D399;font-weight:700">▲ {{ data.previous - data.current }}</span>
+{% elif data.previous and data.previous < data.current %}<span style="color:#EF4444;font-weight:700">▼ {{ data.current - data.previous }}</span>
+{% elif data.previous == data.current %}<span style="color:#64748B">—</span>
+{% else %}<span class="badge badge-new" style="background:rgba(6,182,212,.1);color:#22D3EE;border:1px solid rgba(6,182,212,.2)">NEW</span>{% endif %}</td>
+<td>{{ "{:,}".format(data.volume) }}</td>
+<td><small>{{ data.url or '—' }}</small></td></tr>
+{% endfor %}</tbody></table></div>
+
+<!-- Locations Section -->
+{% if locations %}
+<div class="card" id="locations-section"><h3>📍 Business Locations</h3>
+<div class="project-grid">
+{% for loc in locations %}
+<div class="project-card">
+<h4>{{ loc.location_name }}</h4>
+<p>{{ loc.address or '' }}{% if loc.city %}, {{ loc.city }}{% endif %}{% if loc.state %}, {{ loc.state }}{% endif %} {{ loc.zip_code or '' }}</p>
+{% if loc.phone %}<p>📞 {{ loc.phone }}</p>{% endif %}
+{% if loc.gbp_url %}<p><a href="{{ loc.gbp_url }}" target="_blank" class="btn btn-sm btn-primary">View GBP Listing</a></p>{% endif %}
+</div>
+{% endfor %}
+</div></div>
+{% endif %}
+
+<!-- Add Ranking Form (for staff only) -->
+{% if user.role != 'client' %}
+<div class="card"><h3>➕ Add Keyword Ranking</h3>
+<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:flex-end">
+<div><small style="color:#64748B">Keyword</small><input id="rk_keyword" placeholder="e.g. dentist austin tx" class="form-input"></div>
+<div><small style="color:#64748B">Position</small><input id="rk_position" type="number" placeholder="1-100" class="form-input" style="width:80px"></div>
+<div><small style="color:#64748B">Volume</small><input id="rk_volume" type="number" placeholder="1000" class="form-input" style="width:100px"></div>
+<div><small style="color:#64748B">URL</small><input id="rk_url" placeholder="https://..." class="form-input" style="width:200px"></div>
+<button class="btn btn-primary" onclick="addRanking()">Add Ranking</button>
+</div></div>
+{% endif %}
+
+<script>
+// Chart
+const chartData = {{ chart_data|safe }};
+const colors = ['#22D3EE','#34D399','#FBBF24','#A855F7','#EF4444','#60A5FA','#F472B6','#FB923C','#14B8A6'];
+const ctx = document.getElementById('rankChart').getContext('2d');
+const datasets = [];
+let i = 0;
+for (const [keyword, positions] of Object.entries(chartData.keywords)) {
+    datasets.push({
+        label: keyword,
+        data: positions,
+        borderColor: colors[i % colors.length],
+        backgroundColor: colors[i % colors.length] + '22',
+        tension: 0.3,
+        pointRadius: 4,
+        borderWidth: 2
+    });
+    i++;
+}
+new Chart(ctx, {
+    type: 'line',
+    data: { labels: datasets.length ? datasets[0].data.map((_, idx) => 'Check ' + (idx + 1)) : [], datasets: datasets },
+    options: {
+        responsive: true,
+        scales: { y: { reverse: true, min: 1, title: { display: true, text: 'Position (lower = better)', color: '#94A3B8' },
+            ticks: { color: '#94A3B8' }, grid: { color: '#1E3A5F' } },
+            x: { ticks: { color: '#94A3B8' }, grid: { color: '#1E3A5F' } } },
+        plugins: { legend: { labels: { color: '#CBD5E1', font: { size: 12 } } } }
+    }
+});
+
+// Add ranking
+function addRanking() {
+    fetch('/api/rankings', { method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ client_id: {{ client.id }}, keyword: document.getElementById('rk_keyword').value,
+            position: parseInt(document.getElementById('rk_position').value),
+            search_volume: parseInt(document.getElementById('rk_volume').value) || 0,
+            url: document.getElementById('rk_url').value })
+    }).then(r => r.json()).then(r => { if (r.id) { location.reload(); } else { alert(r.error || 'Error'); } });
+}
+</script>
+</main></body></html>

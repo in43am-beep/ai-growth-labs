@@ -1,0 +1,80 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Social Media — AI Growth Labs OS</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/static/css/dashboard.css"></head><body>
+<aside class="sidebar"><div class="sidebar-brand">AI Growth<span>Labs</span></div>
+<nav><div class="nav-section">Main</div><a href="/dashboard" class="active">📊Dashboard</a>
+<a href="#accounts-section">📱Client Accounts</a>
+<a href="#posts-section">📝Posts</a>
+<a href="#analytics-section">📈Analytics</a>
+<a href="#suggestions-section">💡Suggestions</a>
+<a href="/team-chat">💬Team Chat</a>
+</nav>
+<div class="sidebar-user"><div class="user-avatar">{{ user.full_name[:2]|upper }}</div>
+<div><strong>{{ user.full_name }}</strong><small>Social Media Manager</small></div></div></aside>
+<main class="main">
+<div class="header-bar"><h1>Social Media Dashboard</h1><span>Content Creation, Scheduling & Analytics</span>
+<div class="header-actions"><button class="btn btn-primary" onclick="openModal('addPostModal')">+ Create Post</button>
+<a href="/logout" class="btn btn-outline">Logout</a></div></div>
+
+<div class="stats-grid">
+<div class="stat-card"><div class="stat-label">Total Posts</div><div class="stat-value">{{ stats.total_posts }}</div></div>
+<div class="stat-card"><div class="stat-label">Published</div><div class="stat-value green">{{ stats.published }}</div></div>
+<div class="stat-card"><div class="stat-label">Scheduled</div><div class="stat-value cyan">{{ stats.scheduled }}</div></div>
+<div class="stat-card"><div class="stat-label">Drafts</div><div class="stat-value orange">{{ stats.drafts }}</div></div>
+<div class="stat-card"><div class="stat-label">Total Likes</div><div class="stat-value">{{ "{:,}".format(stats.total_likes) }}</div></div>
+<div class="stat-card"><div class="stat-label">Total Reach</div><div class="stat-value cyan">{{ "{:,}".format(stats.total_reach) }}</div></div>
+</div>
+
+<div class="card" id="analytics-section"><h3>📈 Engagement Analytics</h3>
+<div class="stats-grid">
+<div class="stat-card"><div class="stat-value green">{{ "{:,}".format(stats.total_likes) }}</div><div class="stat-sub">Total Likes</div></div>
+<div class="stat-card"><div class="stat-value cyan">{{ "{:,}".format(stats.total_comments) }}</div><div class="stat-sub">Total Comments</div></div>
+<div class="stat-card"><div class="stat-value orange">{{ "{:,}".format(stats.total_shares) }}</div><div class="stat-sub">Total Shares</div></div>
+<div class="stat-card"><div class="stat-value">{{ "{:,}".format(stats.total_reach) }}</div><div class="stat-sub">Total Reach</div></div>
+</div></div>
+
+<div class="card" id="accounts-section"><h3>📱 Client Social Accounts</h3>
+<div class="project-grid">{% for c in clients %}
+<div class="project-card"><h4>{{ c.business_name }}</h4><small>{{ c.industry }} | {{ c.location }}</small>
+<div style="margin-top:8px">
+<span class="badge badge-active">FB</span> <span class="badge badge-active">IG</span> <span class="badge badge-active">TT</span>
+</div><a href="/client/{{ c.id }}" class="btn btn-sm btn-primary" style="margin-top:8px">Manage</a></div>{% endfor %}</div></div>
+
+<div class="card" id="posts-section"><h3>📝 All Posts</h3>
+<table><thead><tr><th>Client</th><th>Platform</th><th>Content</th><th>Status</th><th>Engagement</th><th>Date</th></tr></thead><tbody>
+{% for p in posts %}{% set eng = {} %}
+<tr><td>{{ p.business_name }}</td><td><span class="badge badge-active">{{ p.platform }}</span></td>
+<td>{{ p.content[:60] }}...</td><td><span class="badge badge-{{ p.status }}">{{ p.status }}</span></td>
+<td>{% if p.engagement_data %}{{ p.engagement_data }}{% else %}-{% endif %}</td><td>{{ p.scheduled_date or p.created_at }}</td></tr>
+{% endfor %}</tbody></table></div>
+
+<div class="card"><h3>🤖 AI Content Generator</h3>
+<div class="tools-grid">
+<div class="tool-card"><h4>💬 Engagement</h4><p>Questions, polls, tips</p></div>
+<div class="tool-card"><h4>📚 Educational</h4><p>How-to, tips, guides</p></div>
+<div class="tool-card"><h4>⭐ Testimonials</h4><p>Client success stories</p></div>
+<div class="tool-card"><h4>🎯 Promotional</h4><p>Offers, deals, CTAs</p></div>
+<div class="tool-card"><h4>📊 Statistics</h4><p>Industry facts, data</p></div>
+<div class="tool-card"><h4>🎬 Video Script</h4><p>Short-form video scripts</p></div>
+</div></div>
+
+<!-- Create Post Modal -->
+<div class="modal-overlay" id="addPostModal"><div class="modal"><div class="modal-header"><h3>Create Post</h3><button onclick="closeModal('addPostModal')" class="modal-close">×</button></div>
+<div class="modal-body">
+<select id="sp_client" class="form-select">{% for c in clients %}<option value="{{ c.id }}">{{ c.business_name }}</option>{% endfor %}</select>
+<select id="sp_platform" class="form-select"><option value="facebook">Facebook</option><option value="instagram">Instagram</option><option value="tiktok">TikTok</option><option value="linkedin">LinkedIn</option><option value="twitter">Twitter</option><option value="pinterest">Pinterest</option></select>
+<textarea id="sp_content" placeholder="Post content..." class="form-input" rows="4"></textarea>
+<input id="sp_date" type="datetime-local" class="form-input">
+<select id="sp_status" class="form-select"><option value="draft">Draft</option><option value="scheduled">Scheduled</option><option value="published">Published</option></select>
+<button class="btn btn-primary btn-full" onclick="addPost()">Create Post</button></div></div></div>
+
+<script>
+function openModal(id){document.getElementById(id).classList.add('show')}
+function closeModal(id){document.getElementById(id).classList.remove('show')}
+function addPost(){fetch('/api/social-posts',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({
+    client_id:parseInt(document.getElementById('sp_client').value),platform:document.getElementById('sp_platform').value,
+    content:document.getElementById('sp_content').value,status:document.getElementById('sp_status').value,
+    scheduled_date:document.getElementById('sp_date').value})}).then(()=>location.reload())}
+</script>
+</main></body></html>

@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Reputation Management — Complete Execution Playbook</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Inter',sans-serif;color:#1E293B;line-height:1.7;background:#f8fafc}
+.container{max-width:900px;margin:0 auto;padding:20px}
+.doc{background:#fff;padding:60px;border-radius:16px;box-shadow:0 4px 20px rgba(0,0,0,0.08);margin:20px auto}
+@media print{.doc{box-shadow:none;padding:40px;margin:0}.no-print{display:none!important}body{background:#fff}}
+.hdr{background:linear-gradient(135deg,#0A1628,#112240);color:#fff;padding:40px;border-radius:12px;margin-bottom:40px}
+.logo{font-size:1.6rem;font-weight:800}.logo span{color:#00D4FF}
+.hdr p{color:#94A3B8;font-size:0.9rem}
+h1{font-size:2rem;color:#0A1628;margin:20px 0 10px;font-weight:800}
+h2{font-size:1.3rem;color:#0A1628;margin:30px 0 15px;padding-bottom:8px;border-bottom:2px solid #00D4FF;font-weight:700}
+h3{font-size:1.05rem;color:#112240;margin:20px 0 8px;font-weight:600}
+p{margin-bottom:12px;color:#475569}
+.card{background:#F8FAFC;border:1px solid #E2E8F0;border-radius:12px;padding:24px;margin:15px 0}
+.c-cyan{border-left:4px solid #00D4FF}
+.c-green{border-left:4px solid #00C853}
+.c-red{border-left:4px solid #EF4444}
+ul,ol{margin:10px 0 15px 20px}
+li{margin-bottom:6px;color:#475569;font-size:0.93rem}
+li::marker{color:#00D4FF}
+.cl{list-style:none;margin-left:0}
+.cl li{padding:5px 0;border-bottom:1px solid #F1F5F9}
+.cl li::before{content:'☐ '}
+table{width:100%;border-collapse:collapse;margin:15px 0}
+th,td{padding:10px 14px;text-align:left;border-bottom:1px solid #E2E8F0;font-size:0.88rem}
+th{background:#F1F5F9;font-weight:600;color:#334155}
+.tip{background:#ECFDF5;border:1px solid #A7F3D0;border-radius:8px;padding:12px 16px;margin:12px 0;font-size:0.88rem;color:#065F46}
+.warn{background:#FEF2F2;border:1px solid #FECACA;border-radius:8px;padding:12px 16px;margin:12px 0;font-size:0.88rem;color:#991B1B}
+.code{background:#0A1628;color:#E2E8F0;padding:16px 20px;border-radius:10px;margin:12px 0;font-size:0.9rem;line-height:1.7;white-space:pre-wrap}
+.code b{color:#00D4FF}
+.sn{display:inline-block;background:#00D4FF;color:#fff;width:28px;height:28px;border-radius:50%;text-align:center;line-height:28px;font-weight:700;font-size:0.85rem;margin-right:8px}
+.btn-print{position:fixed;bottom:30px;right:30px;background:linear-gradient(135deg,#00D4FF,#00A8CC);color:#fff;border:none;padding:14px 28px;border-radius:50px;font-size:1rem;font-weight:600;cursor:pointer;box-shadow:0 4px 15px rgba(0,212,255,0.4);z-index:100}
+</style>
+</head>
+<body>
+<button class="btn-print no-print" onclick="window.print()">📄 Download / Print PDF</button>
+<div class="container"><div class="doc">
+
+<div class="hdr">
+<div class="logo">AI<span>Growth</span>Labs</div>
+<p>SERVICE PLAYBOOK — Reputation Management</p>
+</div>
+
+<h1>Reputation Management — Complete Execution Playbook</h1>
+
+<!-- PHASE 1 -->
+<h2>PHASE 1: REVIEW AUDIT (Week 1)</h2>
+
+<h3><span class="sn">1</span>Multi-Platform Review Audit</h3>
+<div class="card c-cyan">
+<p>Check every review platform and document current status:</p>
+<table>
+<tr><th>Platform</th><th>URL</th><th>Reviews</th><th>Rating</th><th>Last Review</th><th>Claimed?</th></tr>
+<tr><td>Google</td><td></td><td></td><td></td><td></td><td>☐</td></tr>
+<tr><td>Yelp</td><td></td><td></td><td></td><td></td><td>☐</td></tr>
+<tr><td>Facebook</td><td></td><td></td><td></td><td></td><td>☐</td></tr>
+<tr><td>Trustpilot</td><td></td><td></td><td></td><td></td><td>☐</td></tr>
+<tr><td>BBB</td><td></td><td></td><td></td><td></td><td>☐</td></tr>
+<tr><td>Industry-specific 1</td><td></td><td></td><td></td><td></td><td>☐</td></tr>
+<tr><td>Industry-specific 2</td><td></td><td></td><td></td><td></td><td>☐</td></tr>
+</table>
+<p><strong>Industry-Specific Platforms:</strong></p>
+<ul>
+<li><strong>Healthcare:</strong> Healthgrades, Zocdoc, Vitals, RateMDs, WebMD</li>
+<li><strong>Legal:</strong> Avvo, FindLaw, Justia, Lawyers.com, Martindale</li>
+<li><strong>Restaurants:</strong> TripAdvisor, OpenTable, Zomato, DoorDash</li>
+<li><strong>Home Services:</strong> HomeAdvisor, Angi, Thumbtack, Porch</li>
+<li><strong>Automotive:</strong> CarFax, DealerRater, Cars.com, Edmunds</li>
+</ul>
+</div>
+
+<h3><span class="sn">2</span>Sentiment Analysis</h3>
+<div class="card">
+<p>Read ALL existing reviews and categorize:</p>
+<table>
+<tr><th>Theme</th><th>Positive Mentions</th><th>Negative Mentions</th><th>Action Needed</th></tr>
+<tr><td>Staff/Service Quality</td><td></td><td></td><td></td></tr>
+<tr><td>Wait Times</td><td></td><td></td><td></td></tr>
+<tr><td>Pricing/Billing</td><td></td><td></td><td></td></tr>
+<tr><td>Facility/Cleanliness</td><td></td><td></td><td></td></tr>
+<tr><td>Communication</td><td></td><td></td><td></td></tr>
+<tr><td>Results/Quality</td><td></td><td></td><td></td></tr>
+</table>
+<div class="tip">💡 Share negative themes with the client — some operational improvements (shorter wait times, clearer billing) can prevent future negative reviews.</div>
+</div>
+
+<!-- PHASE 2 -->
+<h2>PHASE 2: REVIEW GENERATION SYSTEM (Week 2)</h2>
+
+<h3><span class="sn">3</span>Create Google Review Link</h3>
+<div class="code"><b>Method 1 — From Google Maps:</b>
+1. Search client's business on Google Maps
+2. Click "Write a review"
+3. Copy the URL from the browser
+4. Shorten with bit.ly
+
+<b>Method 2 — Place ID Method:</b>
+1. Go to: developers.google.com/maps/documentation/places/web-service/place-id
+2. Find Place ID for the business
+3. Create link: https://search.google.com/local/writereview?placeid=YOUR_PLACE_ID
+4. Shorten with bit.ly
+
+<b>Method 3 — Google Business Profile:</b>
+1. Login to business.google.com
+2. Go to Home → "Get more reviews"
+3. Copy the short review link</div>
+
+<h3><span class="sn">4</span>Review Request Templates</h3>
+
+<div class="card c-green">
+<h4>SMS Template (Highest Conversion: 20-30%)</h4>
+<div class="code"><b>Send 1-2 hours after service:</b>
+
+"Hi [Name]! Thank you for visiting SmileCare NYC today. We hope you had a great experience! Would you mind taking 30 seconds to share your feedback on Google? It really helps us: [SHORT LINK] Thank you! 😊"
+
+<b>Follow-up (if no action in 3 days):</b>
+
+"Hi [Name], we hope you're doing well after your visit to SmileCare NYC! If you have a moment, we'd love to hear about your experience: [SHORT LINK] Thank you!"</div>
+</div>
+
+<div class="card c-green">
+<h4>Email Template (Conversion: 5-10%)</h4>
+<div class="code"><b>Subject:</b> How was your visit to SmileCare NYC?
+
+Hi [Name],
+
+Thank you for visiting SmileCare NYC [today/yesterday]. We hope Dr. [Name] took great care of you!
+
+Your feedback means the world to us and helps other families find quality dental care in New York.
+
+If you have 30 seconds, we'd be incredibly grateful if you could share your experience:
+
+⭐ [LEAVE A REVIEW — BIG BUTTON LINK]
+
+Thank you for being a valued patient!
+
+Warm regards,
+The SmileCare NYC Team
+
+P.S. If there's anything we could have done better, please reply to this email and let us know directly. Your satisfaction is our priority.</div>
+</div>
+
+<div class="card c-green">
+<h4>In-Office Methods</h4>
+<div class="code"><b>1. QR Code Display:</b>
+- Create QR code linking to Google review page (use qr-code-generator.com)
+- Print on table tents for reception area
+- Print on checkout receipts
+- Post in treatment rooms / service areas
+- Add to business cards
+
+<b>2. Staff Training Script:</b>
+"[After positive interaction]
+Staff: 'It was great seeing you today, [Name]! If you had a good experience, 
+we'd really appreciate if you could leave us a quick Google review. 
+There's a QR code right here — it only takes 30 seconds!'
+[Point to QR code or hand them a review card]"
+
+<b>3. Review Request Cards:</b>
+Front: "We'd Love Your Feedback! 🌟"
+Back: QR code + bit.ly link + "Scan to leave a review"
+- Business card size
+- Hand to every happy customer at checkout</div>
+</div>
+
+<h3><span class="sn">5</span>Automation Setup</h3>
+<div class="card">
+<h4>Tools for Review Automation:</h4>
+<table>
+<tr><th>Tool</th><th>Cost</th><th>Features</th><th>Best For</th></tr>
+<tr><td>Podium</td><td>$249+/mo</td><td>SMS, webchat, payments, review</td><td>Multi-location businesses</td></tr>
+<tr><td>Birdeye</td><td>$299+/mo</td><td>Review, survey, social, listings</td><td>Enterprise</td></tr>
+<tr><td>NiceJob</td><td>$75+/mo</td><td>Reviews, referrals, social proof</td><td>Small businesses</td></tr>
+<tr><td>Grade.us</td><td>$110+/mo</td><td>White-label, review funnels</td><td>Agencies (resell)</td></tr>
+<tr><td>Google Forms + Zapier</td><td>$20/mo</td><td>DIY automation</td><td>Budget option</td></tr>
+</table>
+
+<h4>Automation Flow:</h4>
+<div class="code"><b>Trigger:</b> Customer completes service (entered into CRM/POS)
+    ↓
+<b>Step 1 (2 hours later):</b> Send SMS review request
+    ↓
+<b>Step 2 (24 hours, if no action):</b> Send email review request
+    ↓
+<b>Step 3 (7 days, if no action):</b> Send final reminder email
+    ↓
+<b>If negative response detected:</b> Route to private feedback form
+(NOT public review — capture complaint privately first)</div>
+</div>
+
+<!-- PHASE 3 -->
+<h2>PHASE 3: NEGATIVE REVIEW MANAGEMENT</h2>
+
+<h3><span class="sn">6</span>The A.R.E.S. Response Framework</h3>
+<div class="card c-red">
+<div class="code"><b>A</b> — <b>Acknowledge:</b> "We're sorry to hear about your experience..."
+<b>R</b> — <b>Responsibility:</b> "We take full responsibility for..."
+<b>E</b> — <b>Empathy:</b> "We understand how frustrating that must have been..."
+<b>S</b> — <b>Solution:</b> "Please contact us at [phone/email] so we can make this right"</div>
+
+<h4>Full Response Example:</h4>
+<div class="code">"We're so sorry to hear about your experience, [Name]. This absolutely doesn't reflect the level of care and service we strive to provide at SmileCare NYC. We understand how frustrating [specific issue they mentioned] must have been, and we take your feedback very seriously.
+
+We'd love the opportunity to make this right. Please contact our office manager, [Name], directly at (212) 555-0123 or email info@smilecarenyc.com so we can address your concerns personally.
+
+Thank you for bringing this to our attention — it helps us improve."</div>
+</div>
+
+<h3><span class="sn">7</span>Review Removal Process</h3>
+<div class="card">
+<h4>When Can You Flag a Review for Removal?</h4>
+<ul>
+<li>Spam or fake content (never visited the business)</li>
+<li>Conflict of interest (competitor, ex-employee)</li>
+<li>Offensive / hate speech / profanity</li>
+<li>Off-topic (not about the business experience)</li>
+<li>Personal information exposed</li>
+</ul>
+<div class="code"><b>Removal Process:</b>
+1. Go to Google Maps → Find the review
+2. Click the 3 dots next to the review → "Flag as inappropriate"
+3. Select the reason
+4. Submit
+5. Wait 5-14 days for Google's review
+6. If denied → Appeal once through Google Business support
+7. If still denied → Focus on burying it with positive reviews</div>
+<div class="warn">⚠️ <strong>Never:</strong> Buy fake reviews, offer incentives for reviews, ask only happy customers (review gating), write reviews yourself, use review farms/fiverr, threaten reviewers</div>
+</div>
+
+<!-- MONTHLY -->
+<h2>ONGOING MONTHLY ACTIVITIES</h2>
+
+<div class="card c-cyan">
+<h4>Monthly Reputation Management Checklist:</h4>
+<ul class="cl">
+<li>Respond to ALL new reviews within 24 hours</li>
+<li>Run review generation campaign (SMS + Email)</li>
+<li>Track new review count and rating across all platforms</li>
+<li>Analyze review sentiment — identify trends</li>
+<li>Flag fake/spam reviews for removal</li>
+<li>Follow up on negative review resolutions</li>
+<li>Update review widgets on website</li>
+<li>Share best reviews on social media</li>
+<li>Update review generation templates (keep fresh)</li>
+<li>Report results to client with competitor comparison</li>
+</ul>
+</div>
+
+<h3>Monthly Targets by Package:</h3>
+<table>
+<tr><th>Package</th><th>Monthly Price</th><th>New Reviews Target</th><th>Response Time</th><th>Platforms Monitored</th></tr>
+<tr><td>Monitor</td><td>$697/mo</td><td>5-10/month</td><td>Within 24 hrs</td><td>3 platforms</td></tr>
+<tr><td>Growth</td><td>$1,497/mo</td><td>15-25/month</td><td>Within 12 hrs</td><td>5+ platforms</td></tr>
+<tr><td>Authority</td><td>$2,497/mo</td><td>30-50/month</td><td>Within 6 hrs</td><td>All platforms</td></tr>
+</table>
+
+</div></div>
+</body>
+</html>

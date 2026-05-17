@@ -1,0 +1,77 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Sales Dashboard — AI Growth Labs OS</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/static/css/dashboard.css"></head><body>
+<aside class="sidebar"><div class="sidebar-brand">AI Growth<span>Labs</span></div>
+<nav><div class="nav-section">Main</div><a href="/dashboard" class="active">📊Dashboard</a>
+<a href="#leads-section">🎯Leads</a>
+<a href="#tools-section">📧Lead Tools</a>
+<a href="#proposal-section">📝Proposals</a>
+<a href="#clients-section">👥Clients</a>
+<a href="/team-chat">💬Team Chat</a>
+</nav>
+<div class="sidebar-user"><div class="user-avatar">{{ user.full_name[:2]|upper }}</div>
+<div><strong>{{ user.full_name }}</strong><small>Sales Agent</small></div></div></aside>
+<main class="main">
+<div class="header-bar"><h1>Sales Dashboard</h1><span>Lead Pipeline & Conversion Tracking</span>
+<div class="header-actions"><button class="btn btn-primary" onclick="openModal('addLeadModal')">+ New Lead</button>
+<a href="/logout" class="btn btn-outline">Logout</a></div></div>
+
+<div class="stats-grid">
+<div class="stat-card"><div class="stat-label">Total Leads</div><div class="stat-value">{{ stats.total_leads }}</div></div>
+<div class="stat-card"><div class="stat-label">New Leads</div><div class="stat-value cyan">{{ stats.new_leads }}</div></div>
+<div class="stat-card"><div class="stat-label">Proposals Sent</div><div class="stat-value orange">{{ stats.proposals_sent }}</div></div>
+<div class="stat-card"><div class="stat-label">Won Deals</div><div class="stat-value green">{{ stats.won_leads }}</div></div>
+<div class="stat-card"><div class="stat-label">Conversion Rate</div><div class="stat-value">{{ stats.conversion_rate }}%</div></div>
+</div>
+
+<div class="card" id="leads-section"><h3>🎯 Lead Pipeline</h3>
+<div class="kanban-board" style="grid-template-columns:repeat(6,1fr)">
+{% set stages = [('new','🆕 New'),('contacted','📞 Contacted'),('qualified','✅ Qualified'),('proposal_sent','📝 Proposal'),('negotiating','🤝 Negotiating'),('won','🏆 Won')] %}
+{% for stage_key, stage_label in stages %}
+<div class="kanban-col"><h4>{{ stage_label }}</h4>
+{% for l in leads if l.status == stage_key %}
+<div class="kanban-card"><h5>{{ l.business_name }}</h5><small>{{ l.contact_name }}<br>{{ l.industry }} — {{ l.location }}</small>
+<div class="kanban-actions">
+{% if stage_key != 'won' %}<select onchange="moveLead({{ l.id }},this.value)" class="form-select form-select-sm">
+<option value="">Move to...</option><option value="contacted">Contacted</option><option value="qualified">Qualified</option>
+<option value="proposal_sent">Proposal</option><option value="negotiating">Negotiating</option><option value="won">Won</option>
+<option value="lost">Lost</option></select>{% endif %}</div></div>{% endfor %}</div>
+{% endfor %}</div></div>
+
+<div class="card" id="tools-section"><h3>📧 Lead Collection Tools</h3>
+<div class="tools-grid">
+<div class="tool-card"><h4>🔍 Google Search</h4><p>Find businesses via Google search queries</p><button class="btn btn-primary" disabled>Coming Soon</button></div>
+<div class="tool-card"><h4>📍 Google Maps</h4><p>Scrape local business listings from Maps</p><button class="btn btn-primary" disabled>Coming Soon</button></div>
+<div class="tool-card"><h4>💼 LinkedIn</h4><p>Find business owners on LinkedIn</p><button class="btn btn-primary" disabled>Coming Soon</button></div>
+<div class="tool-card"><h4>📱 Social Media</h4><p>Discover businesses on Facebook/Instagram</p><button class="btn btn-primary" disabled>Coming Soon</button></div>
+</div></div>
+
+<div class="card" id="clients-section"><h3>👥 Recent Clients</h3>
+<table><thead><tr><th>Business</th><th>Contact</th><th>Package</th><th>Status</th><th>Details</th></tr></thead><tbody>
+{% for c in recent_clients %}
+<tr><td>{{ c.business_name }}</td><td>{{ c.contact_name }}</td><td>{{ c.package or '-' }}</td>
+<td><span class="badge badge-{{ c.status }}">{{ c.status }}</span></td>
+<td><a href="/client/{{ c.id }}" class="btn btn-sm btn-primary">View</a></td></tr>
+{% endfor %}</tbody></table></div>
+
+<!-- Add Lead Modal -->
+<div class="modal-overlay" id="addLeadModal"><div class="modal"><div class="modal-header"><h3>Add New Lead</h3><button onclick="closeModal('addLeadModal')" class="modal-close">×</button></div>
+<div class="modal-body"><input id="nl_business" placeholder="Business Name" class="form-input"><input id="nl_contact" placeholder="Contact Name" class="form-input">
+<input id="nl_email" placeholder="Email" class="form-input"><input id="nl_phone" placeholder="Phone" class="form-input">
+<input id="nl_website" placeholder="Website" class="form-input"><input id="nl_industry" placeholder="Industry" class="form-input">
+<input id="nl_location" placeholder="Location" class="form-input">
+<select id="nl_source" class="form-select"><option value="google_search">Google Search</option><option value="google_maps">Google Maps</option><option value="linkedin">LinkedIn</option><option value="facebook">Facebook</option><option value="referral">Referral</option><option value="website">Website</option><option value="other">Other</option></select>
+<button class="btn btn-primary btn-full" onclick="addLead()">Add Lead</button></div></div></div>
+
+<script>
+function openModal(id){document.getElementById(id).classList.add('show')}
+function closeModal(id){document.getElementById(id).classList.remove('show')}
+function api(url,data){return fetch(url,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(data)}).then(r=>r.json())}
+function addLead(){api('/api/leads',{business_name:document.getElementById('nl_business').value,contact_name:document.getElementById('nl_contact').value,
+    email:document.getElementById('nl_email').value,phone:document.getElementById('nl_phone').value,website:document.getElementById('nl_website').value,
+    industry:document.getElementById('nl_industry').value,location:document.getElementById('nl_location').value,
+    source:document.getElementById('nl_source').value}).then(()=>location.reload())}
+function moveLead(id,status){if(!status)return;fetch('/api/leads/'+id+'/status',{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({status:status})}).then(()=>location.reload())}
+</script>
+</main></body></html>

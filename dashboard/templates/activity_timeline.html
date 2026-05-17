@@ -1,0 +1,81 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Activity Timeline — AI Growth Labs OS</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/static/css/dashboard.css">
+<style>
+.timeline{position:relative;padding-left:30px}
+.timeline::before{content:'';position:absolute;left:12px;top:0;bottom:0;width:2px;background:#1E3A5F}
+.timeline-item{position:relative;margin-bottom:16px;padding:12px 16px;background:#0B1120;border:1px solid #1E3A5F;border-radius:8px}
+.timeline-item::before{content:'';position:absolute;left:-23px;top:16px;width:10px;height:10px;border-radius:50%;border:2px solid #22D3EE;background:#0A1628}
+.timeline-item.action-timer_started::before,.timeline-item.action-timer_stopped::before{border-color:#FBBF24}
+.timeline-item.action-task_status_updated::before{border-color:#34D399}
+.timeline-item.action-file_uploaded::before{border-color:#A855F7}
+.timeline-item.action-password_changed::before{border-color:#EF4444}
+.timeline-item.action-report_generated::before,.timeline-item.action-report_emailed::before{border-color:#60A5FA}
+.tl-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:4px}
+.tl-user{color:#22D3EE;font-weight:600;font-size:.85rem}
+.tl-time{color:#64748B;font-size:.75rem}
+.tl-action{color:#CBD5E1;font-size:.82rem}
+.tl-detail{color:#94A3B8;font-size:.75rem;margin-top:2px}
+.filter-bar{display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap}
+.filter-btn{padding:6px 14px;border-radius:6px;border:1px solid #1E3A5F;background:#0B1120;color:#94A3B8;cursor:pointer;font-size:.8rem}
+.filter-btn.active{border-color:#22D3EE;color:#22D3EE;background:rgba(34,211,238,.1)}
+</style></head><body>
+<aside class="sidebar"><div class="sidebar-brand">AI Growth<span>Labs</span></div>
+<nav><div class="nav-section">Main</div>
+<a href="/dashboard">📊Dashboard</a>
+<a href="/activity" class="active">📜Activity Log</a>
+<a href="/performance">📊Performance</a>
+<a href="/monitor">📡Team Monitor</a>
+</nav>
+<div class="sidebar-user"><div class="user-avatar">{{ user.full_name[:2]|upper }}</div>
+<div><strong>{{ user.full_name }}</strong><small>{{ user.role|replace("_"," ")|title }}</small></div></div></aside>
+<main class="main">
+<div class="header-bar"><h1>📜 Activity Timeline</h1><span>Audit log of all system actions</span>
+<div class="header-actions"><a href="/dashboard" class="btn btn-outline">← Dashboard</a></div></div>
+
+<div class="stats-grid">
+<div class="stat-card"><div class="stat-label">Total Actions</div><div class="stat-value cyan">{{ activities|length }}</div></div>
+<div class="stat-card"><div class="stat-label">Unique Users</div><div class="stat-value">{{ activities|map(attribute='user_name')|unique|list|length }}</div></div>
+<div class="stat-card"><div class="stat-label">Today</div><div class="stat-value green">{{ activities|selectattr('created_at','defined')|list|length }}</div></div>
+</div>
+
+<div class="card">
+<h3>Activity Feed</h3>
+<div class="filter-bar">
+<button class="filter-btn active" onclick="filterActivity('all',this)">All</button>
+<button class="filter-btn" onclick="filterActivity('timer',this)">Timers</button>
+<button class="filter-btn" onclick="filterActivity('task',this)">Tasks</button>
+<button class="filter-btn" onclick="filterActivity('report',this)">Reports</button>
+<button class="filter-btn" onclick="filterActivity('file',this)">Files</button>
+<button class="filter-btn" onclick="filterActivity('password',this)">Security</button>
+</div>
+<div class="timeline" id="timeline">
+{% for a in activities %}
+<div class="timeline-item action-{{ a.action_type }}" data-action="{{ a.action_type }}">
+<div class="tl-header">
+<span class="tl-user">{{ a.user_name or 'System' }}</span>
+<span class="tl-time">{{ a.created_at }}</span>
+</div>
+<div class="tl-action">
+{% if 'timer' in a.action_type %}⏱️{% elif 'task' in a.action_type %}📋{% elif 'report' in a.action_type %}📄{% elif 'file' in a.action_type %}📁{% elif 'password' in a.action_type %}🔒{% elif 'invoice' in a.action_type %}🧾{% elif 'email' in a.action_type %}📧{% elif 'approval' in a.action_type %}✅{% elif 'contract' in a.action_type %}📄{% elif 'location' in a.action_type %}📍{% else %}📌{% endif %}
+{{ a.action_type|replace("_"," ")|title }}
+</div>
+<div class="tl-detail">{{ a.description or '' }} {% if a.entity_type %}| {{ a.entity_type }} #{{ a.entity_id }}{% endif %}</div>
+</div>
+{% endfor %}
+{% if not activities %}<p style="color:#64748B;text-align:center;padding:20px">No activity recorded yet.</p>{% endif %}
+</div>
+</div>
+
+<script>
+function filterActivity(type, btn) {
+    document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    document.querySelectorAll('.timeline-item').forEach(item => {
+        if (type === 'all') { item.style.display = 'block'; }
+        else { item.style.display = item.dataset.action.includes(type) ? 'block' : 'none'; }
+    });
+}
+</script>
+</main></body></html>

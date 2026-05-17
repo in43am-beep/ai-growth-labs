@@ -1,0 +1,208 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Super Admin — AI Growth Labs OS</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/static/css/dashboard.css"></head><body>
+<aside class="sidebar"><div class="sidebar-brand">AI Growth<span>Labs</span></div>
+<nav><div class="nav-section">Main</div><a href="/dashboard" class="active">📊Dashboard</a>
+<a href="#clients-section">👥Clients</a>
+<a href="#projects-section">📋Projects</a>
+<a href="#tasks-section">✅Tasks</a>
+<a href="#workers-section">👷Workers</a>
+<a href="#payments-section">💰Payments</a>
+<a href="#audit-section">🔍SEO Audit</a>
+<a href="/monitor">📡Team Monitor</a>
+<a href="/team-chat">💬Team Chat</a>
+<a href="#invoices-section">🧨Invoices</a>
+<a href="#rankings-section">📈Rankings</a>
+<a href="#contracts-section">📄Contracts</a>
+<a href="/analytics">📈Analytics</a>
+<a href="/activity">📜Activity Log</a>
+<a href="/performance">📊Performance</a>
+<a href="/settings">⚙️API Settings</a>
+</nav>
+<div class="sidebar-user"><div class="user-avatar">{{ user.full_name[:2]|upper }}</div>
+<div><strong>{{ user.full_name }}</strong><small>{{ user.role }}</small></div></div></aside>
+<main class="main">
+<div class="header-bar"><h1>Super Admin Dashboard</h1><span>Agency Operating System — Complete Overview</span>
+<div style="position:relative;margin:8px 0"><input id="globalSearch" placeholder="🔍 Search clients, projects, tasks..." class="form-input" style="width:320px" oninput="doSearch(this.value)"><div id="searchResults" style="position:absolute;top:100%;left:0;width:320px;background:#0F172A;border:1px solid #1E3A5F;border-radius:8px;display:none;z-index:100;max-height:300px;overflow-y:auto"></div></div>
+<div class="header-actions">
+<button class="btn btn-primary" onclick="openModal('addClientModal')">+ Add Client</button>
+<button class="btn btn-secondary" onclick="openModal('addProjectModal')">+ New Project</button>
+<button class="btn btn-secondary" onclick="openModal('addWorkerModal')">+ Add Worker</button>
+{% if unread_chats > 0 %}<a href="/team-chat" class="btn btn-warning">💬 {{ unread_chats }} New Messages</a>{% endif %}
+{% if chat_requests|length > 0 %}<a href="/monitor" class="btn btn-warning">🔔 {{ chat_requests|length }} Chat Requests</a>{% endif %}
+<a href="/logout" class="btn btn-outline">Logout</a></div></div>
+
+<div class="stats-grid">
+<div class="stat-card"><div class="stat-label">Monthly Revenue</div><div class="stat-value cyan">${{ "{:,.0f}".format(stats.monthly_recurring) }}</div><div class="stat-sub">Active MRR</div></div>
+<div class="stat-card"><div class="stat-label">Total Collected</div><div class="stat-value green">${{ "{:,.0f}".format(stats.total_revenue) }}</div><div class="stat-sub">All time payments</div></div>
+<div class="stat-card"><div class="stat-label">Pending Revenue</div><div class="stat-value orange">${{ "{:,.0f}".format(stats.pending_revenue) }}</div><div class="stat-sub">Outstanding payments</div></div>
+<div class="stat-card"><div class="stat-label">Active Clients</div><div class="stat-value">{{ stats.active_clients }}</div><div class="stat-sub">Currently active</div></div>
+<div class="stat-card"><div class="stat-label">Active Projects</div><div class="stat-value">{{ stats.active_projects }}</div><div class="stat-sub">In progress</div></div>
+<div class="stat-card"><div class="stat-label">Task Completion</div><div class="stat-value">{{ stats.task_completion }}%</div><div class="stat-sub">{{ stats.completed_tasks }}/{{ stats.total_tasks }} tasks</div></div>
+</div>
+
+{% if suggestions|length > 0 %}
+<div class="card" id="suggestions-section"><h3>💡 Team Suggestions</h3>
+<table><thead><tr><th>From</th><th>Project</th><th>Suggestion</th><th>Status</th><th>Action</th></tr></thead><tbody>
+{% for s in suggestions %}
+<tr><td>{{ s.author_name }}</td><td>{{ s.project_title or '-' }}</td><td><strong>{{ s.title }}</strong><br><small>{{ s.description[:80] }}...</small></td>
+<td><span class="badge badge-{{ s.status }}">{{ s.status }}</span></td>
+<td>{% if s.status == 'pending' %}<button class="btn btn-sm btn-primary" onclick="updateSuggestion({{ s.id }}, 'approved')">Approve</button>
+<button class="btn btn-sm btn-danger" onclick="updateSuggestion({{ s.id }}, 'rejected')">Reject</button>{% else %}{{ s.admin_response or '-' }}{% endif %}</td></tr>
+{% endfor %}</tbody></table></div>
+{% endif %}
+
+<div class="card" id="projects-section"><h3>📋 All Projects</h3>
+<table><thead><tr><th>Client</th><th>Project</th><th>Service</th><th>Worker</th><th>Team Lead</th><th>Progress</th><th>Priority</th><th>Status</th><th>Upsell</th></tr></thead><tbody>
+{% for p in projects %}
+<tr><td><a href="/client/{{ p.client_id }}">{{ p.business_name }}</a></td><td>{{ p.title }}</td><td>{{ p.service_type }}</td><td>{{ p.worker_name }}</td><td>{{ p.leader_name }}</td>
+<td><div class="progress-bar"><div class="progress-fill" style="width:{{ p.progress }}%"></div></div>{{ p.progress }}%</td>
+<td><span class="badge badge-{{ p.priority }}">{{ p.priority }}</span></td><td><span class="badge badge-active">{{ p.status }}</span></td><td>—</td></tr>
+{% endfor %}</tbody></table></div>
+
+<div class="card" id="clients-section"><h3>👥 All Clients</h3>
+<table><thead><tr><th>Business</th><th>Contact</th><th>Industry</th><th>Location</th><th>Package</th><th>Payment</th><th>Status</th><th>Details</th></tr></thead><tbody>
+{% for c in clients %}
+<tr><td><strong>{{ c.business_name }}</strong><br><small>{{ c.website }}</small></td><td>{{ c.contact_name }}<br><small>{{ c.email }}</small></td>
+<td>{{ c.industry }}</td><td>{{ c.location }}</td><td>{{ c.package or '-' }}</td>
+<td>{% if c.monthly_payment %}${{ "{:,.0f}".format(c.monthly_payment) }}/mo{% else %}-{% endif %}</td>
+<td><span class="badge badge-{{ c.status }}">{{ c.status }}</span></td>
+<td><a href="/client/{{ c.id }}" class="btn btn-sm btn-primary">View</a></td></tr>
+{% endfor %}</tbody></table></div>
+
+<div class="card" id="workers-section"><h3>👷 Team Members</h3>
+<table><thead><tr><th>Name</th><th>Role</th><th>Rank</th><th>Salary</th><th>Status</th></tr></thead><tbody>
+{% for w in workers %}
+<tr><td><strong>{{ w.full_name }}</strong><br><small>@{{ w.username }}</small></td><td>{{ w.role|replace('_',' ')|title }}</td><td>{{ w.rank }}</td>
+<td>${{ "{:,.0f}".format(w.salary) }}</td><td><span class="badge badge-active">Active</span></td></tr>
+{% endfor %}</tbody></table></div>
+
+<div class="card" id="tasks-section"><h3>✅ Recent Tasks</h3>
+<table><thead><tr><th>Task</th><th>Project</th><th>Assigned</th><th>Priority</th><th>Status</th></tr></thead><tbody>
+{% for t in tasks %}
+<tr><td>{{ t.title }}</td><td>{{ t.project_title }}</td><td>{{ t.assigned_name }}</td>
+<td><span class="badge badge-{{ t.priority }}">{{ t.priority }}</span></td>
+<td><span class="badge badge-{{ t.status|replace(' ','_') }}">{{ t.status }}</span></td></tr>
+{% endfor %}</tbody></table></div>
+
+<div class="card" id="payments-section"><h3>💰 Payment Records</h3>
+<table><thead><tr><th>Invoice</th><th>Client</th><th>Amount</th><th>Due Date</th><th>Paid Date</th><th>Status</th><th>Report</th></tr></thead><tbody>
+{% for p in payments %}
+<tr><td>{{ p.invoice_number }}</td><td>{{ p.business_name }}</td><td><strong>${{ "{:,.0f}".format(p.amount) }}</strong></td>
+<td>{{ p.due_date }}</td><td>{{ p.paid_date or '-' }}</td>
+<td><span class="badge badge-{{ p.status }}">{{ p.status }}</span></td>
+<td><button class="btn btn-sm btn-primary" onclick="generateReport({{ p.client_id }})">📄 Generate</button></td></tr>
+{% endfor %}</tbody></table></div>
+
+<!-- Invoices Section -->
+<div class="card" id="invoices-section"><h3>🧨 Invoices</h3>
+<div id="admin-invoices"><p style="color:#64748B">Loading...</p></div></div>
+
+<!-- Rankings Overview -->
+<div class="card" id="rankings-section"><h3>📈 Keyword Rankings Overview</h3>
+<div id="admin-rankings"><p style="color:#64748B">Loading...</p></div></div>
+
+<!-- Contracts -->
+<div class="card" id="contracts-section"><h3>📄 Active Contracts</h3>
+<div id="admin-contracts"><p style="color:#64748B">Loading...</p></div></div>
+
+<div class="card" id="audit-section"><h3>🔍 Run SEO DNA Audit</h3>
+<p>Paste a client's website URL and select an AI provider to run a complete DNA-level audit.</p>
+<div class="form-row"><input type="url" id="auditUrl" placeholder="https://clientwebsite.com" class="form-input">
+<select id="auditProvider" class="form-select"><option value="claude">Claude Sonnet</option><option value="chatgpt">ChatGPT 4.5</option><option value="gemini">Google Gemini</option></select>
+<button class="btn btn-primary" onclick="runAudit()">Run Audit →</button></div>
+<p class="text-muted">Note: AI API key must be configured in <a href="/settings">Settings</a> for audits to process.</p></div>
+
+<!-- Add Client Modal -->
+<div class="modal-overlay" id="addClientModal"><div class="modal"><div class="modal-header"><h3>Add New Client</h3><button onclick="closeModal('addClientModal')" class="modal-close">×</button></div>
+<div class="modal-body"><input id="nc_business" placeholder="Business Name" class="form-input"><input id="nc_contact" placeholder="Contact Name" class="form-input">
+<input id="nc_email" placeholder="Email" class="form-input"><input id="nc_phone" placeholder="Phone" class="form-input">
+<input id="nc_website" placeholder="Website URL" class="form-input"><input id="nc_industry" placeholder="Industry" class="form-input">
+<input id="nc_location" placeholder="Location (City, ST)" class="form-input">
+<select id="nc_package" class="form-select"><option value="">Select Package</option><option value="Growth Starter">Growth Starter - $997/mo</option><option value="Growth Pro">Growth Pro - $2,997/mo</option><option value="Growth Elite">Growth Elite - $6,997/mo</option></select>
+<select id="nc_status" class="form-select"><option value="lead">Lead</option><option value="prospect">Prospect</option><option value="active">Active</option></select>
+<button class="btn btn-primary btn-full" onclick="addClient()">Add Client</button></div></div></div>
+
+<!-- Add Project Modal -->
+<div class="modal-overlay" id="addProjectModal"><div class="modal"><div class="modal-header"><h3>New Project</h3><button onclick="closeModal('addProjectModal')" class="modal-close">×</button></div>
+<div class="modal-body"><select id="np_client" class="form-select">{% for c in clients %}<option value="{{ c.id }}">{{ c.business_name }}</option>{% endfor %}</select>
+<input id="np_title" placeholder="Project Title" class="form-input"><textarea id="np_desc" placeholder="Description" class="form-input"></textarea>
+<select id="np_service" class="form-select"><option>Local SEO</option><option>AI SEO</option><option>GBP Optimization</option><option>Reputation Management</option><option>Content Creation</option><option>Social Media</option><option>Paid Advertising</option><option>Link Building</option><option>Technical SEO Audit</option><option>Schema Markup</option><option>Citation Building</option><option>Review Management</option><option>Competitor Analysis</option></select>
+<select id="np_worker" class="form-select">{% for w in workers %}<option value="{{ w.id }}">{{ w.full_name }} ({{ w.role }})</option>{% endfor %}</select>
+<button class="btn btn-primary btn-full" onclick="addProject()">Create Project</button></div></div></div>
+
+<!-- Add Worker Modal -->
+<div class="modal-overlay" id="addWorkerModal"><div class="modal"><div class="modal-header"><h3>Add Worker</h3><button onclick="closeModal('addWorkerModal')" class="modal-close">×</button></div>
+<div class="modal-body"><input id="nw_username" placeholder="Username" class="form-input"><input id="nw_name" placeholder="Full Name" class="form-input">
+<input id="nw_email" placeholder="Email" class="form-input"><input id="nw_password" placeholder="Password" class="form-input" type="password">
+<select id="nw_role" class="form-select"><option value="worker">Worker</option><option value="tech_seo">Tech SEO</option><option value="content_writer">Content Writer</option><option value="link_builder">Link Builder</option><option value="social_media">Social Media</option><option value="finance">Finance</option><option value="sales">Sales</option><option value="account_manager">Account Manager</option><option value="operations_manager">Operations Manager</option></select>
+<select id="nw_rank" class="form-select"><option value="junior">Junior</option><option value="mid">Mid</option><option value="senior">Senior</option><option value="lead">Lead</option></select>
+<input id="nw_salary" placeholder="Monthly Salary" type="number" class="form-input">
+<button class="btn btn-primary btn-full" onclick="addWorker()">Add Worker</button></div></div></div>
+
+<script>
+function openModal(id){document.getElementById(id).classList.add('show')}
+function closeModal(id){document.getElementById(id).classList.remove('show')}
+function api(url,data){return fetch(url,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(data)}).then(r=>r.json())}
+function apiPut(url,data){return fetch(url,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(data)}).then(r=>r.json())}
+
+function addClient(){
+    const pkg=document.getElementById('nc_package').value;
+    const pmts={'Growth Starter':997,'Growth Pro':2997,'Growth Elite':6997};
+    api('/api/clients',{business_name:document.getElementById('nc_business').value,contact_name:document.getElementById('nc_contact').value,
+        email:document.getElementById('nc_email').value,phone:document.getElementById('nc_phone').value,website:document.getElementById('nc_website').value,
+        industry:document.getElementById('nc_industry').value,location:document.getElementById('nc_location').value,
+        package:pkg,monthly_payment:pmts[pkg]||0,status:document.getElementById('nc_status').value}).then(()=>location.reload())}
+
+function addProject(){api('/api/projects',{client_id:parseInt(document.getElementById('np_client').value),title:document.getElementById('np_title').value,
+    description:document.getElementById('np_desc').value,service_type:document.getElementById('np_service').value,
+    assigned_worker_id:parseInt(document.getElementById('np_worker').value)}).then(()=>location.reload())}
+
+function addWorker(){api('/api/users',{username:document.getElementById('nw_username').value,full_name:document.getElementById('nw_name').value,
+    email:document.getElementById('nw_email').value,password:document.getElementById('nw_password').value,
+    role:document.getElementById('nw_role').value,rank:document.getElementById('nw_rank').value,
+    salary:parseFloat(document.getElementById('nw_salary').value)||0}).then(()=>location.reload())}
+
+function runAudit(){api('/api/audit',{website_url:document.getElementById('auditUrl').value,ai_provider:document.getElementById('auditProvider').value})
+    .then(r=>{alert(r.message||r.error);location.reload()})}
+
+function generateReport(clientId){api('/api/reports/generate',{client_id:clientId,report_type:'monthly'})
+    .then(r=>{if(r.id){window.open('/api/reports/'+r.id+'/download','_blank')}else{alert(r.error||'Error')}})}
+
+function updateSuggestion(id,status){apiPut('/api/suggestions/'+id,{status:status,admin_response:status=='approved'?'Approved by admin':'Rejected'}).then(()=>location.reload())}
+
+// Load invoices
+fetch('/api/invoices').then(r=>r.json()).then(d=>{const el=document.getElementById('admin-invoices');
+if(!d.invoices||!d.invoices.length){el.innerHTML='<p style="color:#64748B">No invoices yet.</p>';return}
+let html='<table><thead><tr><th>#</th><th>Client</th><th>Total</th><th>Status</th><th>Due</th><th>View</th></tr></thead><tbody>';
+d.invoices.forEach(i=>{html+='<tr><td>'+i.invoice_number+'</td><td>'+(i.business_name||'-')+'</td><td><strong>$'+i.total.toFixed(2)+'</strong></td><td><span class="badge badge-'+i.status+'">'+i.status+'</span></td><td>'+(i.due_date||'-')+'</td><td><a href="/api/invoices/'+i.id+'/download" target="_blank" class="btn btn-sm btn-primary">View</a></td></tr>'});
+html+='</tbody></table>';el.innerHTML=html})
+
+// Load rankings for all clients
+fetch('/api/rankings/0').then(r=>r.json()).then(d=>{const el=document.getElementById('admin-rankings');
+if(!d.rankings||!d.rankings.length){el.innerHTML='<p style="color:#64748B">No rankings tracked yet.</p>';return}
+let html='<table><thead><tr><th>Client</th><th>Keyword</th><th>Position</th><th>Change</th><th>Volume</th></tr></thead><tbody>';
+d.rankings.forEach(r=>{const change=r.previous_position?r.previous_position-r.position:0;const arrow=change>0?'<span style="color:#34D399">▲'+change+'</span>':change<0?'<span style="color:#EF4444">▼'+Math.abs(change)+'</span>':'—';
+html+='<tr><td>'+r.client_id+'</td><td><strong>'+r.keyword+'</strong></td><td>'+r.position+'</td><td>'+arrow+'</td><td>'+r.search_volume+'</td></tr>'});
+html+='</tbody></table>';el.innerHTML=html}).catch(()=>{document.getElementById('admin-rankings').innerHTML='<p style="color:#64748B">Rankings loading error</p>'})
+
+// Load contracts
+fetch('/api/contracts').then(r=>r.json()).then(d=>{const el=document.getElementById('admin-contracts');
+if(!d.contracts||!d.contracts.length){el.innerHTML='<p style="color:#64748B">No contracts yet.</p>';return}
+let html='<table><thead><tr><th>Client</th><th>Title</th><th>Period</th><th>Monthly Value</th><th>Status</th></tr></thead><tbody>';
+d.contracts.forEach(c=>{html+='<tr><td>'+c.client_id+'</td><td>'+c.title+'</td><td>'+c.start_date+' to '+c.end_date+'</td><td><strong>$'+(c.monthly_value||0).toFixed(2)+'</strong></td><td><span class="badge badge-'+c.status+'">'+c.status+'</span></td></tr>'});
+html+='</tbody></table>';el.innerHTML=html}).catch(()=>{document.getElementById('admin-contracts').innerHTML='<p style="color:#64748B">Contracts loading error</p>'})
+
+// Global search
+let searchTimer;
+function doSearch(q){clearTimeout(searchTimer);const el=document.getElementById('searchResults');
+if(q.length<2){el.style.display='none';return}
+searchTimer=setTimeout(()=>{fetch('/api/search?q='+encodeURIComponent(q)).then(r=>r.json()).then(d=>{
+if(!d.results.length){el.innerHTML='<div style="padding:12px;color:#64748B">No results found</div>';el.style.display='block';return}
+let h='';d.results.forEach(r=>{const icon=r.type==='client'?'👤':r.type==='project'?'📋':'✅';
+h+='<a href="'+r.link+'" style="display:block;padding:8px 12px;color:#CBD5E1;text-decoration:none;border-bottom:1px solid #1E3A5F">'+icon+' <strong>'+r.title+'</strong><br><small style="color:#64748B">'+r.type+' • '+r.subtitle+'</small></a>'});
+el.innerHTML=h;el.style.display='block'})},300)}
+document.addEventListener('click',e=>{if(!e.target.closest('#globalSearch')&&!e.target.closest('#searchResults'))document.getElementById('searchResults').style.display='none'})
+</script>
+</main></body></html>

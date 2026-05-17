@@ -1,0 +1,69 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Team Performance — AI Growth Labs OS</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/static/css/dashboard.css">
+<style>
+.perf-card{background:#0B1120;border:1px solid #1E3A5F;border-radius:10px;padding:20px;margin-bottom:12px;display:flex;align-items:center;gap:20px}
+.perf-avatar{width:48px;height:48px;border-radius:50%;background:linear-gradient(135deg,#0A1628,#1E3A5F);display:flex;align-items:center;justify-content:center;font-weight:700;color:#22D3EE;font-size:1rem;border:2px solid #1E3A5F}
+.perf-info{flex:1}
+.perf-name{color:#F1F5F9;font-weight:700;font-size:.95rem}
+.perf-role{color:#64748B;font-size:.75rem}
+.perf-stats{display:flex;gap:16px;align-items:center}
+.perf-stat{text-align:center}
+.perf-stat-val{color:#F1F5F9;font-weight:700;font-size:1.1rem}
+.perf-stat-label{color:#64748B;font-size:.65rem;text-transform:uppercase}
+.score-ring{width:56px;height:56px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:1.1rem}
+.score-high{background:rgba(52,211,153,.15);color:#34D399;border:3px solid #34D399}
+.score-mid{background:rgba(251,191,36,.15);color:#FBBF24;border:3px solid #FBBF24}
+.score-low{background:rgba(239,68,68,.15);color:#EF4444;border:3px solid #EF4444}
+.rank-badge{display:inline-block;padding:2px 8px;border-radius:4px;font-size:.7rem;font-weight:600}
+.rank-1{background:rgba(251,191,36,.2);color:#FBBF24}
+.rank-2{background:rgba(192,192,192,.2);color:#C0C0C0}
+.rank-3{background:rgba(205,127,50,.2);color:#CD7F32}
+</style></head><body>
+<aside class="sidebar"><div class="sidebar-brand">AI Growth<span>Labs</span></div>
+<nav><div class="nav-section">Main</div>
+<a href="/dashboard">📊Dashboard</a>
+<a href="/activity">📜Activity Log</a>
+<a href="/performance" class="active">📊Performance</a>
+<a href="/monitor">📡Team Monitor</a>
+</nav>
+<div class="sidebar-user"><div class="user-avatar">{{ user.full_name[:2]|upper }}</div>
+<div><strong>{{ user.full_name }}</strong><small>{{ user.role|replace("_"," ")|title }}</small></div></div></aside>
+<main class="main">
+<div class="header-bar"><h1>📊 Team Performance</h1><span>Worker performance scores and metrics</span>
+<div class="header-actions"><a href="/dashboard" class="btn btn-outline">← Dashboard</a></div></div>
+
+<div class="stats-grid">
+<div class="stat-card"><div class="stat-label">Team Members</div><div class="stat-value cyan">{{ workers|length }}</div></div>
+<div class="stat-card"><div class="stat-label">Avg Score</div><div class="stat-value">{% if workers %}{{ "%.0f"|format(workers|map(attribute='score')|sum / workers|length) }}{% else %}—{% endif %}</div></div>
+<div class="stat-card"><div class="stat-label">Total Hours</div><div class="stat-value green">{{ "%.0f"|format(workers|map(attribute='total_hours')|sum) }}h</div></div>
+<div class="stat-card"><div class="stat-label">Tasks Done</div><div class="stat-value">{{ workers|map(attribute='completed_tasks')|sum }}</div></div>
+</div>
+
+<div class="card"><h3>🏆 Performance Leaderboard</h3>
+{% for w in workers %}
+<div class="perf-card">
+<div style="text-align:center;min-width:30px">
+{% if loop.index == 1 %}<span class="rank-badge rank-1">🥇 1st</span>
+{% elif loop.index == 2 %}<span class="rank-badge rank-2">🥈 2nd</span>
+{% elif loop.index == 3 %}<span class="rank-badge rank-3">🥉 3rd</span>
+{% else %}<span style="color:#64748B;font-size:.8rem">#{{ loop.index }}</span>{% endif %}
+</div>
+<div class="perf-avatar">{{ w.full_name[:2]|upper }}</div>
+<div class="perf-info">
+<div class="perf-name">{{ w.full_name }}</div>
+<div class="perf-role">{{ w.role|replace("_"," ")|title }} • {{ w.rank|title }}</div>
+</div>
+<div class="perf-stats">
+<div class="perf-stat"><div class="perf-stat-val">{{ w.total_tasks }}</div><div class="perf-stat-label">Tasks</div></div>
+<div class="perf-stat"><div class="perf-stat-val">{{ w.completed_tasks }}</div><div class="perf-stat-label">Done</div></div>
+<div class="perf-stat"><div class="perf-stat-val">{{ w.completion_rate }}%</div><div class="perf-stat-label">Rate</div></div>
+<div class="perf-stat"><div class="perf-stat-val">{{ w.total_hours }}h</div><div class="perf-stat-label">Hours</div></div>
+</div>
+<div class="score-ring {% if w.score >= 70 %}score-high{% elif w.score >= 40 %}score-mid{% else %}score-low{% endif %}">{{ w.score }}</div>
+</div>
+{% endfor %}
+{% if not workers %}<p style="color:#64748B;text-align:center;padding:20px">No workers found.</p>{% endif %}
+</div>
+</main></body></html>

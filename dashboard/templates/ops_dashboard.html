@@ -1,0 +1,97 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Operations — AI Growth Labs OS</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/static/css/dashboard.css"></head><body>
+<aside class="sidebar"><div class="sidebar-brand">AI Growth<span>Labs</span></div>
+<nav><div class="nav-section">Operations</div>
+<a href="/dashboard" class="active">📊 Dashboard</a>
+<a href="#projects-section">📋 Projects</a>
+<a href="#workers-section">👷 Workers</a>
+<a href="#tasks-section">✅ Tasks</a>
+<a href="#overdue-section">⚠️ Overdue</a>
+<a href="#approvals-section">🔔 Approvals</a>
+<a href="/analytics">📈 Analytics</a>
+<a href="/activity">📜 Activity Log</a>
+<a href="/performance">📊 Performance</a>
+<a href="/monitor">📡 Team Monitor</a>
+<a href="/team-chat">💬 Team Chat</a>
+</nav>
+<div class="sidebar-user"><div class="user-avatar">{{ user.full_name[:2]|upper }}</div>
+<div><strong>{{ user.full_name }}</strong><small>Operations Mgr</small></div></div></aside>
+<main class="main">
+<div class="header-bar"><h1>Operations Dashboard</h1><span>Team Management & Quality Control</span>
+<div class="header-actions">
+<a href="/monitor" class="btn btn-secondary">📡 Team Monitor</a>
+{% if stats.overdue_count > 0 %}<span class="btn btn-danger">⚠️ {{ stats.overdue_count }} Overdue</span>{% endif %}
+{% if stats.pending_approvals > 0 %}<span class="btn btn-warning">🔔 {{ stats.pending_approvals }} Approvals</span>{% endif %}
+<a href="/logout" class="btn btn-outline">Logout</a></div></div>
+
+<div class="stats-grid">
+<div class="stat-card"><div class="stat-label">Active Projects</div><div class="stat-value cyan">{{ stats.active_projects }}</div></div>
+<div class="stat-card"><div class="stat-label">Total Tasks</div><div class="stat-value">{{ stats.total_tasks }}</div></div>
+<div class="stat-card"><div class="stat-label">Completed Tasks</div><div class="stat-value green">{{ stats.completed_tasks }}</div></div>
+<div class="stat-card"><div class="stat-label">Task Completion</div><div class="stat-value">{{ stats.task_completion }}%</div></div>
+<div class="stat-card"><div class="stat-label">Overdue Tasks</div><div class="stat-value red">{{ stats.overdue_count }}</div></div>
+<div class="stat-card"><div class="stat-label">Pending Approvals</div><div class="stat-value orange">{{ stats.pending_approvals }}</div></div>
+</div>
+
+<!-- Workers Workload -->
+<div class="card" id="workers-section"><h3>👷 Team Workload</h3>
+<table><thead><tr><th>Worker</th><th>Role</th><th>Active Tasks</th><th>Total Hours</th><th>Status</th></tr></thead><tbody>
+{% for w in workers %}
+<tr><td><strong>{{ w.full_name }}</strong></td><td><span class="badge badge-{{ w.role }}">{{ w.role|replace('_',' ')|title }}</span></td>
+<td>{{ w.active_tasks }}{% if w.active_tasks > 5 %} <span style="color:#EF4444">⚠️ OVERLOADED</span>{% endif %}</td>
+<td>{{ "%.1f"|format(w.total_hours) }}h</td>
+<td>{% if w.active_tasks > 5 %}<span class="badge badge-overdue">Overloaded</span>{% elif w.active_tasks > 0 %}<span class="badge badge-active">Active</span>{% else %}<span class="badge badge-draft">Available</span>{% endif %}</td></tr>
+{% endfor %}</tbody></table></div>
+
+<!-- Overdue Tasks -->
+{% if overdue_tasks %}
+<div class="card" id="overdue-section"><h3>⚠️ Overdue Tasks</h3>
+<table><thead><tr><th>Task</th><th>Project</th><th>Assigned To</th><th>Due Date</th><th>Days Overdue</th></tr></thead><tbody>
+{% for t in overdue_tasks %}
+<tr><td><strong>{{ t.title }}</strong></td><td>{{ t.project_title }}</td><td>{{ t.assigned_name or 'Unassigned' }}</td>
+<td style="color:#EF4444">{{ t.due_date }}</td>
+<td style="color:#EF4444;font-weight:700">OVERDUE</td></tr>
+{% endfor %}</tbody></table></div>
+{% endif %}
+
+<!-- Pending Approvals -->
+{% if pending_approvals %}
+<div class="card" id="approvals-section"><h3>🔔 Pending Approvals</h3>
+<table><thead><tr><th>Title</th><th>Type</th><th>Date</th><th>Action</th></tr></thead><tbody>
+{% for a in pending_approvals %}
+<tr><td><strong>{{ a.title }}</strong><br><small>{{ a.description[:60] if a.description else '' }}</small></td>
+<td><span class="badge badge-{{ a.request_type }}">{{ a.request_type }}</span></td>
+<td>{{ a.created_at[:10] }}</td>
+<td><button class="btn btn-sm btn-success" onclick="respondApproval({{ a.id }},'approved')">Approve</button>
+<button class="btn btn-sm btn-danger" onclick="respondApproval({{ a.id }},'rejected')">Reject</button></td></tr>
+{% endfor %}</tbody></table></div>
+{% endif %}
+
+<!-- All Projects -->
+<div class="card" id="projects-section"><h3>📋 All Projects</h3>
+<table><thead><tr><th>Client</th><th>Project</th><th>Worker</th><th>Progress</th><th>Status</th></tr></thead><tbody>
+{% for p in projects %}
+<tr><td>{{ p.business_name }}</td><td>{{ p.title }}</td><td>{{ p.worker_name or 'Unassigned' }}</td>
+<td><div class="progress-bar"><div class="progress-fill" style="width:{{ p.progress }}%"></div></div>{{ p.progress }}%</td>
+<td><span class="badge badge-{{ p.status }}">{{ p.status }}</span></td></tr>
+{% endfor %}</tbody></table></div>
+
+<!-- Recent Tasks -->
+<div class="card" id="tasks-section"><h3>✅ Recent Tasks</h3>
+<table><thead><tr><th>Task</th><th>Project</th><th>Assigned</th><th>Priority</th><th>Status</th></tr></thead><tbody>
+{% for t in tasks %}
+<tr><td>{{ t.title }}</td><td>{{ t.project_title }}</td><td>{{ t.assigned_name or '-' }}</td>
+<td><span class="badge badge-{{ t.priority }}">{{ t.priority }}</span></td>
+<td><span class="badge badge-{{ t.status|replace(' ','_') }}">{{ t.status }}</span></td></tr>
+{% endfor %}</tbody></table></div>
+
+<script>
+async function respondApproval(id, status) {
+    const notes = status === 'rejected' ? prompt('Rejection reason:') : 'Approved by Ops Manager';
+    const r = await fetch(`/api/approvals/${id}`, {method:'PUT', headers:{'Content-Type':'application/json'}, body:JSON.stringify({status, review_notes: notes})});
+    if(r.ok) location.reload(); else alert('Error');
+}
+</script>
+</main></body></html>

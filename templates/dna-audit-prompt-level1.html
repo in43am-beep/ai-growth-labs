@@ -1,0 +1,463 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DNA SEO Audit Prompt — Level 1 Public Audit</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap');
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Inter',sans-serif;color:#1E293B;line-height:1.7;background:#f8fafc}
+.container{max-width:960px;margin:0 auto;padding:20px}
+.doc{background:#fff;padding:60px;border-radius:16px;box-shadow:0 4px 20px rgba(0,0,0,0.08);margin:20px auto}
+@media print{.doc{box-shadow:none;padding:40px;margin:0}.no-print{display:none!important}body{background:#fff}}
+.hdr{background:linear-gradient(135deg,#0A1628,#112240);color:#fff;padding:40px;border-radius:12px;margin-bottom:40px}
+.logo{font-size:1.6rem;font-weight:800}.logo span{color:#00D4FF}
+.hdr p{color:#94A3B8;font-size:0.9rem}
+h1{font-size:2rem;color:#0A1628;margin:20px 0 10px;font-weight:800}
+h2{font-size:1.3rem;color:#0A1628;margin:30px 0 15px;padding-bottom:8px;border-bottom:2px solid #00D4FF;font-weight:700}
+h3{font-size:1.05rem;color:#112240;margin:20px 0 8px;font-weight:600}
+p{margin-bottom:12px;color:#475569}
+.badge{display:inline-block;padding:4px 14px;border-radius:20px;font-size:0.8rem;font-weight:600}
+.b-green{background:#ECFDF5;color:#059669}
+.b-cyan{background:#F0FDFF;color:#00A8CC}
+.tip{background:#ECFDF5;border:1px solid #A7F3D0;border-radius:8px;padding:14px 18px;margin:12px 0;font-size:0.9rem;color:#065F46}
+.warn{background:#FFF7ED;border:1px solid #FDBA74;border-radius:8px;padding:14px 18px;margin:12px 0;font-size:0.9rem;color:#9A3412}
+.prompt-box{position:relative;background:#0A1628;border:2px solid #1E3A5F;border-radius:14px;padding:30px;margin:20px 0}
+.prompt-box pre{color:#E2E8F0;font-family:'JetBrains Mono','Courier New',monospace;font-size:0.85rem;line-height:1.8;white-space:pre-wrap;word-wrap:break-word;margin:0}
+.prompt-box .highlight{color:#00D4FF;font-weight:500}
+.prompt-box .var{color:#F59E0B;font-weight:600}
+.prompt-box .section-marker{color:#22D3EE;font-weight:700;font-size:0.95rem}
+.prompt-box .comment{color:#64748B;font-style:italic}
+.copy-btn{position:absolute;top:12px;right:12px;background:linear-gradient(135deg,#00D4FF,#00A8CC);color:#0A1628;border:none;padding:8px 18px;border-radius:8px;font-size:0.82rem;font-weight:700;cursor:pointer;z-index:10;transition:all 0.2s}
+.copy-btn:hover{transform:scale(1.05)}
+.copy-btn.copied{background:#059669;color:#fff}
+ul{margin:10px 0 15px 20px}
+li{margin-bottom:6px;color:#475569;font-size:0.93rem}
+li::marker{color:#00D4FF}
+.btn-print{position:fixed;bottom:30px;right:30px;background:linear-gradient(135deg,#00D4FF,#00A8CC);color:#fff;border:none;padding:14px 28px;border-radius:50px;font-size:1rem;font-weight:600;cursor:pointer;box-shadow:0 4px 15px rgba(0,212,255,0.4);z-index:100}
+</style>
+</head>
+<body>
+<button class="btn-print no-print" onclick="window.print()">📄 Print PDF</button>
+<div class="container"><div class="doc">
+
+<div class="hdr">
+<div class="logo">AI<span>Growth</span>Labs</div>
+<p>AI SEO AGENCY OS — DNA-Level Audit Prompt</p>
+</div>
+
+<h1>DNA SEO Audit — Level 1: Public Audit Prompt</h1>
+<p><span class="badge b-green">No Credentials Needed</span> <span class="badge b-cyan">Just Paste Website URL</span></p>
+<p>Copy this mega prompt into ChatGPT (GPT-4o), Claude, or Gemini. Replace <strong>[WEBSITE_URL]</strong> with the client's website. The AI will produce a comprehensive, professional-grade SEO audit covering all 12 DNA pillars.</p>
+
+<div class="tip">💡 <strong>How to Use:</strong> Copy the prompt below → Open ChatGPT/Claude → Paste → Replace [WEBSITE_URL] with your client's actual URL → Send → Get complete audit report.</div>
+
+<h2>THE MEGA PROMPT — Copy Below</h2>
+
+<div class="prompt-box">
+<button class="copy-btn no-print" onclick="copyPrompt(this)">📋 Copy Prompt</button>
+<pre id="prompt-text">
+<span class="section-marker">═══════════════════════════════════════════════════</span>
+<span class="section-marker">  AI SEO AGENCY — COMPLETE DNA-LEVEL WEBSITE AUDIT</span>
+<span class="section-marker">═══════════════════════════════════════════════════</span>
+
+You are a senior SEO strategist and technical SEO auditor with 15+ years of experience working at top agencies (like WebFX, Victorious, NP Digital). You have deep expertise in all 12 DNA pillars of website ranking.
+
+I need you to perform a COMPLETE, PROFESSIONAL-GRADE DNA-LEVEL SEO AUDIT of this website:
+
+<span class="var">🔗 WEBSITE URL: [WEBSITE_URL]</span>
+
+<span class="comment">--- INSTRUCTIONS ---</span>
+
+Browse the website thoroughly. Visit at minimum: the homepage, 3-5 inner pages (services, about, contact, blog if exists), and any landing pages. Analyze everything you can see publicly. Be extremely detailed and specific — give exact findings, not generic advice.
+
+Produce a STRUCTURED AUDIT REPORT covering ALL 12 DNA PILLARS below. For each factor, give:
+- Current status (what you found)
+- Score out of 10
+- Specific issues found
+- Priority fix recommendation
+
+Use this EXACT report structure:
+
+<span class="section-marker">══════════════════════════════════════</span>
+<span class="section-marker">PILLAR 1: TECHNICAL SEO DNA (Foundation)</span>
+<span class="section-marker">══════════════════════════════════════</span>
+
+<span class="highlight">A) Crawlability Analysis</span>
+- Check: robots.txt rules, crawl blocks, orphan pages, crawl depth, broken links, redirect chains
+- Report any pages that might be blocked from Google
+
+<span class="highlight">B) Indexability Analysis</span>
+- Check: Are important pages likely indexed? Look for noindex signals, canonical issues, duplicate content patterns, thin pages, soft 404 patterns
+- Estimate how many pages should vs shouldn't be indexed
+
+<span class="highlight">C) Site Speed & Core Web Vitals</span>
+- Analyze: page load perception, heavy resources visible (large images, unoptimized videos, render-blocking scripts)
+- Check for: excessive JavaScript, uncompressed images, no lazy loading, layout shifts visible
+- Estimate LCP, CLS, INP risk based on page structure
+- Score each Core Web Vital: LCP / CLS / INP / TTFB
+
+<span class="highlight">D) Mobile Optimization</span>
+- Check: responsive design quality, tap target sizes, mobile navigation, mobile layout issues, font readability on mobile
+- Is this truly mobile-first or desktop-adapted?
+
+<span class="highlight">E) Site Architecture</span>
+- Analyze: URL structure pattern, hierarchy depth, breadcrumb implementation, internal navigation logic, click depth to important pages
+- Is the architecture flat or deep? Is it logical?
+
+<span class="highlight">F) Security</span>
+- Check: HTTPS implementation, SSL certificate, mixed content warnings, any security red flags
+
+<span class="highlight">G) Structured Data / Schema Markup</span>
+- Check for: LocalBusiness, Organization, FAQPage, Review/AggregateRating, Service, Article, BreadcrumbList, HowTo, VideoObject, Person schema
+- What's implemented? What's missing? What's broken?
+
+<span class="section-marker">══════════════════════════════════════</span>
+<span class="section-marker">PILLAR 2: ON-PAGE SEO DNA</span>
+<span class="section-marker">══════════════════════════════════════</span>
+
+<span class="highlight">A) Title Tags</span>
+- Check homepage + 3-5 inner page titles
+- Analyze: keyword placement, CTR optimization, uniqueness, length (under 60 chars?), brand inclusion
+- Are titles compelling or generic?
+
+<span class="highlight">B) Meta Descriptions</span>
+- Check: are they present? Unique per page? Include CTR hooks? Proper length (under 160 chars)?
+- Are they engaging or auto-generated?
+
+<span class="highlight">C) Heading Structure (H1/H2/H3)</span>
+- Analyze heading hierarchy on homepage + key pages
+- Check: proper H1 usage (single H1?), semantic structure, keyword coverage in headings, topic depth through subheadings
+
+<span class="highlight">D) Keyword Optimization</span>
+- Identify: what primary keywords the site appears to target
+- Check: keyword in title, H1, first 100 words, URL, throughout content
+- Assess: keyword stuffing vs natural usage
+- Check for: secondary/semantic keyword variety, NLP entity coverage
+
+<span class="highlight">E) Content Quality Assessment</span>
+- Analyze: originality (does it feel AI-generated or human-written?), helpfulness, depth, expertise signals (E-E-A-T)
+- Word count estimates for key pages
+- Is content providing real value or thin/generic?
+
+<span class="highlight">F) Image & Media Optimization</span>
+- Check: image alt text present?, file naming conventions, image compression (oversized images?), video embeds optimized?, WebP/AVIF usage
+- Count approximate images per page and optimization status
+
+<span class="highlight">G) Internal Linking</span>
+- Check: are pages well-connected? Topical linking present? Orphan pages visible? Anchor text quality?
+- Is there a strategic internal linking structure or random links?
+
+<span class="highlight">H) UX Signals</span>
+- Analyze: readability (font size, contrast, spacing), CTA placement and design, engagement elements, bounce risk factors, above-the-fold content quality
+
+<span class="section-marker">══════════════════════════════════════</span>
+<span class="section-marker">PILLAR 3: CONTENT SEO DNA</span>
+<span class="section-marker">══════════════════════════════════════</span>
+
+<span class="highlight">A) Topic Coverage</span>
+- Does the website comprehensively cover its niche?
+- What topics are covered vs missing?
+- Is there topical authority building or scattered content?
+
+<span class="highlight">B) Semantic SEO</span>
+- Are related entities properly used throughout content?
+- Does the site use semantic language that Google can understand?
+- NLP optimization assessment
+
+<span class="highlight">C) Search Intent Match</span>
+- For key pages: does the content match search intent?
+- Informational vs commercial vs transactional intent alignment
+- Are service pages selling or informing?
+
+<span class="highlight">D) Content Freshness</span>
+- When was content last updated?
+- Are there dated references or outdated information?
+- Blog posting frequency (if blog exists)
+
+<span class="highlight">E) Helpful Content Assessment</span>
+- Does content actually solve user problems?
+- Google Helpful Content System compliance check
+- People-first vs search-engine-first content?
+
+<span class="highlight">F) E-E-A-T Analysis</span>
+- Experience: Does content show first-hand experience?
+- Expertise: Are credentials, qualifications shown?
+- Authoritativeness: Is the site/author recognized in the niche?
+- Trust: Contact info, about page, privacy policy, reviews?
+
+<span class="highlight">G) Content Depth</span>
+- Surface-level or authority-level content?
+- Compared to top-ranking competitors, is content thinner or more comprehensive?
+
+<span class="section-marker">══════════════════════════════════════</span>
+<span class="section-marker">PILLAR 4: ENTITY SEO DNA</span>
+<span class="section-marker">══════════════════════════════════════</span>
+
+- What entities does this website represent?
+- Are entities properly defined and connected?
+- Is there a semantic entity graph (related topics logically connected)?
+- Entity gap: what entities are competitors covering that this site is not?
+- NLP entity optimization level
+- Topical map assessment: how well does the site map its topic universe?
+
+<span class="section-marker">══════════════════════════════════════</span>
+<span class="section-marker">PILLAR 5: INTERNAL LINKING DNA</span>
+<span class="section-marker">══════════════════════════════════════</span>
+
+- Are there orphan pages (pages with no internal links pointing to them)?
+- Is there a silo/hub structure?
+- Topical clusters properly linked?
+- Contextual links within content (not just navigation)?
+- Anchor text diversity and optimization
+- Click depth: can users reach important pages within 3 clicks?
+
+<span class="section-marker">══════════════════════════════════════</span>
+<span class="section-marker">PILLAR 6: OFF-PAGE SEO DNA</span>
+<span class="section-marker">══════════════════════════════════════</span>
+
+<span class="highlight">A) Backlink Profile Estimate</span>
+- Based on domain authority signals, content quality, and niche — estimate the likely backlink strength
+- Are there obvious link-worthy assets on the site?
+
+<span class="highlight">B) Brand Presence</span>
+- Google the brand name: what comes up?
+- Is there a Knowledge Panel?
+- Brand mentions visible across the web?
+
+<span class="highlight">C) Citation Profile (for local businesses)</span>
+- Check for NAP (Name, Address, Phone) on the website
+- Is NAP prominent and consistent?
+- Estimated citation presence
+
+<span class="highlight">D) Social Signals</span>
+- Check for social media links on the website
+- Visit each linked social profile and analyze:
+  * Platform name and URL
+  * Follower/subscriber count
+  * Last post date
+  * Posting frequency
+  * Engagement level (likes, comments, shares per post)
+  * Content quality and consistency
+  * Is the account active or dormant?
+  * Profile completeness (bio, profile pic, cover photo, contact info)
+
+Check these platforms (if linked or findable):
+  - Facebook (page likes, reviews, post engagement)
+  - Instagram (followers, post frequency, reel views, engagement rate)
+  - YouTube (subscribers, video count, view counts, last upload)
+  - TikTok (followers, video views, posting frequency)
+  - Twitter/X (followers, tweet frequency, engagement)
+  - LinkedIn (company page followers, post activity)
+  - Pinterest (monthly views, pin count, board organization)
+
+For each platform found, report:
+  ☐ Profile URL
+  ☐ Follower count
+  ☐ Last post date
+  ☐ Posts per week/month
+  ☐ Average engagement
+  ☐ Active or Dormant?
+  ☐ Content quality (1-10)
+  ☐ Profile completeness (1-10)
+  ☐ Why it's failing / succeeding
+
+<span class="section-marker">══════════════════════════════════════</span>
+<span class="section-marker">PILLAR 7: LOCAL SEO DNA</span>
+<span class="section-marker">══════════════════════════════════════</span>
+
+<span class="highlight">A) Google Business Profile</span>
+- Search "[business name] + [city]" on Google
+- Check: Does GBP listing appear? Rating? Review count? Photo count?
+- Analyze: categories, business description quality, post activity, Q&A
+- Check for negative reviews — list the top 3 most critical negative reviews and what they say
+- Are review responses present? Quality of responses?
+
+<span class="highlight">B) NAP Consistency</span>
+- Is Name, Address, Phone consistent on website (header, footer, contact page)?
+- Local phone number vs toll-free?
+- Address format consistent?
+
+<span class="highlight">C) Local Content</span>
+- Are there location-specific pages?
+- City names in titles, content, meta?
+- Service area properly defined?
+
+<span class="highlight">D) Geo-Relevance Signals</span>
+- Embedded Google Map?
+- Local schema markup?
+- Local landmarks or area references in content?
+
+<span class="section-marker">══════════════════════════════════════</span>
+<span class="section-marker">PILLAR 8: USER BEHAVIOR DNA</span>
+<span class="section-marker">══════════════════════════════════════</span>
+
+Based on your analysis of the site, estimate risk for:
+- High bounce rate (what would make users leave?)
+- Low dwell time (is content engaging enough?)
+- Pogo-sticking risk (would users go back to Google?)
+- Scroll depth concerns (is above-fold content compelling?)
+- Engagement quality (interactive elements, clear next steps?)
+
+<span class="section-marker">══════════════════════════════════════</span>
+<span class="section-marker">PILLAR 9: CONVERSION DNA</span>
+<span class="section-marker">══════════════════════════════════════</span>
+
+- CTA Analysis: Are calls-to-action clear, visible, compelling?
+- Trust Signals: reviews displayed, badges, certifications, guarantees?
+- Contact Options: phone, form, chat, email — all present?
+- Form Quality: how many fields? Friction level?
+- Conversion Flow: can a visitor easily go from landing → action?
+- Social Proof: testimonials, case studies, review widgets on site?
+
+<span class="section-marker">══════════════════════════════════════</span>
+<span class="section-marker">PILLAR 10: COMPETITOR DNA ANALYSIS</span>
+<span class="section-marker">══════════════════════════════════════</span>
+
+Identify 3-5 likely competitors ranking for the same keywords.
+For each competitor, briefly compare:
+
+A) Authority Level (estimated domain strength)
+B) Content Gap (what they have that this site doesn't)
+C) Keyword Gap (topics/keywords competitors rank for but this site doesn't)
+D) Entity Gap (semantic coverage differences)
+E) UX Gap (is competitor's user experience stronger?)
+F) Topical Depth Gap (who has deeper content?)
+
+<span class="section-marker">══════════════════════════════════════</span>
+<span class="section-marker">PILLAR 11: INDEXING DNA</span>
+<span class="section-marker">══════════════════════════════════════</span>
+
+- Do a "site:[domain]" search on Google and report estimated indexed page count
+- Are important pages showing up?
+- Any obvious thin content or duplicate pages in the index?
+- Is there a visible XML sitemap link?
+- Any signs of crawl budget waste (parameter URLs, tag pages, etc.)?
+- JavaScript rendering concerns (does the site rely heavily on JS for content)?
+
+<span class="section-marker">══════════════════════════════════════</span>
+<span class="section-marker">PILLAR 12: AI / PROGRAMMATIC SEO DNA</span>
+<span class="section-marker">══════════════════════════════════════</span>
+
+- Is the site using programmatic/template-based pages? (e.g., city+service pages)
+- Could the site benefit from programmatic SEO? How?
+- AI visibility assessment: search "[business type] in [city]" on ChatGPT/Perplexity — is this business mentioned?
+- Is content AI-friendly (structured, factual, directly answering questions)?
+- Dynamic content opportunities (FAQ pages, comparison pages, data-driven content)
+
+<span class="section-marker">══════════════════════════════════════</span>
+<span class="section-marker">FINAL SCORING & PRIORITY ROADMAP</span>
+<span class="section-marker">══════════════════════════════════════</span>
+
+<span class="highlight">OVERALL DNA SCORE CARD</span>
+
+Score each pillar out of 10 and provide an overall DNA score out of 120:
+
+| # | DNA Pillar | Score /10 | Priority |
+|---|-----------|-----------|----------|
+| 1 | Technical SEO | /10 | |
+| 2 | On-Page SEO | /10 | |
+| 3 | Content SEO | /10 | |
+| 4 | Entity SEO | /10 | |
+| 5 | Internal Linking | /10 | |
+| 6 | Off-Page SEO | /10 | |
+| 7 | Local SEO | /10 | |
+| 8 | User Behavior | /10 | |
+| 9 | Conversion | /10 | |
+| 10 | Competitor Position | /10 | |
+| 11 | Indexing | /10 | |
+| 12 | AI/Programmatic SEO | /10 | |
+| TOTAL | | /120 | |
+
+<span class="highlight">SEO MATURITY LEVEL</span>
+Based on the score, classify:
+- Level 1 (0-30): Basic — needs fundamental fixes
+- Level 2 (31-60): Intermediate — has basics, needs depth
+- Level 3 (61-90): Advanced — good foundation, needs optimization
+- Level 4 (91-120): DNA Level — highly optimized, needs fine-tuning
+
+<span class="highlight">TOP 10 CRITICAL FIXES (Priority Roadmap)</span>
+List the 10 most impactful fixes in order of priority:
+
+| # | Fix | Pillar | Impact | Effort | Timeline |
+|---|-----|--------|--------|--------|----------|
+| 1 | | | High/Med/Low | Easy/Med/Hard | Week 1-2 |
+| 2 | | | | | |
+... continue to 10
+
+<span class="highlight">QUICK WINS (Can Fix This Week)</span>
+List 5 things that can be fixed immediately with minimal effort but maximum impact.
+
+<span class="highlight">SOCIAL MEDIA BREAKDOWN</span>
+Summarize why social media is failing or succeeding. Give specific recommendations for each platform found.
+
+<span class="highlight">GOOGLE BUSINESS PROFILE BREAKDOWN</span>
+Summarize GBP status with specific action items to improve listing.
+
+<span class="highlight">90-DAY GROWTH ROADMAP</span>
+Month 1: [Foundation fixes]
+Month 2: [Growth activities]
+Month 3: [Authority building]
+
+<span class="highlight">CREDENTIALS NEEDED FOR DEEPER AUDIT</span>
+List the specific credentials/access needed for a Level 2 Professional Audit:
+1. Google Search Console — for [what it unlocks]
+2. Google Analytics (GA4) — for [what it unlocks]
+3. WordPress/CMS Login — for [what it unlocks]
+4. Google Business Profile access — for [what it unlocks]
+5. Semrush/Ahrefs API — for [what it unlocks]
+
+End with: "To unlock Level 2 Professional DNA Audit with real ranking data, traffic analysis, and automated fixes — please share the credentials listed above."
+
+<span class="section-marker">══════════════════════════════════════</span>
+<span class="section-marker">FORMAT REQUIREMENTS</span>
+<span class="section-marker">══════════════════════════════════════</span>
+
+- Use tables for data wherever possible
+- Use clear section headers with the pillar numbers
+- Be SPECIFIC — mention actual page names, URLs, exact issues found
+- Give SCORES for every sub-section
+- Include screenshots descriptions where relevant
+- Write professionally — this will be sent to a paying client
+- Make it comprehensive: minimum 3000+ words
+- End with a compelling reason to hire for the fixes
+
+<span class="section-marker">═══════════════════════════════════════════════════</span>
+<span class="section-marker">  BEGIN AUDIT NOW. BE THOROUGH. BE SPECIFIC. BE PROFESSIONAL.</span>
+<span class="section-marker">═══════════════════════════════════════════════════</span>
+</pre>
+</div>
+
+<h2>HOW TO USE THIS PROMPT</h2>
+<div class="tip">
+<strong>Step 1:</strong> Copy the entire prompt above<br>
+<strong>Step 2:</strong> Open ChatGPT (GPT-4o), Claude, or Gemini<br>
+<strong>Step 3:</strong> Paste the prompt<br>
+<strong>Step 4:</strong> Replace <code>[WEBSITE_URL]</code> with client's actual website URL<br>
+<strong>Step 5:</strong> Send and wait for complete audit report<br>
+<strong>Step 6:</strong> Review, add your expert insights, and send to client as PDF
+</div>
+
+<div class="warn">
+<strong>Important Notes:</strong><br>
+- GPT-4o with browsing enabled gives best results (it can actually visit the website)<br>
+- For very large sites, you may need to ask for individual pillar deep-dives in follow-up messages<br>
+- Always verify AI findings manually before sending to clients<br>
+- This is Level 1 (public data only). Level 2 prompt adds GSC, GA4, and CMS analysis
+</div>
+
+</div></div>
+
+<script>
+function copyPrompt(btn){
+  const text = document.getElementById('prompt-text').innerText;
+  navigator.clipboard.writeText(text).then(()=>{
+    btn.textContent='Copied!';
+    btn.classList.add('copied');
+    setTimeout(()=>{btn.textContent='📋 Copy Prompt';btn.classList.remove('copied')},2000);
+  });
+}
+</script>
+</body>
+</html>
