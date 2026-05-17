@@ -349,6 +349,9 @@ img { max-width: 100%; height: auto; display: block; }
   gap: 24px;
   margin-top: 48px;
 }
+.hero-stats-4 {
+  grid-template-columns: repeat(4, 1fr);
+}
 .hero-stat {
   text-align: center;
   padding: 20px;
