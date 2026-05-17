@@ -1,0 +1,137 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Content Pipeline — AI Growth Labs OS</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/static/css/dashboard.css"></head><body>
+<aside class="sidebar"><div class="sidebar-brand">AI Growth<span>Labs</span></div>
+<nav><div class="nav-section">Content</div>
+<a href="/dashboard">📊 Dashboard</a>
+<a href="/content-pipeline" class="active">📝 Content Pipeline</a>
+<a href="/knowledge">📚 Knowledge Base</a>
+<a href="/team-chat">💬 Team Chat</a>
+</nav>
+<div class="sidebar-user"><div class="user-avatar">{{ user.full_name[:2]|upper }}</div>
+<div><strong>{{ user.full_name }}</strong><small>{{ user.role }}</small></div></div></aside>
+<main class="main">
+<div class="header-bar"><h1>📝 AI Content Pipeline</h1><span>Generate, review, and publish content</span>
+<div class="header-actions">
+<button class="btn btn-primary" onclick="document.getElementById('generateModal').style.display='flex'">🤖 Generate Content</button>
+<a href="/dashboard" class="btn btn-outline">← Back</a>
+</div></div>
+
+<!-- Content Kanban -->
+<div class="kanban-row">
+<div class="kanban-col">
+<h4 class="kanban-header" style="border-color:#f59e0b">📝 Drafts</h4>
+{% for c in contents if c.status == 'draft' %}
+<div class="kanban-card">
+<span class="badge">{{ c.content_type }}</span>
+<h5>{{ c.title or 'Untitled' }}</h5>
+<small>{{ c.business_name or '' }} | {{ c.ai_provider or '' }}</small>
+<div class="kanban-actions">
+<button class="btn btn-sm btn-outline" onclick="viewContent({{ c.id }})">View</button>
+<button class="btn btn-sm btn-primary" onclick="updateContentStatus({{ c.id }},'review')">To Review</button>
+</div>
+</div>
+{% endfor %}
+</div>
+<div class="kanban-col">
+<h4 class="kanban-header" style="border-color:#3b82f6">🔍 In Review</h4>
+{% for c in contents if c.status == 'review' %}
+<div class="kanban-card">
+<span class="badge">{{ c.content_type }}</span>
+<h5>{{ c.title or 'Untitled' }}</h5>
+<small>{{ c.business_name or '' }}</small>
+<div class="kanban-actions">
+<button class="btn btn-sm" style="background:#22c55e;color:#fff" onclick="updateContentStatus({{ c.id }},'approved')">Approve</button>
+<button class="btn btn-sm" style="background:#ef4444;color:#fff" onclick="updateContentStatus({{ c.id }},'rejected')">Reject</button>
+</div>
+</div>
+{% endfor %}
+</div>
+<div class="kanban-col">
+<h4 class="kanban-header" style="border-color:#22c55e">✅ Approved</h4>
+{% for c in contents if c.status == 'approved' %}
+<div class="kanban-card">
+<span class="badge badge-active">{{ c.content_type }}</span>
+<h5>{{ c.title or 'Untitled' }}</h5>
+<small>{{ c.business_name or '' }}</small>
+<div class="kanban-actions">
+<button class="btn btn-sm btn-outline" onclick="viewContent({{ c.id }})">View</button>
+<button class="btn btn-sm btn-primary" onclick="updateContentStatus({{ c.id }},'published')">Publish</button>
+</div>
+</div>
+{% endfor %}
+</div>
+<div class="kanban-col">
+<h4 class="kanban-header" style="border-color:#8b5cf6">🚀 Published</h4>
+{% for c in contents if c.status == 'published' %}
+<div class="kanban-card">
+<span class="badge" style="background:#8b5cf6;color:#fff">{{ c.content_type }}</span>
+<h5>{{ c.title or 'Untitled' }}</h5>
+<small>{{ c.business_name or '' }}</small>
+</div>
+{% endfor %}
+</div>
+</div>
+
+<!-- View Content Modal -->
+<div id="viewContentModal" class="modal" style="display:none">
+<div class="modal-content" style="max-width:800px;max-height:80vh;overflow-y:auto">
+<div class="modal-header"><h3 id="contentTitle"></h3><button onclick="this.closest('.modal').style.display='none'" class="modal-close">&times;</button></div>
+<div id="contentBody" style="white-space:pre-wrap;line-height:1.8;color:#e2e8f0;font-size:14px"></div>
+</div></div>
+
+<!-- Generate Modal -->
+<div id="generateModal" class="modal" style="display:none">
+<div class="modal-content">
+<div class="modal-header"><h3>🤖 Generate AI Content</h3><button onclick="this.closest('.modal').style.display='none'" class="modal-close">&times;</button></div>
+<div class="form-group"><label>Client</label>
+<select id="gen_client" class="form-input">{% for c in clients %}<option value="{{ c.id }}">{{ c.business_name }}</option>{% endfor %}</select></div>
+<div class="form-group"><label>Content Type</label>
+<select id="gen_type" class="form-input">
+<option value="blog">Blog Post (1500+ words)</option>
+<option value="meta_title">Meta Titles (5 options)</option>
+<option value="meta_desc">Meta Descriptions (5 options)</option>
+<option value="social_post">Social Media Posts (5 posts)</option>
+<option value="faq">FAQ Section (10 Q&As)</option>
+<option value="schema">Schema Markup (JSON-LD)</option>
+</select></div>
+<div class="form-group"><label>Topic / Keywords</label>
+<input id="gen_topic" type="text" class="form-input" placeholder="e.g., dental implants cost, emergency dentist near me"></div>
+<button class="btn btn-primary btn-full" onclick="generateContent()" id="genBtn">🤖 Generate with AI</button>
+<p id="genStatus" style="color:#94a3b8;text-align:center;margin-top:8px;display:none">Generating content... this may take 30-60 seconds...</p>
+</div></div>
+
+<script>
+const allContents={{ contents|tojson }};
+function viewContent(id){
+    const c=allContents.find(x=>x.id===id);
+    if(!c)return;
+    document.getElementById('contentTitle').textContent=(c.title||'Content')+ ' ('+c.content_type+')';
+    document.getElementById('contentBody').textContent=c.content||'';
+    document.getElementById('viewContentModal').style.display='flex';
+}
+function updateContentStatus(id,status){
+    fetch('/api/content/'+id+'/status',{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({status})})
+    .then(r=>r.json()).then(d=>{location.reload()});
+}
+function generateContent(){
+    const btn=document.getElementById('genBtn');
+    const status=document.getElementById('genStatus');
+    btn.disabled=true;btn.textContent='Generating...';status.style.display='block';
+    fetch('/api/content/generate',{method:'POST',headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({client_id:parseInt(document.getElementById('gen_client').value),
+            content_type:document.getElementById('gen_type').value,topic:document.getElementById('gen_topic').value})})
+    .then(r=>r.json()).then(d=>{
+        alert(d.message);location.reload();
+    }).catch(e=>{alert('Error: '+e);btn.disabled=false;btn.textContent='🤖 Generate with AI';status.style.display='none'});
+}
+</script>
+<style>
+.kanban-row{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px}
+.kanban-col{min-height:200px}.kanban-header{padding:10px;border-bottom:3px solid;margin-bottom:12px;font-size:14px}
+.kanban-card{background:#0d1f3c;border:1px solid #1e3a5f;border-radius:8px;padding:12px;margin-bottom:8px}
+.kanban-card h5{margin:6px 0;font-size:14px;color:#fff}.kanban-card small{color:#94a3b8;font-size:12px}
+.kanban-actions{margin-top:8px;display:flex;gap:6px}
+</style>
+</main></body></html>

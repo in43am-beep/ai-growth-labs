@@ -1,0 +1,133 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>SEO DNA Audit — AI Growth Labs</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/static/css/dashboard.css">
+<style>
+.audit-container{max-width:800px;margin:0 auto}
+.audit-hero{background:linear-gradient(135deg,#0A1628 0%,#162544 50%,#1a1a4e 100%);padding:60px 40px;border-radius:16px;text-align:center;margin-bottom:30px}
+.audit-hero h1{font-size:36px;color:#fff;margin-bottom:10px}
+.audit-hero p{color:#94a3b8;font-size:16px;margin-bottom:30px}
+.audit-form{display:flex;gap:12px;justify-content:center;flex-wrap:wrap;max-width:600px;margin:0 auto}
+.audit-input{flex:1;min-width:300px;padding:16px 20px;border-radius:10px;border:2px solid #1e3a5f;background:#0d1f3c;color:#fff;font-size:16px;outline:none;transition:border-color 0.3s}
+.audit-input:focus{border-color:#22D3EE}
+.audit-input::placeholder{color:#64748b}
+.audit-btn{padding:16px 32px;border-radius:10px;background:linear-gradient(135deg,#22D3EE,#7c3aed);color:#fff;font-size:16px;font-weight:700;border:none;cursor:pointer;transition:transform 0.2s,box-shadow 0.2s;white-space:nowrap}
+.audit-btn:hover{transform:translateY(-2px);box-shadow:0 8px 25px rgba(34,211,238,0.3)}
+.audit-btn:disabled{opacity:0.5;cursor:not-allowed;transform:none}
+.features-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:16px;margin:30px 0}
+.feature-card{background:#0d1f3c;border:1px solid #1e3a5f;border-radius:12px;padding:20px;text-align:center}
+.feature-card .emoji{font-size:32px;margin-bottom:10px}
+.feature-card h4{color:#22D3EE;margin-bottom:6px;font-size:14px}
+.feature-card p{color:#94a3b8;font-size:12px;margin:0}
+.loading-overlay{display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(10,22,40,0.95);z-index:1000;flex-direction:column;align-items:center;justify-content:center}
+.loading-overlay.show{display:flex}
+.spinner{width:60px;height:60px;border:4px solid #1e3a5f;border-top:4px solid #22D3EE;border-radius:50%;animation:spin 1s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.loading-text{color:#22D3EE;font-size:18px;margin-top:20px;font-weight:600}
+.loading-sub{color:#94a3b8;font-size:14px;margin-top:8px}
+.recent-audits{margin-top:30px}
+.recent-audits h3{color:#e2e8f0;margin-bottom:15px}
+.audit-history-item{background:#0d1f3c;border:1px solid #1e3a5f;border-radius:10px;padding:16px 20px;margin-bottom:10px;display:flex;justify-content:space-between;align-items:center}
+.audit-history-item .domain{color:#22D3EE;font-weight:600}
+.audit-history-item .score{font-size:20px;font-weight:800}
+.audit-history-item .date{color:#64748b;font-size:12px}
+.error-msg{background:#ef444420;border:1px solid #ef4444;color:#fca5a5;padding:12px 20px;border-radius:8px;margin-top:15px;display:none;font-size:14px}
+</style></head><body>
+<aside class="sidebar"><div class="sidebar-brand">AI Growth<span>Labs</span></div>
+<nav><div class="nav-section">Navigation</div>
+<a href="/dashboard">📊 Dashboard</a>
+<a href="/audit" class="active">🔍 SEO Audit</a>
+<a href="/monitor">📡 Monitor</a>
+<a href="/invoices">💰 Invoices</a>
+<a href="/content-pipeline">📝 Content</a>
+<a href="/knowledge">📚 Knowledge</a>
+<a href="/team-chat">💬 Chat</a>
+<a href="/settings">⚙️ Settings</a>
+</nav>
+<div class="sidebar-user"><div class="user-avatar">{{ user.full_name[:2]|upper }}</div>
+<div><strong>{{ user.full_name }}</strong><small>{{ user.role }}</small></div></div></aside>
+<main class="main">
+<div class="header-bar"><h1>🔍 DNA-Level SEO Audit</h1><span>Analyze any website with 100+ SEO factors across 12 pillars</span>
+<div class="header-actions"><a href="/dashboard" class="btn btn-secondary">← Dashboard</a><a href="/logout" class="btn btn-outline">Logout</a></div></div>
+
+<div class="audit-container">
+<div class="audit-hero">
+<h1>🧬 DNA SEO Audit Engine</h1>
+<p>Paste any website URL below — our engine will crawl and analyze 100+ SEO factors across 12 DNA pillars in real-time.</p>
+<form id="auditForm" onsubmit="startAudit(event)">
+<div class="audit-form">
+<input type="url" id="websiteUrl" class="audit-input" placeholder="https://example.com" required>
+<button type="submit" class="audit-btn" id="auditBtn">🔍 Run DNA Audit</button>
+</div>
+</form>
+<div class="error-msg" id="errorMsg"></div>
+</div>
+
+<h3 style="color:#22D3EE;margin-bottom:15px">What We Analyze</h3>
+<div class="features-grid">
+<div class="feature-card"><div class="emoji">🔧</div><h4>Technical SEO</h4><p>HTTPS, robots.txt, sitemap, redirects, server speed</p></div>
+<div class="feature-card"><div class="emoji">📄</div><h4>On-Page SEO</h4><p>Title, meta, headings, viewport, OG tags, favicons</p></div>
+<div class="feature-card"><div class="emoji">📝</div><h4>Content Quality</h4><p>Word count, paragraphs, lists, readability, depth</p></div>
+<div class="feature-card"><div class="emoji">🧠</div><h4>Entity SEO</h4><p>Semantic depth, topic terms, NLP coverage</p></div>
+<div class="feature-card"><div class="emoji">🔗</div><h4>Internal Linking</h4><p>Link count, external links, anchor optimization</p></div>
+<div class="feature-card"><div class="emoji">📊</div><h4>Structured Data</h4><p>JSON-LD, microdata, schema types, rich results</p></div>
+<div class="feature-card"><div class="emoji">🖼️</div><h4>Images & Media</h4><p>Alt text, lazy loading, WebP, video content</p></div>
+<div class="feature-card"><div class="emoji">📱</div><h4>Social Media</h4><p>Facebook, Instagram, YouTube, LinkedIn, TikTok, Twitter, Pinterest</p></div>
+<div class="feature-card"><div class="emoji">🔒</div><h4>Security</h4><p>HTTPS, HSTS, CSP, XSS protection, frame options</p></div>
+<div class="feature-card"><div class="emoji">📲</div><h4>Mobile & UX</h4><p>Viewport, responsive CSS, font sizes, touch targets</p></div>
+<div class="feature-card"><div class="emoji">🗂️</div><h4>Indexability</h4><p>Meta robots, canonical, noindex, X-Robots-Tag</p></div>
+<div class="feature-card"><div class="emoji">⚡</div><h4>Performance</h4><p>TTFB, HTML size, scripts, render-blocking, compression</p></div>
+</div>
+
+{% if recent_audits %}
+<div class="recent-audits">
+<h3>📋 Recent Audits</h3>
+{% for a in recent_audits %}
+<div class="audit-history-item">
+<div><div class="domain">{{ a.website_url }}</div><div class="date">{{ a.created_at }} | {{ a.status }}</div></div>
+<div class="score" style="color:{% if a.overall_score and a.overall_score >= 70 %}#22c55e{% elif a.overall_score and a.overall_score >= 40 %}#f59e0b{% else %}#ef4444{% endif %}">{% if a.overall_score %}{{ a.overall_score }}%{% else %}--{% endif %}</div>
+{% if a.status == 'completed' %}<a href="/audit/{{ a.id }}/results" class="btn btn-sm btn-primary">View Report</a>{% endif %}
+</div>
+{% endfor %}
+</div>
+{% endif %}
+</div>
+
+<div class="loading-overlay" id="loadingOverlay">
+<div class="spinner"></div>
+<div class="loading-text">🧬 Analyzing DNA-Level SEO Factors...</div>
+<div class="loading-sub" id="loadingStatus">Crawling website and checking 100+ factors across 12 pillars</div>
+</div>
+
+<script>
+async function startAudit(e){
+    e.preventDefault();
+    const url=document.getElementById('websiteUrl').value.trim();
+    if(!url){return}
+    const btn=document.getElementById('auditBtn');
+    const overlay=document.getElementById('loadingOverlay');
+    const errorMsg=document.getElementById('errorMsg');
+    errorMsg.style.display='none';
+    btn.disabled=true;
+    btn.textContent='Analyzing...';
+    overlay.classList.add('show');
+    const statuses=['Checking Technical SEO...','Analyzing On-Page factors...','Evaluating Content Quality...','Scanning Entity SEO...','Checking Internal Links...','Analyzing Structured Data...','Checking Images & Media...','Scanning Social Media...','Verifying Security...','Testing Mobile Friendliness...','Checking Indexability...','Measuring Performance...'];
+    let si=0;
+    const statusInterval=setInterval(()=>{document.getElementById('loadingStatus').textContent=statuses[si%statuses.length];si++},2000);
+    try{
+        const resp=await fetch('/api/audit/run',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({website_url:url})});
+        const data=await resp.json();
+        clearInterval(statusInterval);
+        if(data.audit_id){window.location.href='/audit/'+data.audit_id+'/results'}
+        else{throw new Error(data.error||'Audit failed')}
+    }catch(err){
+        clearInterval(statusInterval);
+        overlay.classList.remove('show');
+        btn.disabled=false;
+        btn.textContent='🔍 Run DNA Audit';
+        errorMsg.textContent='Error: '+err.message;
+        errorMsg.style.display='block';
+    }
+}
+</script>
+</main></body></html>

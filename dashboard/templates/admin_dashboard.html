@@ -9,7 +9,10 @@
 <a href="#tasks-section">✅Tasks</a>
 <a href="#workers-section">👷Workers</a>
 <a href="#payments-section">💰Payments</a>
-<a href="#audit-section">🔍SEO Audit</a>
+<a href="/audit">🔍SEO Audit</a>
+<a href="/invoices">💰Invoices</a>
+<a href="/content-pipeline">📝Content Pipeline</a>
+<a href="/knowledge">📚Knowledge Base</a>
 <a href="/monitor">📡Team Monitor</a>
 <a href="/team-chat">💬Team Chat</a>
 <a href="/settings">⚙️API Settings</a>
@@ -19,6 +22,8 @@
 <main class="main">
 <div class="header-bar"><h1>Super Admin Dashboard</h1><span>Agency Operating System — Complete Overview</span>
 <div class="header-actions">
+<input type="text" id="searchInput" placeholder="Search..." class="search-input" onkeyup="globalSearch(this.value)" style="width:200px">
+<div id="searchResults" class="search-results"></div>
 <button class="btn btn-primary" onclick="openModal('addClientModal')">+ Add Client</button>
 <button class="btn btn-secondary" onclick="openModal('addProjectModal')">+ New Project</button>
 <button class="btn btn-secondary" onclick="openModal('addWorkerModal')">+ Add Worker</button>
@@ -33,6 +38,8 @@
 <div class="stat-card"><div class="stat-label">Active Clients</div><div class="stat-value">{{ stats.active_clients }}</div><div class="stat-sub">Currently active</div></div>
 <div class="stat-card"><div class="stat-label">Active Projects</div><div class="stat-value">{{ stats.active_projects }}</div><div class="stat-sub">In progress</div></div>
 <div class="stat-card"><div class="stat-label">Task Completion</div><div class="stat-value">{{ stats.task_completion }}%</div><div class="stat-sub">{{ stats.completed_tasks }}/{{ stats.total_tasks }} tasks</div></div>
+<div class="stat-card"><div class="stat-label">Overdue Tasks</div><div class="stat-value" style="{% if stats.overdue_tasks > 0 %}color:#ef4444{% endif %}">{{ stats.overdue_tasks }}</div><div class="stat-sub">Need attention</div></div>
+<div class="stat-card"><div class="stat-label">Invoice Revenue</div><div class="stat-value">${{ "{:,.0f}".format(stats.invoice_total) }}</div><div class="stat-sub">${{ "{:,.0f}".format(stats.invoice_pending) }} pending</div></div>
 </div>
 
 {% if suggestions|length > 0 %}
@@ -88,6 +95,17 @@
 <td><button class="btn btn-sm btn-primary" onclick="generateReport({{ p.client_id }})">📄 Generate</button></td></tr>
 {% endfor %}</tbody></table></div>
 
+<!-- Activity Timeline -->
+{% if activities %}
+<div class="card"><h3>📅 Recent Activity</h3>
+<div class="timeline">
+{% for a in activities[:10] %}
+<div class="timeline-item"><span class="timeline-dot"></span>
+<div><strong>{{ a.user_name or 'System' }}</strong> {{ a.action }}<br><small style="color:#94a3b8">{{ a.details }} | {{ a.created_at }}</small></div></div>
+{% endfor %}
+</div></div>
+{% endif %}
+
 <div class="card" id="audit-section"><h3>🔍 Run SEO DNA Audit</h3>
 <p>Paste a client's website URL and select an AI provider to run a complete DNA-level audit.</p>
 <div class="form-row"><input type="url" id="auditUrl" placeholder="https://clientwebsite.com" class="form-input">
@@ -117,7 +135,8 @@
 <div class="modal-overlay" id="addWorkerModal"><div class="modal"><div class="modal-header"><h3>Add Worker</h3><button onclick="closeModal('addWorkerModal')" class="modal-close">×</button></div>
 <div class="modal-body"><input id="nw_username" placeholder="Username" class="form-input"><input id="nw_name" placeholder="Full Name" class="form-input">
 <input id="nw_email" placeholder="Email" class="form-input"><input id="nw_password" placeholder="Password" class="form-input" type="password">
-<select id="nw_role" class="form-select"><option value="worker">Worker</option><option value="tech_seo">Tech SEO</option><option value="sales">Sales</option><option value="social_media">Social Media</option><option value="finance">Finance</option></select>
+<select id="nw_role" class="form-select"><option value="worker">Worker</option><option value="tech_seo">Tech SEO</option><option value="sales">Sales</option><option value="social_media">Social Media</option><option value="finance">Finance</option><option value="ops_manager">Operations Manager</option><option value="client">Client Portal</option></select>
+<input id="nw_linked_client" placeholder="Linked Client ID (for client role)" type="number" class="form-input">
 <select id="nw_rank" class="form-select"><option value="junior">Junior</option><option value="mid">Mid</option><option value="senior">Senior</option><option value="lead">Lead</option></select>
 <input id="nw_salary" placeholder="Monthly Salary" type="number" class="form-input">
 <button class="btn btn-primary btn-full" onclick="addWorker()">Add Worker</button></div></div></div>
@@ -152,5 +171,28 @@ function generateReport(clientId){api('/api/reports/generate',{client_id:clientI
     .then(r=>{if(r.id){window.open('/api/reports/'+r.id+'/download','_blank')}else{alert(r.error||'Error')}})}
 
 function updateSuggestion(id,status){apiPut('/api/suggestions/'+id,{status:status,admin_response:status=='approved'?'Approved by admin':'Rejected'}).then(()=>location.reload())}
+
+let searchTimeout;
+function globalSearch(q){
+    clearTimeout(searchTimeout);
+    const box=document.getElementById('searchResults');
+    if(q.length<2){box.innerHTML='';box.style.display='none';return}
+    searchTimeout=setTimeout(()=>{
+        fetch('/api/search?q='+encodeURIComponent(q)).then(r=>r.json()).then(d=>{
+            if(!d.results.length){box.innerHTML='<div class="sr-item">No results</div>';box.style.display='block';return}
+            box.innerHTML=d.results.map(r=>`<a href="${r.url}" class="sr-item"><span class="sr-type">${r.type}</span><strong>${r.title}</strong><small>${r.subtitle||''}</small></a>`).join('');
+            box.style.display='block';
+        })
+    },300);
+}
+document.addEventListener('click',e=>{if(!e.target.closest('.header-actions'))document.getElementById('searchResults').style.display='none'});
 </script>
+<style>
+.search-input{background:#0d1f3c;border:1px solid #1e3a5f;color:#fff;padding:8px 14px;border-radius:6px;font-size:13px}
+.search-results{position:absolute;top:100%;right:0;background:#0d1f3c;border:1px solid #1e3a5f;border-radius:8px;width:350px;max-height:400px;overflow-y:auto;display:none;z-index:100}
+.sr-item{display:block;padding:10px 14px;border-bottom:1px solid #1e3a5f;color:#e2e8f0;text-decoration:none}
+.sr-item:hover{background:#162544}.sr-type{background:#22D3EE;color:#0A1628;padding:2px 6px;border-radius:3px;font-size:10px;font-weight:600;margin-right:6px}
+.timeline{padding-left:20px}.timeline-item{position:relative;padding:8px 0 8px 20px;border-left:2px solid #1e3a5f}
+.timeline-dot{position:absolute;left:-6px;top:12px;width:10px;height:10px;border-radius:50%;background:#22D3EE}
+</style>
 </main></body></html>

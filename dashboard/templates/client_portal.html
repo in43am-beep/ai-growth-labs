@@ -1,0 +1,114 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Client Portal — AI Growth Labs</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/static/css/dashboard.css"></head><body>
+<aside class="sidebar"><div class="sidebar-brand">AI Growth<span>Labs</span></div>
+<nav><div class="nav-section">My Portal</div>
+<a href="/dashboard" class="active">📊 Dashboard</a>
+<a href="#rankings" onclick="showTab('rankings')">📈 Rankings</a>
+<a href="#reports" onclick="showTab('reports')">📄 Reports</a>
+<a href="#invoices" onclick="showTab('invoices')">💳 Invoices</a>
+</nav>
+<div class="sidebar-user"><div class="user-avatar">{{ user.full_name[:2]|upper }}</div>
+<div><strong>{{ user.full_name }}</strong><small>Client Portal</small></div></div></aside>
+<main class="main">
+<div class="header-bar"><h1>Welcome, {{ client.contact_name or user.full_name }}</h1>
+<span>{{ client.business_name }} — {{ client.package or 'No Package' }}</span>
+<div class="header-actions"><a href="/logout" class="btn btn-outline">Logout</a></div></div>
+
+<!-- Stats -->
+<div class="stats-grid">
+<div class="stat-card"><div class="stat-num">{{ projects|length }}</div><div class="stat-label">Active Projects</div></div>
+<div class="stat-card"><div class="stat-num">{{ keyword_rankings|length }}</div><div class="stat-label">Keywords Tracked</div></div>
+<div class="stat-card"><div class="stat-num">{{ reports|length }}</div><div class="stat-label">Reports</div></div>
+<div class="stat-card"><div class="stat-num">{{ client.package or 'None' }}</div><div class="stat-label">Your Package</div></div>
+</div>
+
+<!-- Projects -->
+<div id="tab-projects" class="tab-content active-tab">
+<div class="card"><h3>📋 Your Projects</h3>
+{% for p in projects %}
+<div class="project-card" style="margin-bottom:16px;padding:16px;background:#0d1f3c;border-radius:8px">
+<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+<h4>{{ p.title }}</h4>
+<span class="badge badge-{{ p.status|replace('_','-') }}">{{ p.status }}</span>
+</div>
+<div class="progress-bar"><div class="progress-fill" style="width:{{ p.progress }}%"></div></div>
+<small style="color:#94a3b8">{{ p.progress }}% complete | {{ p.service_type }} | Worker: {{ p.worker_name or 'Unassigned' }}</small>
+{% if p.tasks %}
+<div style="margin-top:12px">
+<table class="mini-table"><thead><tr><th>Task</th><th>Priority</th><th>Status</th></tr></thead><tbody>
+{% for t in p.tasks %}
+<tr><td>{{ t.title }}</td><td>{{ t.priority }}</td>
+<td><span class="badge badge-{{ t.status }}">{{ t.status }}</span></td></tr>
+{% endfor %}</tbody></table>
+</div>
+{% endif %}
+</div>
+{% endfor %}
+{% if not projects %}<p class="empty-state">No active projects yet.</p>{% endif %}
+</div>
+</div>
+
+<!-- Rankings -->
+<div id="tab-rankings" class="tab-content">
+<div class="card"><h3>📈 Keyword Rankings</h3>
+{% if keyword_rankings %}
+<table><thead><tr><th>Keyword</th><th>Position</th><th>Change</th><th>Search Volume</th><th>URL</th></tr></thead><tbody>
+{% for r in keyword_rankings %}
+<tr><td><strong>{{ r.keyword }}</strong></td>
+<td style="font-size:18px;font-weight:700">#{{ r.position }}</td>
+<td>{% set change = (r.previous_position or r.position) - r.position %}
+{% if change > 0 %}<span style="color:#22c55e;font-weight:600">▲ +{{ change }}</span>
+{% elif change < 0 %}<span style="color:#ef4444;font-weight:600">▼ {{ change }}</span>
+{% else %}<span style="color:#94a3b8">—</span>{% endif %}</td>
+<td>{{ "{:,}".format(r.search_volume) }}</td>
+<td style="max-width:200px;overflow:hidden;text-overflow:ellipsis">{{ r.url or '' }}</td></tr>
+{% endfor %}</tbody></table>
+{% else %}<p class="empty-state">No keyword rankings tracked yet.</p>{% endif %}
+</div>
+</div>
+
+<!-- Reports -->
+<div id="tab-reports" class="tab-content">
+<div class="card"><h3>📄 Your Reports</h3>
+{% if reports %}
+<table><thead><tr><th>Report</th><th>Type</th><th>Date</th><th>Action</th></tr></thead><tbody>
+{% for r in reports %}
+<tr><td>{{ r.title }}</td><td><span class="badge">{{ r.report_type }}</span></td><td>{{ r.created_at[:10] }}</td>
+<td><a href="/api/reports/{{ r.id }}/download" target="_blank" class="btn btn-sm btn-primary">View Report</a></td></tr>
+{% endfor %}</tbody></table>
+{% else %}<p class="empty-state">No reports available yet.</p>{% endif %}
+</div>
+</div>
+
+<!-- Invoices -->
+<div id="tab-invoices" class="tab-content">
+<div class="card"><h3>💳 Invoices</h3>
+{% if invoices %}
+<table><thead><tr><th>Invoice #</th><th>Amount</th><th>Status</th><th>Due Date</th><th>Action</th></tr></thead><tbody>
+{% for inv in invoices %}
+<tr><td>{{ inv.invoice_number }}</td><td style="font-weight:600">${{ "{:,.0f}".format(inv.total) }}</td>
+<td><span class="badge badge-{{ inv.status }}">{{ inv.status }}</span></td>
+<td>{{ inv.due_date or '' }}</td>
+<td><a href="/api/invoices/{{ inv.id }}/pdf" target="_blank" class="btn btn-sm btn-outline">View PDF</a></td></tr>
+{% endfor %}</tbody></table>
+{% else %}<p class="empty-state">No invoices yet.</p>{% endif %}
+</div>
+</div>
+
+<script>
+function showTab(tab){
+    document.querySelectorAll('.tab-content').forEach(t=>t.classList.remove('active-tab'));
+    document.getElementById('tab-'+tab).classList.add('active-tab');
+    document.querySelectorAll('.sidebar nav a').forEach(a=>a.classList.remove('active'));
+    event.target.classList.add('active');
+}
+</script>
+<style>
+.tab-content{display:none}.active-tab{display:block!important}
+.mini-table{width:100%;font-size:13px;margin-top:8px}.mini-table th{background:#162544;padding:6px 8px;font-size:11px;text-transform:uppercase;color:#94a3b8}
+.mini-table td{padding:6px 8px;border-bottom:1px solid #1e3a5f}
+.empty-state{text-align:center;color:#64748b;padding:40px;font-size:14px}
+</style>
+</main></body></html>

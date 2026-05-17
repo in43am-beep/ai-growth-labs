@@ -1,0 +1,96 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Invoices — AI Growth Labs OS</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/static/css/dashboard.css"></head><body>
+<aside class="sidebar"><div class="sidebar-brand">AI Growth<span>Labs</span></div>
+<nav><div class="nav-section">Finance</div>
+<a href="/dashboard">📊 Dashboard</a>
+<a href="/invoices" class="active">💰 Invoices</a>
+<a href="/team-chat">💬 Team Chat</a>
+</nav>
+<div class="sidebar-user"><div class="user-avatar">{{ user.full_name[:2]|upper }}</div>
+<div><strong>{{ user.full_name }}</strong><small>{{ user.role }}</small></div></div></aside>
+<main class="main">
+<div class="header-bar"><h1>💰 Invoice Management</h1><span>Create, track, and manage invoices</span>
+<div class="header-actions">
+<button class="btn btn-primary" onclick="document.getElementById('newInvoiceModal').style.display='flex'">+ New Invoice</button>
+<a href="/api/export/invoices" class="btn btn-outline" download>📥 Export CSV</a>
+<a href="/dashboard" class="btn btn-outline">← Back</a>
+</div></div>
+
+<div class="stats-grid">
+<div class="stat-card"><div class="stat-num">${{ "{:,.0f}".format(stats.total_invoiced) }}</div><div class="stat-label">Total Invoiced</div></div>
+<div class="stat-card"><div class="stat-num" style="color:#22c55e">${{ "{:,.0f}".format(stats.total_paid) }}</div><div class="stat-label">Collected</div></div>
+<div class="stat-card"><div class="stat-num" style="color:#f59e0b">${{ "{:,.0f}".format(stats.total_pending) }}</div><div class="stat-label">Outstanding</div></div>
+<div class="stat-card"><div class="stat-num">{{ invoices|length }}</div><div class="stat-label">Total Invoices</div></div>
+</div>
+
+<div class="card"><h3>All Invoices</h3>
+<table><thead><tr><th>Invoice #</th><th>Client</th><th>Amount</th><th>Status</th><th>Due Date</th><th>Paid</th><th>Actions</th></tr></thead><tbody>
+{% for inv in invoices %}
+<tr><td><strong>{{ inv.invoice_number }}</strong></td>
+<td>{{ inv.business_name }}</td>
+<td style="font-weight:600">${{ "{:,.0f}".format(inv.total) }}</td>
+<td><span class="badge badge-{{ inv.status }}">{{ inv.status }}</span></td>
+<td>{{ inv.due_date or '—' }}</td>
+<td>{{ inv.paid_date or '—' }}</td>
+<td>
+<a href="/api/invoices/{{ inv.id }}/pdf" target="_blank" class="btn btn-sm btn-outline">PDF</a>
+{% if inv.status != 'paid' %}
+<button class="btn btn-sm btn-primary" onclick="updateInvoice({{ inv.id }},'sent')">Send</button>
+<button class="btn btn-sm" style="background:#22c55e;color:#fff" onclick="updateInvoice({{ inv.id }},'paid')">Mark Paid</button>
+{% endif %}
+</td></tr>
+{% endfor %}</tbody></table></div>
+
+<!-- New Invoice Modal -->
+<div id="newInvoiceModal" class="modal" style="display:none">
+<div class="modal-content">
+<div class="modal-header"><h3>Create New Invoice</h3><button onclick="this.closest('.modal').style.display='none'" class="modal-close">&times;</button></div>
+<div class="form-group"><label>Client</label>
+<select id="inv_client" class="form-input">
+{% for c in clients %}<option value="{{ c.id }}">{{ c.business_name }} ({{ c.package }} — ${{ "{:,.0f}".format(c.monthly_payment) }}/mo)</option>{% endfor %}
+</select></div>
+<div id="invoiceItems">
+<div class="form-row inv-item">
+<input type="text" placeholder="Description" class="form-input item-desc" style="flex:3" value="Monthly SEO Service">
+<input type="number" placeholder="Qty" class="form-input item-qty" style="flex:1" value="1">
+<input type="number" placeholder="Rate" class="form-input item-rate" style="flex:1" value="2997">
+</div>
+</div>
+<button class="btn btn-outline btn-sm" onclick="addInvoiceItem()" style="margin:8px 0">+ Add Item</button>
+<div class="form-group"><label>Tax Rate (%)</label><input id="inv_tax" type="number" class="form-input" value="0"></div>
+<div class="form-group"><label>Due Date</label><input id="inv_due" type="date" class="form-input"></div>
+<div class="form-group"><label>Notes</label><textarea id="inv_notes" class="form-input" rows="2"></textarea></div>
+<button class="btn btn-primary btn-full" onclick="createInvoice()">Create Invoice</button>
+</div></div>
+
+<script>
+function addInvoiceItem(){
+    const div=document.createElement('div');div.className='form-row inv-item';
+    div.innerHTML='<input type="text" placeholder="Description" class="form-input item-desc" style="flex:3"><input type="number" placeholder="Qty" class="form-input item-qty" style="flex:1" value="1"><input type="number" placeholder="Rate" class="form-input item-rate" style="flex:1">';
+    document.getElementById('invoiceItems').appendChild(div);
+}
+function createInvoice(){
+    const items=[];
+    document.querySelectorAll('.inv-item').forEach(row=>{
+        const desc=row.querySelector('.item-desc').value;
+        const qty=parseFloat(row.querySelector('.item-qty').value)||1;
+        const rate=parseFloat(row.querySelector('.item-rate').value)||0;
+        if(desc&&rate)items.push({desc,qty,rate});
+    });
+    fetch('/api/invoices',{method:'POST',headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({client_id:parseInt(document.getElementById('inv_client').value),items,
+            tax_rate:parseFloat(document.getElementById('inv_tax').value)||0,
+            due_date:document.getElementById('inv_due').value,notes:document.getElementById('inv_notes').value})})
+    .then(r=>r.json()).then(d=>{alert(d.message+' — '+d.invoice_number);location.reload()}).catch(e=>alert('Error: '+e));
+}
+function updateInvoice(id,status){
+    fetch('/api/invoices/'+id+'/status',{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({status})})
+    .then(r=>r.json()).then(d=>{alert(d.message);location.reload()});
+}
+</script>
+<style>
+.form-row{display:flex;gap:8px;margin-bottom:8px}
+</style>
+</main></body></html>

@@ -1,12 +1,13 @@
-"""AI Growth Labs — Agency Operating System Dashboard v2"""
+"""AI Growth Labs — Agency Operating System Dashboard v3 — Full Feature Implementation"""
 import os
 import json
 import secrets
 import io
+import csv
 from datetime import datetime, timedelta
 from typing import Optional
 
-from fastapi import FastAPI, Request, Form, HTTPException, Depends, Response
+from fastapi import FastAPI, Request, Form, HTTPException, Depends, Response, UploadFile, File
 from fastapi.responses import HTMLResponse, RedirectResponse, JSONResponse, StreamingResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
@@ -14,6 +15,7 @@ from jose import jwt
 from passlib.hash import bcrypt
 
 from database import get_db, init_db
+from seo_audit import run_audit
 
 app = FastAPI(title="AI Growth Labs OS", docs_url=None, redoc_url=None)
 
@@ -23,11 +25,14 @@ TOKEN_EXPIRE = 24
 
 static_dir = os.path.join(os.path.dirname(__file__), "static")
 templates_dir = os.path.join(os.path.dirname(__file__), "templates")
+uploads_dir = os.path.join(os.path.dirname(__file__), "uploads")
 os.makedirs(static_dir, exist_ok=True)
 os.makedirs(os.path.join(static_dir, "css"), exist_ok=True)
 os.makedirs(os.path.join(static_dir, "js"), exist_ok=True)
+os.makedirs(uploads_dir, exist_ok=True)
 
 app.mount("/static", StaticFiles(directory=static_dir), name="static")
+app.mount("/uploads", StaticFiles(directory=uploads_dir), name="uploads")
 templates = Jinja2Templates(directory=templates_dir)
 
 @app.on_event("startup")
@@ -121,6 +126,12 @@ async def dashboard(request: Request):
     elif role == "finance":
         data = _get_finance_data(db)
         template = "finance_dashboard.html"
+    elif role == "ops_manager":
+        data = _get_ops_data(db)
+        template = "ops_dashboard.html"
+    elif role == "client":
+        data = _get_client_portal_data(db, user)
+        template = "client_portal.html"
     else:
         data = {}
         template = "worker_dashboard.html"
@@ -133,7 +144,7 @@ async def dashboard(request: Request):
 @app.get("/settings", response_class=HTMLResponse)
 async def settings_page(request: Request):
     user = get_current_user(request)
-    if not user or user["role"] != "super_admin":
+    if not user or user["role"] not in ("super_admin", "ops_manager"):
         return RedirectResponse(url="/login")
     db = get_db()
     api_settings = [dict(r) for r in db.execute("SELECT * FROM api_settings ORDER BY provider").fetchall()]
@@ -169,30 +180,52 @@ async def client_detail(client_id: int, request: Request):
     package_tasks = []
     if client.get("package"):
         package_tasks = [dict(r) for r in db.execute("SELECT * FROM package_tasks WHERE package=? ORDER BY category, order_num", (client["package"],)).fetchall()]
+    invoices = [dict(r) for r in db.execute("SELECT * FROM invoices WHERE client_id=? ORDER BY created_at DESC", (client_id,)).fetchall()]
+    keyword_rankings = [dict(r) for r in db.execute("SELECT * FROM keyword_rankings WHERE client_id=? ORDER BY tracked_date DESC, position ASC", (client_id,)).fetchall()]
+    contracts = [dict(r) for r in db.execute("SELECT * FROM contracts WHERE client_id=? ORDER BY created_at DESC", (client_id,)).fetchall()]
+    locations = [dict(r) for r in db.execute("SELECT * FROM client_locations WHERE client_id=? ORDER BY is_primary DESC", (client_id,)).fetchall()]
+    files = [dict(r) for r in db.execute("SELECT * FROM file_attachments WHERE entity_type='client' AND entity_id=? ORDER BY created_at DESC", (client_id,)).fetchall()]
+    time_entries = [dict(r) for r in db.execute("""
+        SELECT te.*, u.full_name as user_name, t.title as task_title 
+        FROM time_entries te LEFT JOIN users u ON te.user_id=u.id LEFT JOIN tasks t ON te.task_id=t.id
+        WHERE te.project_id IN (SELECT id FROM projects WHERE client_id=?) ORDER BY te.start_time DESC LIMIT 20
+    """, (client_id,)).fetchall()]
     db.close()
     return templates.TemplateResponse("client_detail.html", {
         "request": request, "user": user, "client": client, "credentials": credentials,
         "projects": projects, "tasks_by_project": tasks_by_project, "payments": payments,
-        "reports": reports, "package_tasks": package_tasks
+        "reports": reports, "package_tasks": package_tasks, "invoices": invoices,
+        "keyword_rankings": keyword_rankings, "contracts": contracts, "locations": locations,
+        "files": files, "time_entries": time_entries
     })
 
-# ===== TEAM MONITOR PAGE (Admin) =====
+# ===== TEAM MONITOR PAGE (Admin/Ops) =====
 @app.get("/monitor", response_class=HTMLResponse)
 async def monitor_page(request: Request):
     user = get_current_user(request)
-    if not user or user["role"] != "super_admin":
+    if not user or user["role"] not in ("super_admin", "ops_manager"):
         return RedirectResponse(url="/login")
     db = get_db()
-    workers = [dict(r) for r in db.execute("SELECT * FROM users WHERE role != 'super_admin' AND is_active=1 ORDER BY role, full_name").fetchall()]
+    workers = [dict(r) for r in db.execute("SELECT * FROM users WHERE role NOT IN ('super_admin','client') AND is_active=1 ORDER BY role, full_name").fetchall()]
     for w in workers:
         w["active_tasks"] = db.execute("SELECT COUNT(*) FROM tasks WHERE assigned_to=? AND status='in_progress'", (w["id"],)).fetchone()[0]
         w["pending_tasks"] = db.execute("SELECT COUNT(*) FROM tasks WHERE assigned_to=? AND status='pending'", (w["id"],)).fetchone()[0]
         w["completed_tasks"] = db.execute("SELECT COUNT(*) FROM tasks WHERE assigned_to=? AND status='completed'", (w["id"],)).fetchone()[0]
         w["total_tasks"] = w["active_tasks"] + w["pending_tasks"] + w["completed_tasks"]
+        w["overdue_tasks"] = db.execute("SELECT COUNT(*) FROM tasks WHERE assigned_to=? AND status!='completed' AND due_date < date('now')", (w["id"],)).fetchone()[0]
+        total_hours = db.execute("SELECT COALESCE(SUM(hours),0) FROM time_entries WHERE user_id=?", (w["id"],)).fetchone()[0]
+        w["total_hours"] = round(total_hours, 1)
         w["projects"] = [dict(r) for r in db.execute("""
             SELECT p.title, p.progress, p.status, c.business_name FROM projects p 
             LEFT JOIN clients c ON p.client_id=c.id WHERE p.assigned_worker_id=? OR p.team_leader_id=?
         """, (w["id"], w["id"])).fetchall()]
+        # Performance score
+        if w["total_tasks"] > 0:
+            completion_rate = w["completed_tasks"] / w["total_tasks"]
+            overdue_penalty = w["overdue_tasks"] * 5
+            w["perf_score"] = max(0, min(100, round(completion_rate * 100 - overdue_penalty)))
+        else:
+            w["perf_score"] = 0
     suggestions = [dict(r) for r in db.execute("""
         SELECT s.*, u.full_name as author_name, p.title as project_title 
         FROM suggestions s LEFT JOIN users u ON s.user_id=u.id LEFT JOIN projects p ON s.project_id=p.id
@@ -202,10 +235,14 @@ async def monitor_page(request: Request):
         SELECT cr.*, u.full_name as from_name FROM chat_requests cr 
         LEFT JOIN users u ON cr.from_user_id=u.id WHERE cr.status='pending' ORDER BY cr.created_at DESC
     """).fetchall()]
+    activities = [dict(r) for r in db.execute("""
+        SELECT al.*, u.full_name as user_name FROM activity_log al 
+        LEFT JOIN users u ON al.user_id=u.id ORDER BY al.created_at DESC LIMIT 30
+    """).fetchall()]
     db.close()
     return templates.TemplateResponse("monitor.html", {
         "request": request, "user": user, "workers": workers, 
-        "suggestions": suggestions, "chat_requests": chat_requests
+        "suggestions": suggestions, "chat_requests": chat_requests, "activities": activities
     })
 
 # ===== CHAT PAGE =====
@@ -215,8 +252,7 @@ async def team_chat_page(request: Request):
     if not user:
         return RedirectResponse(url="/login")
     db = get_db()
-    team_members = [dict(r) for r in db.execute("SELECT id, full_name, role, username FROM users WHERE id!=? AND is_active=1 ORDER BY full_name", (user["id"],)).fetchall()]
-    # Get approved chat sessions
+    team_members = [dict(r) for r in db.execute("SELECT id, full_name, role, username FROM users WHERE id!=? AND is_active=1 AND role!='client' ORDER BY full_name", (user["id"],)).fetchall()]
     approved = [dict(r) for r in db.execute("""
         SELECT cr.*, u1.full_name as from_name, u2.full_name as to_name 
         FROM chat_requests cr 
@@ -228,6 +264,61 @@ async def team_chat_page(request: Request):
         "request": request, "user": user, "team_members": team_members, "approved_chats": approved
     })
 
+# ===== INVOICES PAGE =====
+@app.get("/invoices", response_class=HTMLResponse)
+async def invoices_page(request: Request):
+    user = get_current_user(request)
+    if not user or user["role"] not in ("super_admin", "finance", "ops_manager"):
+        return RedirectResponse(url="/login")
+    db = get_db()
+    invoices = [dict(r) for r in db.execute("""
+        SELECT i.*, c.business_name, c.contact_name, c.email as client_email
+        FROM invoices i LEFT JOIN clients c ON i.client_id=c.id ORDER BY i.created_at DESC
+    """).fetchall()]
+    clients = [dict(r) for r in db.execute("SELECT id, business_name, package, monthly_payment FROM clients WHERE status='active' ORDER BY business_name").fetchall()]
+    total_invoiced = sum(inv["total"] for inv in invoices)
+    total_paid = sum(inv["total"] for inv in invoices if inv["status"] == "paid")
+    total_pending = sum(inv["total"] for inv in invoices if inv["status"] in ("sent", "overdue"))
+    db.close()
+    return templates.TemplateResponse("invoices.html", {
+        "request": request, "user": user, "invoices": invoices, "clients": clients,
+        "stats": {"total_invoiced": total_invoiced, "total_paid": total_paid, "total_pending": total_pending}
+    })
+
+# ===== KNOWLEDGE BASE PAGE =====
+@app.get("/knowledge", response_class=HTMLResponse)
+async def knowledge_page(request: Request):
+    user = get_current_user(request)
+    if not user:
+        return RedirectResponse(url="/login")
+    db = get_db()
+    articles = [dict(r) for r in db.execute("""
+        SELECT kb.*, u.full_name as author_name FROM knowledge_base kb 
+        LEFT JOIN users u ON kb.created_by=u.id ORDER BY kb.updated_at DESC
+    """).fetchall()]
+    db.close()
+    return templates.TemplateResponse("knowledge.html", {
+        "request": request, "user": user, "articles": articles
+    })
+
+# ===== CONTENT PIPELINE PAGE =====
+@app.get("/content-pipeline", response_class=HTMLResponse)
+async def content_pipeline_page(request: Request):
+    user = get_current_user(request)
+    if not user or user["role"] not in ("super_admin", "worker", "tech_seo", "social_media", "ops_manager"):
+        return RedirectResponse(url="/login")
+    db = get_db()
+    contents = [dict(r) for r in db.execute("""
+        SELECT gc.*, c.business_name, u.full_name as creator_name
+        FROM generated_content gc LEFT JOIN clients c ON gc.client_id=c.id LEFT JOIN users u ON gc.created_by=u.id
+        ORDER BY gc.created_at DESC LIMIT 50
+    """).fetchall()]
+    clients = [dict(r) for r in db.execute("SELECT id, business_name FROM clients WHERE status='active' ORDER BY business_name").fetchall()]
+    db.close()
+    return templates.TemplateResponse("content_pipeline.html", {
+        "request": request, "user": user, "contents": contents, "clients": clients
+    })
+
 # ===== DATA HELPERS =====
 def _get_admin_data(db):
     clients = [dict(r) for r in db.execute("SELECT * FROM clients ORDER BY created_at DESC").fetchall()]
@@ -237,7 +328,7 @@ def _get_admin_data(db):
         LEFT JOIN users u ON p.assigned_worker_id=u.id LEFT JOIN users tl ON p.team_leader_id=tl.id
         ORDER BY p.created_at DESC
     """).fetchall()]
-    workers = [dict(r) for r in db.execute("SELECT * FROM users WHERE role != 'super_admin' ORDER BY role, full_name").fetchall()]
+    workers = [dict(r) for r in db.execute("SELECT * FROM users WHERE role NOT IN ('super_admin','client') ORDER BY role, full_name").fetchall()]
     tasks = [dict(r) for r in db.execute("""
         SELECT t.*, u.full_name as assigned_name, p.title as project_title
         FROM tasks t LEFT JOIN users u ON t.assigned_to=u.id LEFT JOIN projects p ON t.project_id=p.id
@@ -263,16 +354,30 @@ def _get_admin_data(db):
     active_projects = db.execute("SELECT COUNT(*) FROM projects WHERE status='in_progress'").fetchone()[0]
     total_tasks = db.execute("SELECT COUNT(*) FROM tasks").fetchone()[0]
     completed_tasks = db.execute("SELECT COUNT(*) FROM tasks WHERE status='completed'").fetchone()[0]
+    overdue_tasks = db.execute("SELECT COUNT(*) FROM tasks WHERE status!='completed' AND due_date < date('now') AND due_date IS NOT NULL").fetchone()[0]
+    
+    # Recent activity
+    activities = [dict(r) for r in db.execute("""
+        SELECT al.*, u.full_name as user_name FROM activity_log al 
+        LEFT JOIN users u ON al.user_id=u.id ORDER BY al.created_at DESC LIMIT 15
+    """).fetchall()]
+    
+    # Invoice stats
+    invoice_total = db.execute("SELECT COALESCE(SUM(total),0) FROM invoices WHERE status='paid'").fetchone()[0]
+    invoice_pending = db.execute("SELECT COALESCE(SUM(total),0) FROM invoices WHERE status IN ('sent','overdue')").fetchone()[0]
     
     return {
         "clients": clients, "projects": projects, "workers": workers, "tasks": tasks, "payments": payments,
         "suggestions": suggestions, "chat_requests": chat_requests, "unread_chats": unread_chats,
+        "activities": activities,
         "stats": {
             "total_revenue": total_revenue, "pending_revenue": pending_revenue,
             "active_clients": active_clients, "active_projects": active_projects,
             "total_tasks": total_tasks, "completed_tasks": completed_tasks,
             "task_completion": round(completed_tasks/total_tasks*100) if total_tasks else 0,
-            "monthly_recurring": db.execute("SELECT COALESCE(SUM(monthly_payment),0) FROM clients WHERE status='active'").fetchone()[0]
+            "monthly_recurring": db.execute("SELECT COALESCE(SUM(monthly_payment),0) FROM clients WHERE status='active'").fetchone()[0],
+            "overdue_tasks": overdue_tasks,
+            "invoice_total": invoice_total, "invoice_pending": invoice_pending,
         }
     }
 
@@ -295,16 +400,25 @@ def _get_worker_data(db, user_id):
         "SELECT s.*, p.title as project_title FROM suggestions s LEFT JOIN projects p ON s.project_id=p.id WHERE s.user_id=? ORDER BY s.created_at DESC", (user_id,)).fetchall()]
     unread_chats = db.execute("SELECT COUNT(*) FROM team_chats WHERE to_user_id=? AND is_read=0", (user_id,)).fetchone()[0]
     
+    # Time tracking
+    active_timer = db.execute("SELECT te.*, t.title as task_title FROM time_entries te LEFT JOIN tasks t ON te.task_id=t.id WHERE te.user_id=? AND te.end_time IS NULL", (user_id,)).fetchone()
+    active_timer = dict(active_timer) if active_timer else None
+    today_hours = db.execute("SELECT COALESCE(SUM(hours),0) FROM time_entries WHERE user_id=? AND date(start_time)=date('now')", (user_id,)).fetchone()[0]
+    week_hours = db.execute("SELECT COALESCE(SUM(hours),0) FROM time_entries WHERE user_id=? AND start_time >= date('now', '-7 days')", (user_id,)).fetchone()[0]
+    
     total = len(my_tasks)
     completed = sum(1 for t in my_tasks if t["status"] == "completed")
+    overdue = sum(1 for t in my_tasks if t.get("due_date") and t["status"] != "completed" and t["due_date"] < datetime.now().strftime("%Y-%m-%d"))
     
     return {
         "my_tasks": my_tasks, "my_projects": my_projects, "notifications": notifications, 
         "audits": audits, "suggestions": suggestions, "unread_chats": unread_chats,
+        "active_timer": active_timer, "today_hours": round(today_hours, 1), "week_hours": round(week_hours, 1),
         "stats": {
             "total_tasks": total, "completed_tasks": completed, "pending_tasks": total - completed,
             "completion_pct": round(completed/total*100) if total else 0,
             "active_projects": sum(1 for p in my_projects if p["status"] == "in_progress"),
+            "overdue_tasks": overdue,
         }
     }
 
@@ -328,7 +442,6 @@ def _get_social_data(db, user_id):
         SELECT sp.*, c.business_name FROM social_posts sp LEFT JOIN clients c ON sp.client_id=c.id ORDER BY sp.created_at DESC LIMIT 50
     """).fetchall()]
     clients = [dict(r) for r in db.execute("SELECT * FROM clients WHERE status='active' ORDER BY business_name").fetchall()]
-    # Parse engagement data
     total_likes = 0
     total_comments = 0
     total_shares = 0
@@ -360,13 +473,16 @@ def _get_finance_data(db):
         SELECT pay.*, c.business_name FROM payments pay LEFT JOIN clients c ON pay.client_id=c.id ORDER BY pay.created_at DESC
     """).fetchall()]
     expenses = [dict(r) for r in db.execute("SELECT * FROM expenses ORDER BY date DESC").fetchall()]
-    workers = [dict(r) for r in db.execute("SELECT id, full_name, role, rank, salary FROM users WHERE role != 'super_admin'").fetchall()]
+    workers = [dict(r) for r in db.execute("SELECT id, full_name, role, rank, salary FROM users WHERE role NOT IN ('super_admin','client')").fetchall()]
+    invoices = [dict(r) for r in db.execute("""
+        SELECT i.*, c.business_name FROM invoices i LEFT JOIN clients c ON i.client_id=c.id ORDER BY i.created_at DESC LIMIT 20
+    """).fetchall()]
     total_income = sum(p["amount"] for p in payments if p["status"] == "paid")
     total_expenses = sum(e["amount"] for e in expenses)
     pending_payments = sum(p["amount"] for p in payments if p["status"] in ("pending", "overdue"))
     total_salaries = sum(w["salary"] for w in workers)
     return {
-        "payments": payments, "expenses": expenses, "workers": workers,
+        "payments": payments, "expenses": expenses, "workers": workers, "invoices": invoices,
         "stats": {
             "total_income": total_income, "total_expenses": total_expenses,
             "net_profit": total_income - total_expenses, "pending_payments": pending_payments,
@@ -375,10 +491,69 @@ def _get_finance_data(db):
         }
     }
 
+def _get_ops_data(db):
+    """Operations Manager dashboard data"""
+    workers = [dict(r) for r in db.execute("SELECT * FROM users WHERE role NOT IN ('super_admin','client','ops_manager') AND is_active=1 ORDER BY role, full_name").fetchall()]
+    for w in workers:
+        w["active_tasks"] = db.execute("SELECT COUNT(*) FROM tasks WHERE assigned_to=? AND status='in_progress'", (w["id"],)).fetchone()[0]
+        w["pending_tasks"] = db.execute("SELECT COUNT(*) FROM tasks WHERE assigned_to=? AND status='pending'", (w["id"],)).fetchone()[0]
+        w["completed_tasks"] = db.execute("SELECT COUNT(*) FROM tasks WHERE assigned_to=? AND status='completed'", (w["id"],)).fetchone()[0]
+        w["overdue_tasks"] = db.execute("SELECT COUNT(*) FROM tasks WHERE assigned_to=? AND status!='completed' AND due_date < date('now')", (w["id"],)).fetchone()[0]
+        total_hours = db.execute("SELECT COALESCE(SUM(hours),0) FROM time_entries WHERE user_id=?", (w["id"],)).fetchone()[0]
+        w["total_hours"] = round(total_hours, 1)
+        w["total_tasks"] = w["active_tasks"] + w["pending_tasks"] + w["completed_tasks"]
+        if w["total_tasks"] > 0:
+            completion_rate = w["completed_tasks"] / w["total_tasks"]
+            overdue_penalty = w["overdue_tasks"] * 5
+            w["perf_score"] = max(0, min(100, round(completion_rate * 100 - overdue_penalty)))
+        else:
+            w["perf_score"] = 0
+    projects = [dict(r) for r in db.execute("""
+        SELECT p.*, c.business_name, u.full_name as worker_name FROM projects p 
+        LEFT JOIN clients c ON p.client_id=c.id LEFT JOIN users u ON p.assigned_worker_id=u.id
+        WHERE p.status='in_progress' ORDER BY p.priority DESC, p.due_date ASC
+    """).fetchall()]
+    overdue_tasks = [dict(r) for r in db.execute("""
+        SELECT t.*, u.full_name as assigned_name, p.title as project_title, c.business_name
+        FROM tasks t LEFT JOIN users u ON t.assigned_to=u.id LEFT JOIN projects p ON t.project_id=p.id LEFT JOIN clients c ON p.client_id=c.id
+        WHERE t.status!='completed' AND t.due_date < date('now') AND t.due_date IS NOT NULL ORDER BY t.due_date ASC
+    """).fetchall()]
+    scheduled = [dict(r) for r in db.execute("""
+        SELECT st.*, u.full_name as assigned_name FROM scheduled_tasks st 
+        LEFT JOIN users u ON st.assigned_to=u.id WHERE st.is_active=1 ORDER BY st.next_run ASC
+    """).fetchall()]
+    return {
+        "workers": workers, "projects": projects, "overdue_tasks": overdue_tasks, "scheduled_tasks": scheduled,
+        "stats": {
+            "total_workers": len(workers),
+            "active_projects": len(projects),
+            "overdue_count": len(overdue_tasks),
+            "scheduled_count": len(scheduled),
+        }
+    }
+
+def _get_client_portal_data(db, user):
+    """Client portal — shows client their own project data"""
+    client_id = user.get("linked_client_id")
+    if not client_id:
+        return {"client": {}, "projects": [], "keyword_rankings": [], "reports": [], "invoices": []}
+    client = db.execute("SELECT * FROM clients WHERE id=?", (client_id,)).fetchone()
+    client = dict(client) if client else {}
+    projects = [dict(r) for r in db.execute("""
+        SELECT p.*, u.full_name as worker_name FROM projects p LEFT JOIN users u ON p.assigned_worker_id=u.id
+        WHERE p.client_id=? ORDER BY p.created_at DESC
+    """, (client_id,)).fetchall()]
+    for p in projects:
+        p["tasks"] = [dict(r) for r in db.execute("SELECT title, status, priority FROM tasks WHERE project_id=? ORDER BY order_num", (p["id"],)).fetchall()]
+    keyword_rankings = [dict(r) for r in db.execute("SELECT * FROM keyword_rankings WHERE client_id=? ORDER BY tracked_date DESC, position ASC", (client_id,)).fetchall()]
+    reports = [dict(r) for r in db.execute("SELECT id, title, report_type, created_at, sent_to_client FROM client_reports WHERE client_id=? ORDER BY created_at DESC", (client_id,)).fetchall()]
+    invoices = [dict(r) for r in db.execute("SELECT id, invoice_number, total, status, due_date, paid_date FROM invoices WHERE client_id=? ORDER BY created_at DESC", (client_id,)).fetchall()]
+    return {"client": client, "projects": projects, "keyword_rankings": keyword_rankings, "reports": reports, "invoices": invoices}
+
 # ===== API ENDPOINTS =====
 @app.post("/api/clients")
 async def create_client(request: Request):
-    user = require_role(request, ["super_admin", "sales"])
+    user = require_role(request, ["super_admin", "sales", "ops_manager"])
     data = await request.json()
     db = get_db()
     c = db.cursor()
@@ -388,17 +563,15 @@ async def create_client(request: Request):
                data.get("website"), data.get("industry"), data.get("location"), data.get("status", "lead"),
                data.get("package"), data.get("monthly_payment", 0), data.get("notes"), data.get("source")))
     client_id = c.lastrowid
-    # Auto-generate package tasks if package selected
     if data.get("package"):
         _auto_generate_package_tasks(db, client_id, data["package"])
+    _log_activity(db, user["id"], "Created client", f"Added {data.get('business_name')}", "client", client_id)
     db.commit()
     db.close()
     return {"id": client_id, "message": "Client created"}
 
 def _auto_generate_package_tasks(db, client_id, package):
-    """Auto-generate tasks from package template when client is created"""
     pkg_tasks = db.execute("SELECT * FROM package_tasks WHERE package=? ORDER BY category, order_num", (package,)).fetchall()
-    # Create a project for this client
     c = db.cursor()
     c.execute("""INSERT INTO projects (client_id, title, description, service_type, status, priority)
                  VALUES (?,?,?,?,?,?)""",
@@ -409,9 +582,13 @@ def _auto_generate_package_tasks(db, client_id, package):
                      VALUES (?,?,?,?,?,?,?)""",
                   (project_id, pt["title"], pt["description"], "pending", "medium", i, pt["is_automated"]))
 
+def _log_activity(db, user_id, action, details, entity_type, entity_id):
+    db.execute("INSERT INTO activity_log (user_id, action, details, entity_type, entity_id) VALUES (?,?,?,?,?)",
+               (user_id, action, details, entity_type, entity_id))
+
 @app.post("/api/projects")
 async def create_project(request: Request):
-    user = require_role(request, ["super_admin"])
+    user = require_role(request, ["super_admin", "ops_manager"])
     data = await request.json()
     db = get_db()
     c = db.cursor()
@@ -424,13 +601,14 @@ async def create_project(request: Request):
     if data.get("assigned_worker_id"):
         c.execute("INSERT INTO notifications (user_id, title, message, type) VALUES (?,?,?,?)",
                   (data["assigned_worker_id"], "New Project Assigned", f"You've been assigned: {data.get('title')}", "task"))
+    _log_activity(db, user["id"], "Created project", data.get("title"), "project", project_id)
     db.commit()
     db.close()
     return {"id": project_id, "message": "Project created"}
 
 @app.post("/api/tasks")
 async def create_task(request: Request):
-    user = require_role(request, ["super_admin", "worker", "tech_seo"])
+    user = require_role(request, ["super_admin", "worker", "tech_seo", "ops_manager"])
     data = await request.json()
     db = get_db()
     c = db.cursor()
@@ -461,6 +639,7 @@ async def update_task_status(task_id: int, request: Request):
         done = db.execute("SELECT COUNT(*) FROM tasks WHERE project_id=? AND status='completed'", (pid,)).fetchone()[0]
         progress = round(done/total*100) if total else 0
         db.execute("UPDATE projects SET progress=?, updated_at=datetime('now') WHERE id=?", (progress, pid))
+    _log_activity(db, user["id"], f"Task {data['status']}", f"Task #{task_id}", "task", task_id)
     db.commit()
     db.close()
     return {"message": "Task updated"}
@@ -472,8 +651,8 @@ async def create_user(request: Request):
     db = get_db()
     pw_hash = bcrypt.hash(data.get("password", "changeme123"))
     try:
-        db.execute("""INSERT INTO users (username, password_hash, full_name, email, role, rank, salary) VALUES (?,?,?,?,?,?,?)""",
-                   (data["username"], pw_hash, data["full_name"], data.get("email"), data["role"], data.get("rank", "junior"), data.get("salary", 0)))
+        db.execute("""INSERT INTO users (username, password_hash, full_name, email, role, rank, salary, linked_client_id) VALUES (?,?,?,?,?,?,?,?)""",
+                   (data["username"], pw_hash, data["full_name"], data.get("email"), data["role"], data.get("rank", "junior"), data.get("salary", 0), data.get("linked_client_id")))
         db.commit()
     except Exception as e:
         db.close()
@@ -518,6 +697,70 @@ async def create_social_post(request: Request):
     db.close()
     return {"message": "Post created"}
 
+@app.get("/audit", response_class=HTMLResponse)
+async def audit_page(request: Request):
+    user = require_auth(request)
+    db = get_db()
+    recent_audits = [dict(r) for r in db.execute(
+        "SELECT * FROM seo_audits ORDER BY created_at DESC LIMIT 20").fetchall()]
+    db.close()
+    return templates.TemplateResponse("audit_page.html", {
+        "request": request, "user": user, "recent_audits": recent_audits
+    })
+
+@app.get("/audit/{audit_id}/results", response_class=HTMLResponse)
+async def audit_results_page(audit_id: int, request: Request):
+    user = require_auth(request)
+    db = get_db()
+    audit_row = db.execute("SELECT * FROM seo_audits WHERE id=?", (audit_id,)).fetchone()
+    db.close()
+    if not audit_row:
+        raise HTTPException(status_code=404, detail="Audit not found")
+    audit_data = dict(audit_row)
+    if audit_data.get("report_data"):
+        audit = json.loads(audit_data["report_data"])
+    else:
+        audit = {"domain": audit_data["website_url"], "url": audit_data["website_url"],
+                 "overall_score": audit_data.get("overall_score", 0),
+                 "maturity_level": "Pending", "timestamp": audit_data["created_at"],
+                 "pillars": {}, "pillar_scores": {},
+                 "critical_issues": [], "warnings": [], "quick_wins": [], "passed": []}
+    return templates.TemplateResponse("audit_results.html", {
+        "request": request, "user": user, "audit": audit
+    })
+
+@app.post("/api/audit/run")
+async def run_live_audit(request: Request):
+    user = require_auth(request)
+    data = await request.json()
+    website_url = data.get("website_url", "").strip()
+    if not website_url:
+        return JSONResponse({"error": "Website URL is required"}, status_code=400)
+    if not website_url.startswith("http"):
+        website_url = "https://" + website_url
+    db = get_db()
+    c = db.cursor()
+    c.execute("""INSERT INTO seo_audits (client_id, website_url, status, ai_provider, created_by)
+                 VALUES (?,?,?,?,?)""",
+              (data.get("client_id"), website_url, "running", "engine", user["id"]))
+    audit_id = c.lastrowid
+    db.commit()
+    try:
+        audit_result = run_audit(website_url)
+        overall_score = audit_result.get("overall_score", 0)
+        report_json = json.dumps(audit_result)
+        db.execute("""UPDATE seo_audits SET status='completed', overall_score=?, report_data=?,
+                      completed_at=datetime('now') WHERE id=?""",
+                   (overall_score, report_json, audit_id))
+        db.commit()
+    except Exception as e:
+        db.execute("UPDATE seo_audits SET status='failed' WHERE id=?", (audit_id,))
+        db.commit()
+        db.close()
+        return JSONResponse({"error": str(e)}, status_code=500)
+    db.close()
+    return {"audit_id": audit_id, "overall_score": overall_score, "message": "Audit completed"}
+
 @app.post("/api/audit")
 async def create_audit(request: Request):
     user = require_auth(request)
@@ -529,7 +772,7 @@ async def create_audit(request: Request):
     audit_id = c.lastrowid
     db.commit()
     db.close()
-    return {"id": audit_id, "message": "Audit created — processing will begin when AI API key is configured"}
+    return {"id": audit_id, "message": "Audit created"}
 
 @app.post("/api/notifications/{notif_id}/read")
 async def mark_notification_read(notif_id: int, request: Request):
@@ -551,12 +794,10 @@ async def create_expense(request: Request):
     db.close()
     return {"message": "Expense recorded"}
 
-# ===== NEW API ENDPOINTS =====
-
-# Client Credentials
+# ===== CREDENTIALS / SETTINGS / SUGGESTIONS / CHAT =====
 @app.post("/api/client-credentials")
 async def add_client_credential(request: Request):
-    user = require_role(request, ["super_admin", "sales", "worker", "tech_seo"])
+    user = require_role(request, ["super_admin", "sales", "worker", "tech_seo", "ops_manager"])
     data = await request.json()
     db = get_db()
     db.execute("""INSERT INTO client_credentials (client_id, credential_type, label, username, password_enc, api_key, access_url, notes, added_by)
@@ -567,7 +808,6 @@ async def add_client_credential(request: Request):
     db.close()
     return {"message": "Credential saved"}
 
-# API Settings
 @app.post("/api/settings/api")
 async def update_api_setting(request: Request):
     user = require_role(request, ["super_admin"])
@@ -580,7 +820,6 @@ async def update_api_setting(request: Request):
     db.close()
     return {"message": f"{data['provider']} settings updated"}
 
-# Suggestions
 @app.post("/api/suggestions")
 async def create_suggestion(request: Request):
     user = require_auth(request)
@@ -594,7 +833,7 @@ async def create_suggestion(request: Request):
 
 @app.put("/api/suggestions/{sugg_id}")
 async def update_suggestion(sugg_id: int, request: Request):
-    user = require_role(request, ["super_admin"])
+    user = require_role(request, ["super_admin", "ops_manager"])
     data = await request.json()
     db = get_db()
     db.execute("UPDATE suggestions SET status=?, admin_response=? WHERE id=?", (data["status"], data.get("admin_response"), sugg_id))
@@ -602,7 +841,6 @@ async def update_suggestion(sugg_id: int, request: Request):
     db.close()
     return {"message": "Suggestion updated"}
 
-# Chat Requests
 @app.post("/api/chat-request")
 async def create_chat_request(request: Request):
     user = require_auth(request)
@@ -626,7 +864,6 @@ async def update_chat_request(req_id: int, request: Request):
     db.close()
     return {"message": f"Chat request {data['status']}"}
 
-# Team Chat Messages
 @app.get("/api/chat-messages/{other_user_id}")
 async def get_chat_messages(other_user_id: int, request: Request):
     user = require_auth(request)
@@ -653,10 +890,10 @@ async def send_chat_message(request: Request):
     db.close()
     return {"message": "Sent"}
 
-# Generate PDF Report
+# ===== REPORT GENERATION =====
 @app.post("/api/reports/generate")
 async def generate_report(request: Request):
-    user = require_role(request, ["super_admin", "finance", "worker", "tech_seo"])
+    user = require_role(request, ["super_admin", "finance", "worker", "tech_seo", "ops_manager"])
     data = await request.json()
     client_id = data["client_id"]
     db = get_db()
@@ -666,9 +903,11 @@ async def generate_report(request: Request):
     for p in projects:
         tasks_all += [dict(r) for r in db.execute("SELECT * FROM tasks WHERE project_id=?", (p["id"],)).fetchall()]
     payments = [dict(r) for r in db.execute("SELECT * FROM payments WHERE client_id=?", (client_id,)).fetchall()]
+    rankings = [dict(r) for r in db.execute("SELECT * FROM keyword_rankings WHERE client_id=? ORDER BY tracked_date DESC", (client_id,)).fetchall()]
     
     report_data = json.dumps({
         "client": client, "projects": projects, "tasks": tasks_all, "payments": payments,
+        "rankings": rankings,
         "generated_at": datetime.now().isoformat(), "generated_by": user["full_name"]
     })
     
@@ -677,11 +916,11 @@ async def generate_report(request: Request):
               (client_id, data.get("report_type", "monthly"), f"Report - {client['business_name']} - {datetime.now().strftime('%B %Y')}",
                report_data, user["id"]))
     report_id = c.lastrowid
+    _log_activity(db, user["id"], "Generated report", f"Report for {client['business_name']}", "report", report_id)
     db.commit()
     db.close()
     return {"id": report_id, "message": "Report generated"}
 
-# Download report as HTML
 @app.get("/api/reports/{report_id}/download")
 async def download_report(report_id: int, request: Request):
     user = require_auth(request)
@@ -696,10 +935,21 @@ async def download_report(report_id: int, request: Request):
     projects = rdata.get("projects", [])
     tasks = rdata.get("tasks", [])
     payments = rdata.get("payments", [])
+    rankings = rdata.get("rankings", [])
     
     completed_tasks = sum(1 for t in tasks if t.get("status") == "completed")
     total_tasks = len(tasks)
     total_paid = sum(p.get("amount", 0) for p in payments if p.get("status") == "paid")
+    
+    rankings_html = ""
+    if rankings:
+        rankings_html = '<div class="section"><h2>Keyword Rankings</h2><table><thead><tr><th>Keyword</th><th>Position</th><th>Change</th><th>Search Volume</th></tr></thead><tbody>'
+        for r in rankings[:20]:
+            change = (r.get("previous_position", 0) or 0) - (r.get("position", 0) or 0)
+            change_class = "color:#059669" if change > 0 else ("color:#dc2626" if change < 0 else "")
+            change_str = f"+{change}" if change > 0 else str(change)
+            rankings_html += f'<tr><td>{r.get("keyword","")}</td><td>#{r.get("position","")}</td><td style="{change_class};font-weight:600">{change_str}</td><td>{r.get("search_volume",0):,}</td></tr>'
+        rankings_html += '</tbody></table></div>'
     
     html = f"""<!DOCTYPE html><html><head><meta charset="UTF-8"><title>{report['title']}</title>
 <style>
@@ -727,6 +977,7 @@ th{{background:#f7f9fc;font-weight:600}}.stat-grid{{display:grid;grid-template-c
 <tr><td><strong>Contact</strong></td><td>{client.get('contact_name','')}</td><td><strong>Industry</strong></td><td>{client.get('industry','')}</td></tr>
 <tr><td><strong>Website</strong></td><td>{client.get('website','')}</td><td><strong>Location</strong></td><td>{client.get('location','')}</td></tr>
 </table></div>
+{rankings_html}
 <div class="section"><h2>Projects Overview</h2><table><thead><tr><th>Project</th><th>Service</th><th>Progress</th><th>Status</th></tr></thead><tbody>"""
     for p in projects:
         badge = "badge-completed" if p.get("status") == "completed" else "badge-progress"
@@ -747,7 +998,6 @@ th{{background:#f7f9fc;font-weight:600}}.stat-grid{{display:grid;grid-template-c
     
     return HTMLResponse(content=html)
 
-# Mark report as sent
 @app.post("/api/reports/{report_id}/send")
 async def send_report(report_id: int, request: Request):
     user = require_role(request, ["super_admin", "finance"])
@@ -757,7 +1007,7 @@ async def send_report(report_id: int, request: Request):
     db.close()
     return {"message": "Report marked as sent to client"}
 
-# Run automated DNA task
+# ===== AI AUTOMATION ENGINE =====
 @app.post("/api/tasks/{task_id}/run-auto")
 async def run_automated_task(task_id: int, request: Request):
     user = require_auth(request)
@@ -768,25 +1018,523 @@ async def run_automated_task(task_id: int, request: Request):
         raise HTTPException(status_code=404)
     task = dict(task)
     
-    # Get client website
     client = db.execute("SELECT * FROM clients WHERE id=?", (task["client_id"],)).fetchone()
     client_url = dict(client)["website"] if client else ""
+    client_biz = dict(client)["business_name"] if client else ""
+    client_industry = dict(client)["industry"] if client else ""
+    client_location = dict(client)["location"] if client else ""
     
-    # Get API settings
+    # Get DNA prompt from package tasks
+    pkg_task = db.execute("SELECT dna_prompt FROM package_tasks WHERE title=? LIMIT 1", (task["title"],)).fetchone()
+    dna_prompt = dict(pkg_task)["dna_prompt"] if pkg_task and pkg_task["dna_prompt"] else task.get("description", "")
+    
     api = db.execute("SELECT * FROM api_settings WHERE is_active=1 LIMIT 1").fetchone()
     
     if not api or not api["api_key"]:
         db.close()
         return JSONResponse({"error": "No AI API key configured. Go to Settings to add one."}, status_code=400)
     
-    # For now, store that automation was triggered
-    db.execute("UPDATE tasks SET status='in_progress', auto_result=? WHERE id=?",
-               (json.dumps({"status": "triggered", "provider": api["provider"], "url": client_url, "triggered_at": datetime.now().isoformat()}), task_id))
+    api = dict(api)
+    provider = api["provider"]
+    api_key = api["api_key"]
+    config = json.loads(api.get("config_json") or "{}") 
+    
+    full_prompt = f"""You are an expert SEO analyst for AI Growth Labs agency.
+
+Client: {client_biz}
+Industry: {client_industry}
+Location: {client_location}
+Website: {client_url}
+
+Task: {task['title']}
+{dna_prompt}
+
+Provide a detailed, actionable analysis with specific recommendations. Use data-driven insights. Format with clear headings and bullet points."""
+
+    result_text = ""
+    try:
+        if provider == "claude":
+            import anthropic
+            client_ai = anthropic.Anthropic(api_key=api_key)
+            response = client_ai.messages.create(
+                model=config.get("model", "claude-sonnet-4-20250514"),
+                max_tokens=config.get("max_tokens", 4096),
+                messages=[{"role": "user", "content": full_prompt}]
+            )
+            result_text = response.content[0].text
+        elif provider == "chatgpt":
+            import openai
+            client_ai = openai.OpenAI(api_key=api_key)
+            response = client_ai.chat.completions.create(
+                model=config.get("model", "gpt-4"),
+                max_tokens=config.get("max_tokens", 4096),
+                messages=[{"role": "user", "content": full_prompt}]
+            )
+            result_text = response.choices[0].message.content
+        elif provider == "gemini":
+            import google.generativeai as genai
+            genai.configure(api_key=api_key)
+            model = genai.GenerativeModel(config.get("model", "gemini-pro"))
+            response = model.generate_content(full_prompt)
+            result_text = response.text
+        
+        db.execute("UPDATE tasks SET status='completed', completed_date=datetime('now'), auto_result=? WHERE id=?",
+                   (json.dumps({"status": "completed", "provider": provider, "result": result_text, "completed_at": datetime.now().isoformat()}), task_id))
+        # Update project progress
+        pid = task["project_id"]
+        total = db.execute("SELECT COUNT(*) FROM tasks WHERE project_id=?", (pid,)).fetchone()[0]
+        done = db.execute("SELECT COUNT(*) FROM tasks WHERE project_id=? AND status='completed'", (pid,)).fetchone()[0]
+        progress = round(done/total*100) if total else 0
+        db.execute("UPDATE projects SET progress=?, updated_at=datetime('now') WHERE id=?", (progress, pid))
+        _log_activity(db, user["id"], "AI task completed", f"{task['title']} via {provider}", "task", task_id)
+        db.commit()
+        db.close()
+        return {"message": f"Task completed using {provider}", "result": result_text[:500]}
+    except Exception as e:
+        db.execute("UPDATE tasks SET auto_result=? WHERE id=?",
+                   (json.dumps({"status": "error", "provider": provider, "error": str(e)}), task_id))
+        db.commit()
+        db.close()
+        return JSONResponse({"error": f"AI API error: {str(e)}"}, status_code=500)
+
+# ===== TIME TRACKING =====
+@app.post("/api/time/start")
+async def start_timer(request: Request):
+    user = require_auth(request)
+    data = await request.json()
+    db = get_db()
+    existing = db.execute("SELECT id FROM time_entries WHERE user_id=? AND end_time IS NULL", (user["id"],)).fetchone()
+    if existing:
+        db.close()
+        return JSONResponse({"error": "Timer already running. Stop current timer first."}, status_code=400)
+    task = db.execute("SELECT project_id FROM tasks WHERE id=?", (data["task_id"],)).fetchone()
+    project_id = task["project_id"] if task else None
+    db.execute("INSERT INTO time_entries (user_id, task_id, project_id, start_time, description) VALUES (?,?,?,datetime('now'),?)",
+               (user["id"], data["task_id"], project_id, data.get("description", "")))
+    db.execute("UPDATE tasks SET status='in_progress' WHERE id=? AND status='pending'", (data["task_id"],))
     db.commit()
     db.close()
-    return {"message": f"Automated task triggered using {api['provider']}. Results will appear when processing completes.", "provider": api["provider"]}
+    return {"message": "Timer started"}
 
-# Website chatbot API
+@app.post("/api/time/stop")
+async def stop_timer(request: Request):
+    user = require_auth(request)
+    db = get_db()
+    entry = db.execute("SELECT * FROM time_entries WHERE user_id=? AND end_time IS NULL", (user["id"],)).fetchone()
+    if not entry:
+        db.close()
+        return JSONResponse({"error": "No active timer"}, status_code=400)
+    entry = dict(entry)
+    start = datetime.fromisoformat(entry["start_time"])
+    hours = round((datetime.now() - start).total_seconds() / 3600, 2)
+    db.execute("UPDATE time_entries SET end_time=datetime('now'), hours=? WHERE id=?", (hours, entry["id"]))
+    db.commit()
+    db.close()
+    return {"message": f"Timer stopped. {hours} hours logged.", "hours": hours}
+
+@app.get("/api/time/active")
+async def get_active_timer(request: Request):
+    user = require_auth(request)
+    db = get_db()
+    entry = db.execute("SELECT te.*, t.title as task_title FROM time_entries te LEFT JOIN tasks t ON te.task_id=t.id WHERE te.user_id=? AND te.end_time IS NULL", (user["id"],)).fetchone()
+    db.close()
+    if entry:
+        entry = dict(entry)
+        start = datetime.fromisoformat(entry["start_time"])
+        entry["elapsed_seconds"] = int((datetime.now() - start).total_seconds())
+        return entry
+    return {"active": False}
+
+# ===== INVOICES =====
+@app.post("/api/invoices")
+async def create_invoice(request: Request):
+    user = require_role(request, ["super_admin", "finance", "ops_manager"])
+    data = await request.json()
+    db = get_db()
+    count = db.execute("SELECT COUNT(*) FROM invoices").fetchone()[0]
+    inv_number = f"INV-{datetime.now().year}-{count+1:03d}"
+    items = data.get("items", [])
+    subtotal = sum(item.get("qty", 1) * item.get("rate", 0) for item in items)
+    tax_rate = data.get("tax_rate", 0)
+    tax_amount = round(subtotal * tax_rate / 100, 2)
+    total = subtotal + tax_amount
+    c = db.cursor()
+    c.execute("""INSERT INTO invoices (client_id, invoice_number, items, subtotal, tax_rate, tax_amount, total, status, due_date, notes, created_by)
+                 VALUES (?,?,?,?,?,?,?,?,?,?,?)""",
+              (data["client_id"], inv_number, json.dumps(items), subtotal, tax_rate, tax_amount, total,
+               "draft", data.get("due_date"), data.get("notes"), user["id"]))
+    invoice_id = c.lastrowid
+    _log_activity(db, user["id"], "Created invoice", f"{inv_number} for ${total:,.0f}", "invoice", invoice_id)
+    db.commit()
+    db.close()
+    return {"id": invoice_id, "invoice_number": inv_number, "total": total, "message": "Invoice created"}
+
+@app.put("/api/invoices/{invoice_id}/status")
+async def update_invoice_status(invoice_id: int, request: Request):
+    user = require_role(request, ["super_admin", "finance"])
+    data = await request.json()
+    db = get_db()
+    updates = "status=?"
+    params = [data["status"]]
+    if data["status"] == "paid":
+        updates += ", paid_date=datetime('now')"
+    params.append(invoice_id)
+    db.execute(f"UPDATE invoices SET {updates} WHERE id=?", params)
+    db.commit()
+    db.close()
+    return {"message": f"Invoice marked as {data['status']}"}
+
+@app.get("/api/invoices/{invoice_id}/pdf")
+async def invoice_pdf(invoice_id: int, request: Request):
+    user = require_auth(request)
+    db = get_db()
+    inv = db.execute("SELECT i.*, c.business_name, c.contact_name, c.email, c.phone, c.location FROM invoices i LEFT JOIN clients c ON i.client_id=c.id WHERE i.id=?", (invoice_id,)).fetchone()
+    db.close()
+    if not inv:
+        raise HTTPException(status_code=404)
+    inv = dict(inv)
+    items = json.loads(inv["items"]) if inv["items"] else []
+    items_html = ""
+    for item in items:
+        items_html += f'<tr><td>{item.get("desc","")}</td><td>{item.get("qty",1)}</td><td>${item.get("rate",0):,.2f}</td><td>${item.get("qty",1)*item.get("rate",0):,.2f}</td></tr>'
+    
+    html = f"""<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Invoice {inv['invoice_number']}</title>
+<style>*{{margin:0;padding:0;box-sizing:border-box}}body{{font-family:Inter,sans-serif;padding:40px;color:#333}}
+.inv-header{{display:flex;justify-content:space-between;margin-bottom:40px}}.brand h1{{font-size:24px;color:#0A1628}}
+.brand p{{color:#666}}.inv-meta{{text-align:right}}.inv-meta h2{{font-size:28px;color:#0A1628}}.inv-meta p{{color:#666}}
+.info-grid{{display:grid;grid-template-columns:1fr 1fr;gap:40px;margin-bottom:30px}}.info-box h3{{font-size:14px;color:#999;margin-bottom:8px}}
+.info-box p{{margin:2px 0}}table{{width:100%;border-collapse:collapse;margin:20px 0}}th{{background:#0A1628;color:#fff;padding:12px;text-align:left}}
+td{{padding:10px 12px;border-bottom:1px solid #eee}}.totals{{text-align:right;margin-top:20px}}.totals .total-line{{font-size:24px;color:#0A1628;font-weight:700}}
+.status-badge{{display:inline-block;padding:4px 12px;border-radius:4px;font-size:12px;font-weight:600}}
+.status-paid{{background:#d1fae5;color:#059669}}.status-sent{{background:#dbeafe;color:#2563eb}}.status-overdue{{background:#fee2e2;color:#dc2626}}.status-draft{{background:#f3f4f6;color:#666}}
+.footer{{margin-top:40px;padding-top:20px;border-top:1px solid #eee;text-align:center;color:#999;font-size:12px}}
+@media print{{body{{padding:20px}}}}
+</style></head><body>
+<div class="inv-header"><div class="brand"><h1>AI Growth Labs</h1><p>AI-Powered SEO & Digital Marketing Agency</p><p>admin@aigrowth-labs.com</p></div>
+<div class="inv-meta"><h2>{inv['invoice_number']}</h2><p>Date: {inv['created_at'][:10]}</p><p>Due: {inv.get('due_date','')}</p>
+<p><span class="status-badge status-{inv['status']}">{inv['status'].upper()}</span></p></div></div>
+<div class="info-grid"><div class="info-box"><h3>BILL TO</h3><p><strong>{inv.get('business_name','')}</strong></p><p>{inv.get('contact_name','')}</p><p>{inv.get('email','')}</p><p>{inv.get('location','')}</p></div>
+<div class="info-box"><h3>FROM</h3><p><strong>AI Growth Labs</strong></p><p>admin@aigrowth-labs.com</p></div></div>
+<table><thead><tr><th>Description</th><th>Qty</th><th>Rate</th><th>Amount</th></tr></thead><tbody>{items_html}</tbody></table>
+<div class="totals"><p>Subtotal: ${inv['subtotal']:,.2f}</p><p>Tax ({inv['tax_rate']}%): ${inv['tax_amount']:,.2f}</p>
+<p class="total-line">Total: ${inv['total']:,.2f}</p></div>
+{f"<p style='margin-top:20px;color:#666'>Notes: {inv.get('notes','')}</p>" if inv.get('notes') else ""}
+<div class="footer"><p>Thank you for your business!</p><p>AI Growth Labs | AI-Powered SEO Agency</p></div></body></html>"""
+    return HTMLResponse(content=html)
+
+# ===== KEYWORD RANKINGS =====
+@app.post("/api/keyword-rankings")
+async def add_keyword_ranking(request: Request):
+    user = require_role(request, ["super_admin", "worker", "tech_seo", "ops_manager"])
+    data = await request.json()
+    db = get_db()
+    last = db.execute("SELECT position FROM keyword_rankings WHERE client_id=? AND keyword=? ORDER BY tracked_date DESC LIMIT 1",
+                      (data["client_id"], data["keyword"])).fetchone()
+    prev = last["position"] if last else None
+    db.execute("""INSERT INTO keyword_rankings (client_id, keyword, position, previous_position, search_volume, url) VALUES (?,?,?,?,?,?)""",
+               (data["client_id"], data["keyword"], data["position"], prev, data.get("search_volume", 0), data.get("url")))
+    db.commit()
+    db.close()
+    return {"message": "Ranking recorded"}
+
+@app.get("/api/keyword-rankings/{client_id}")
+async def get_keyword_rankings(client_id: int, request: Request):
+    user = require_auth(request)
+    db = get_db()
+    rankings = [dict(r) for r in db.execute("SELECT * FROM keyword_rankings WHERE client_id=? ORDER BY tracked_date DESC, position ASC", (client_id,)).fetchall()]
+    db.close()
+    return {"rankings": rankings}
+
+# ===== CONTRACTS =====
+@app.post("/api/contracts")
+async def create_contract(request: Request):
+    user = require_role(request, ["super_admin", "ops_manager"])
+    data = await request.json()
+    db = get_db()
+    c = db.cursor()
+    c.execute("""INSERT INTO contracts (client_id, title, terms, start_date, end_date, monthly_value, status, created_by) VALUES (?,?,?,?,?,?,?,?)""",
+              (data["client_id"], data["title"], data.get("terms"), data.get("start_date"), data.get("end_date"),
+               data.get("monthly_value", 0), data.get("status", "draft"), user["id"]))
+    contract_id = c.lastrowid
+    db.commit()
+    db.close()
+    return {"id": contract_id, "message": "Contract created"}
+
+@app.put("/api/contracts/{contract_id}/status")
+async def update_contract_status(contract_id: int, request: Request):
+    user = require_role(request, ["super_admin"])
+    data = await request.json()
+    db = get_db()
+    updates = "status=?"
+    params = [data["status"]]
+    if data["status"] == "signed":
+        updates += ", signed_date=datetime('now')"
+    params.append(contract_id)
+    db.execute(f"UPDATE contracts SET {updates} WHERE id=?", params)
+    db.commit()
+    db.close()
+    return {"message": f"Contract {data['status']}"}
+
+# ===== FILE UPLOADS =====
+@app.post("/api/files/upload")
+async def upload_file(request: Request, file: UploadFile = File(...), entity_type: str = Form(...), entity_id: int = Form(...)):
+    user = require_auth(request)
+    safe_name = file.filename.replace(" ", "_").replace("/", "_")
+    file_path = os.path.join(uploads_dir, f"{entity_type}_{entity_id}_{safe_name}")
+    content = await file.read()
+    with open(file_path, "wb") as f:
+        f.write(content)
+    db = get_db()
+    db.execute("""INSERT INTO file_attachments (entity_type, entity_id, filename, filepath, file_size, mime_type, uploaded_by)
+                  VALUES (?,?,?,?,?,?,?)""",
+               (entity_type, entity_id, file.filename, file_path, len(content), file.content_type, user["id"]))
+    db.commit()
+    db.close()
+    return {"message": "File uploaded", "filename": file.filename}
+
+@app.get("/api/files/{file_id}/download")
+async def download_file(file_id: int, request: Request):
+    user = require_auth(request)
+    db = get_db()
+    f = db.execute("SELECT * FROM file_attachments WHERE id=?", (file_id,)).fetchone()
+    db.close()
+    if not f:
+        raise HTTPException(status_code=404)
+    f = dict(f)
+    if not os.path.exists(f["filepath"]):
+        raise HTTPException(status_code=404, detail="File not found on disk")
+    def iterfile():
+        with open(f["filepath"], "rb") as fh:
+            yield from fh
+    return StreamingResponse(iterfile(), media_type=f.get("mime_type", "application/octet-stream"),
+                             headers={"Content-Disposition": f'attachment; filename="{f["filename"]}"'})
+
+# ===== CONTENT PIPELINE =====
+@app.post("/api/content/generate")
+async def generate_content(request: Request):
+    user = require_role(request, ["super_admin", "worker", "tech_seo", "social_media", "ops_manager"])
+    data = await request.json()
+    db = get_db()
+    
+    client = db.execute("SELECT * FROM clients WHERE id=?", (data["client_id"],)).fetchone()
+    client = dict(client) if client else {}
+    
+    api = db.execute("SELECT * FROM api_settings WHERE is_active=1 LIMIT 1").fetchone()
+    
+    content_type = data.get("content_type", "blog")
+    topic = data.get("topic", "")
+    
+    prompt_map = {
+        "blog": f"Write a comprehensive, SEO-optimized blog post for {client.get('business_name','')} ({client.get('industry','')} in {client.get('location','')}). Topic: {topic}. Include target keywords naturally, use proper heading structure (H2, H3), internal linking suggestions, and make it 1500+ words. Write in an authoritative yet conversational tone.",
+        "meta_title": f"Generate 5 SEO-optimized title tags for {client.get('business_name','')} ({client.get('industry','')}). Each should be under 60 characters, include primary keyword, and have strong CTR appeal. Topic: {topic}",
+        "meta_desc": f"Generate 5 SEO-optimized meta descriptions for {client.get('business_name','')} ({client.get('industry','')}). Each should be 150-160 characters, include a call to action, and target keyword. Topic: {topic}",
+        "social_post": f"Create 5 engaging social media posts for {client.get('business_name','')} ({client.get('industry','')}). Platform focus: {data.get('platform','all')}. Topic: {topic}. Include hashtags, emojis, and engagement hooks.",
+        "faq": f"Generate a comprehensive FAQ section for {client.get('business_name','')} ({client.get('industry','')} in {client.get('location','')}). Topic: {topic}. Create 10 questions with detailed answers. Format for FAQ schema markup.",
+        "schema": f"Generate JSON-LD schema markup for {client.get('business_name','')} ({client.get('industry','')} in {client.get('location','')}). Include LocalBusiness, Service, FAQ schemas. Website: {client.get('website','')}",
+    }
+    
+    full_prompt = prompt_map.get(content_type, prompt_map["blog"])
+    generated_text = ""
+    
+    if api and api["api_key"]:
+        api = dict(api)
+        config = json.loads(api.get("config_json") or "{}")
+        try:
+            if api["provider"] == "claude":
+                import anthropic
+                client_ai = anthropic.Anthropic(api_key=api["api_key"])
+                response = client_ai.messages.create(model=config.get("model", "claude-sonnet-4-20250514"), max_tokens=4096, messages=[{"role": "user", "content": full_prompt}])
+                generated_text = response.content[0].text
+            elif api["provider"] == "chatgpt":
+                import openai
+                client_ai = openai.OpenAI(api_key=api["api_key"])
+                response = client_ai.chat.completions.create(model=config.get("model", "gpt-4"), max_tokens=4096, messages=[{"role": "user", "content": full_prompt}])
+                generated_text = response.choices[0].message.content
+            elif api["provider"] == "gemini":
+                import google.generativeai as genai
+                genai.configure(api_key=api["api_key"])
+                model = genai.GenerativeModel(config.get("model", "gemini-pro"))
+                response = model.generate_content(full_prompt)
+                generated_text = response.text
+        except Exception as e:
+            generated_text = f"[AI generation failed: {str(e)}]\n\nPrompt was:\n{full_prompt}"
+    else:
+        generated_text = f"[No AI API configured - configure in Settings]\n\nPrompt for manual use:\n{full_prompt}"
+    
+    c = db.cursor()
+    c.execute("""INSERT INTO generated_content (client_id, project_id, content_type, title, content, ai_provider, status, created_by)
+                 VALUES (?,?,?,?,?,?,?,?)""",
+              (data["client_id"], data.get("project_id"), content_type, topic, generated_text,
+               api["provider"] if api and api["api_key"] else "manual", "draft", user["id"]))
+    content_id = c.lastrowid
+    db.commit()
+    db.close()
+    return {"id": content_id, "message": "Content generated", "content": generated_text[:500]}
+
+@app.put("/api/content/{content_id}/status")
+async def update_content_status(content_id: int, request: Request):
+    user = require_auth(request)
+    data = await request.json()
+    db = get_db()
+    if data["status"] in ("approved", "rejected"):
+        db.execute("UPDATE generated_content SET status=?, reviewed_by=? WHERE id=?", (data["status"], user["id"], content_id))
+    else:
+        db.execute("UPDATE generated_content SET status=? WHERE id=?", (data["status"], content_id))
+    db.commit()
+    db.close()
+    return {"message": f"Content {data['status']}"}
+
+# ===== SCHEDULED TASKS =====
+@app.post("/api/scheduled-tasks")
+async def create_scheduled_task(request: Request):
+    user = require_role(request, ["super_admin", "ops_manager"])
+    data = await request.json()
+    db = get_db()
+    db.execute("""INSERT INTO scheduled_tasks (project_id, title, description, frequency, assigned_to, next_run, created_by)
+                  VALUES (?,?,?,?,?,?,?)""",
+               (data.get("project_id"), data["title"], data.get("description"), data.get("frequency", "weekly"),
+                data.get("assigned_to"), data.get("next_run"), user["id"]))
+    db.commit()
+    db.close()
+    return {"message": "Scheduled task created"}
+
+# ===== KNOWLEDGE BASE =====
+@app.post("/api/knowledge")
+async def create_kb_article(request: Request):
+    user = require_auth(request)
+    data = await request.json()
+    db = get_db()
+    c = db.cursor()
+    c.execute("""INSERT INTO knowledge_base (title, content, category, tags, created_by) VALUES (?,?,?,?,?)""",
+              (data["title"], data.get("content"), data.get("category", "general"), data.get("tags"), user["id"]))
+    article_id = c.lastrowid
+    db.commit()
+    db.close()
+    return {"id": article_id, "message": "Article created"}
+
+@app.put("/api/knowledge/{article_id}")
+async def update_kb_article(article_id: int, request: Request):
+    user = require_auth(request)
+    data = await request.json()
+    db = get_db()
+    db.execute("UPDATE knowledge_base SET title=?, content=?, category=?, tags=?, updated_at=datetime('now') WHERE id=?",
+               (data["title"], data.get("content"), data.get("category"), data.get("tags"), article_id))
+    db.commit()
+    db.close()
+    return {"message": "Article updated"}
+
+# ===== CLIENT LOCATIONS =====
+@app.post("/api/client-locations")
+async def add_client_location(request: Request):
+    user = require_role(request, ["super_admin", "worker", "tech_seo", "ops_manager"])
+    data = await request.json()
+    db = get_db()
+    db.execute("""INSERT INTO client_locations (client_id, location_name, address, city, state, zip_code, phone, gbp_url, is_primary)
+                  VALUES (?,?,?,?,?,?,?,?,?)""",
+               (data["client_id"], data["location_name"], data.get("address"), data.get("city"), data.get("state"),
+                data.get("zip_code"), data.get("phone"), data.get("gbp_url"), data.get("is_primary", 0)))
+    db.commit()
+    db.close()
+    return {"message": "Location added"}
+
+# ===== VOICE CALLS (Twilio placeholder) =====
+@app.post("/api/voice/log")
+async def log_voice_call(request: Request):
+    user = require_auth(request)
+    data = await request.json()
+    db = get_db()
+    db.execute("""INSERT INTO voice_calls (client_id, caller_number, agent_number, direction, duration, recording_url, transcript, notes, handled_by)
+                  VALUES (?,?,?,?,?,?,?,?,?)""",
+               (data.get("client_id"), data.get("caller_number"), data.get("agent_number"), data.get("direction", "inbound"),
+                data.get("duration", 0), data.get("recording_url"), data.get("transcript"), data.get("notes"), user["id"]))
+    db.commit()
+    db.close()
+    return {"message": "Call logged"}
+
+@app.get("/api/voice/calls")
+async def get_voice_calls(request: Request):
+    user = require_auth(request)
+    db = get_db()
+    calls = [dict(r) for r in db.execute("""
+        SELECT vc.*, c.business_name, u.full_name as handler_name 
+        FROM voice_calls vc LEFT JOIN clients c ON vc.client_id=c.id LEFT JOIN users u ON vc.handled_by=u.id
+        ORDER BY vc.created_at DESC LIMIT 50
+    """).fetchall()]
+    db.close()
+    return {"calls": calls}
+
+# ===== DATA EXPORT =====
+@app.get("/api/export/{entity}")
+async def export_data(entity: str, request: Request):
+    user = require_role(request, ["super_admin", "finance", "ops_manager"])
+    db = get_db()
+    if entity == "clients":
+        rows = [dict(r) for r in db.execute("SELECT id, business_name, contact_name, email, phone, website, industry, location, status, package, monthly_payment, created_at FROM clients ORDER BY id").fetchall()]
+    elif entity == "tasks":
+        rows = [dict(r) for r in db.execute("SELECT t.id, p.title as project, t.title, t.status, t.priority, t.due_date, u.full_name as assigned_to FROM tasks t LEFT JOIN projects p ON t.project_id=p.id LEFT JOIN users u ON t.assigned_to=u.id ORDER BY t.id").fetchall()]
+    elif entity == "payments":
+        rows = [dict(r) for r in db.execute("SELECT pay.id, c.business_name, pay.amount, pay.status, pay.due_date, pay.paid_date, pay.invoice_number FROM payments pay LEFT JOIN clients c ON pay.client_id=c.id ORDER BY pay.id").fetchall()]
+    elif entity == "invoices":
+        rows = [dict(r) for r in db.execute("SELECT i.id, c.business_name, i.invoice_number, i.total, i.status, i.due_date, i.paid_date FROM invoices i LEFT JOIN clients c ON i.client_id=c.id ORDER BY i.id").fetchall()]
+    elif entity == "time_entries":
+        rows = [dict(r) for r in db.execute("SELECT te.id, u.full_name as worker, t.title as task, te.start_time, te.end_time, te.hours FROM time_entries te LEFT JOIN users u ON te.user_id=u.id LEFT JOIN tasks t ON te.task_id=t.id ORDER BY te.id").fetchall()]
+    else:
+        db.close()
+        return JSONResponse({"error": "Unknown entity"}, status_code=400)
+    db.close()
+    
+    if not rows:
+        return JSONResponse({"error": "No data to export"}, status_code=400)
+    
+    output = io.StringIO()
+    writer = csv.DictWriter(output, fieldnames=rows[0].keys())
+    writer.writeheader()
+    writer.writerows(rows)
+    output.seek(0)
+    return StreamingResponse(io.BytesIO(output.getvalue().encode()), media_type="text/csv",
+                             headers={"Content-Disposition": f'attachment; filename="{entity}_export.csv"'})
+
+# ===== SEARCH =====
+@app.get("/api/search")
+async def search_all(request: Request, q: str = ""):
+    user = require_auth(request)
+    if not q or len(q) < 2:
+        return {"results": []}
+    db = get_db()
+    results = []
+    like = f"%{q}%"
+    for r in db.execute("SELECT id, business_name, industry, location FROM clients WHERE business_name LIKE ? OR industry LIKE ? OR location LIKE ? LIMIT 5", (like, like, like)).fetchall():
+        results.append({"type": "client", "id": r["id"], "title": r["business_name"], "subtitle": f"{r['industry']} - {r['location']}", "url": f"/client/{r['id']}"})
+    for r in db.execute("SELECT p.id, p.title, c.business_name FROM projects p LEFT JOIN clients c ON p.client_id=c.id WHERE p.title LIKE ? OR c.business_name LIKE ? LIMIT 5", (like, like)).fetchall():
+        results.append({"type": "project", "id": r["id"], "title": r["title"], "subtitle": r["business_name"], "url": f"/dashboard"})
+    for r in db.execute("SELECT t.id, t.title, p.title as project_title FROM tasks t LEFT JOIN projects p ON t.project_id=p.id WHERE t.title LIKE ? LIMIT 5", (like,)).fetchall():
+        results.append({"type": "task", "id": r["id"], "title": r["title"], "subtitle": r["project_title"], "url": f"/dashboard"})
+    db.close()
+    return {"results": results}
+
+# ===== PERFORMANCE REVIEWS =====
+@app.post("/api/performance-reviews")
+async def create_performance_review(request: Request):
+    user = require_role(request, ["super_admin", "ops_manager"])
+    data = await request.json()
+    worker_id = data["user_id"]
+    db = get_db()
+    completed = db.execute("SELECT COUNT(*) FROM tasks WHERE assigned_to=? AND status='completed'", (worker_id,)).fetchone()[0]
+    total = db.execute("SELECT COUNT(*) FROM tasks WHERE assigned_to=?", (worker_id,)).fetchone()[0]
+    on_time = db.execute("SELECT COUNT(*) FROM tasks WHERE assigned_to=? AND status='completed' AND (due_date IS NULL OR completed_date <= due_date)", (worker_id,)).fetchone()[0]
+    on_time_pct = round(on_time/completed*100) if completed else 0
+    quality = data.get("quality_score", 80)
+    overall = round((on_time_pct * 0.4 + quality * 0.4 + (completed/max(total,1)*100) * 0.2))
+    
+    db.execute("""INSERT INTO performance_reviews (user_id, review_period, tasks_completed, tasks_on_time, on_time_pct, quality_score, overall_score, reviewer_id, comments)
+                  VALUES (?,?,?,?,?,?,?,?,?)""",
+               (worker_id, data.get("review_period", datetime.now().strftime("%Y-%m")), completed, on_time, on_time_pct,
+                quality, overall, user["id"], data.get("comments")))
+    db.commit()
+    db.close()
+    return {"message": "Review created", "overall_score": overall}
+
+# ===== WEBSITE CHATBOT =====
 @app.post("/api/chat")
 async def save_chat(request: Request):
     data = await request.json()

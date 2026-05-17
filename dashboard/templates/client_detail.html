@@ -84,6 +84,64 @@
 <td>{{ p.paid_date or '-' }}</td><td><span class="badge badge-{{ p.status }}">{{ p.status }}</span></td></tr>
 {% endfor %}</tbody></table></div>{% endif %}
 
+{% if invoices|length > 0 %}
+<div class="card"><h3>🧾 Invoices</h3>
+<table><thead><tr><th>Invoice #</th><th>Amount</th><th>Status</th><th>Due Date</th><th>Action</th></tr></thead><tbody>
+{% for inv in invoices %}
+<tr><td>{{ inv.invoice_number }}</td><td style="font-weight:600">${{ "{:,.0f}".format(inv.total) }}</td>
+<td><span class="badge badge-{{ inv.status }}">{{ inv.status }}</span></td><td>{{ inv.due_date or '' }}</td>
+<td><a href="/api/invoices/{{ inv.id }}/pdf" target="_blank" class="btn btn-sm btn-outline">View PDF</a></td></tr>
+{% endfor %}</tbody></table></div>{% endif %}
+
+{% if keyword_rankings|length > 0 %}
+<div class="card"><h3>📈 Keyword Rankings</h3>
+<table><thead><tr><th>Keyword</th><th>Position</th><th>Change</th><th>Search Volume</th><th>URL</th></tr></thead><tbody>
+{% for r in keyword_rankings %}
+<tr><td><strong>{{ r.keyword }}</strong></td><td style="font-size:16px;font-weight:700">#{{ r.position }}</td>
+<td>{% set change = (r.previous_position or r.position) - r.position %}
+{% if change > 0 %}<span style="color:#22c55e;font-weight:600">▲ +{{ change }}</span>
+{% elif change < 0 %}<span style="color:#ef4444;font-weight:600">▼ {{ change }}</span>
+{% else %}<span style="color:#94a3b8">—</span>{% endif %}</td>
+<td>{{ "{:,}".format(r.search_volume) }}</td>
+<td style="max-width:200px;overflow:hidden;text-overflow:ellipsis">{{ r.url or '' }}</td></tr>
+{% endfor %}</tbody></table></div>{% endif %}
+
+{% if contracts|length > 0 %}
+<div class="card"><h3>📝 Contracts</h3>
+<table><thead><tr><th>Title</th><th>Monthly Value</th><th>Start</th><th>End</th><th>Status</th></tr></thead><tbody>
+{% for ct in contracts %}
+<tr><td>{{ ct.title }}</td><td>${{ "{:,.0f}".format(ct.monthly_value) }}</td>
+<td>{{ ct.start_date or '' }}</td><td>{{ ct.end_date or '' }}</td>
+<td><span class="badge badge-{{ ct.status }}">{{ ct.status }}</span></td></tr>
+{% endfor %}</tbody></table></div>{% endif %}
+
+{% if locations|length > 0 %}
+<div class="card"><h3>📍 Locations</h3>
+<table><thead><tr><th>Location</th><th>Address</th><th>City</th><th>Phone</th><th>GBP</th><th>Primary</th></tr></thead><tbody>
+{% for loc in locations %}
+<tr><td>{{ loc.location_name }}</td><td>{{ loc.address or '' }}</td><td>{{ loc.city or '' }}, {{ loc.state or '' }}</td>
+<td>{{ loc.phone or '' }}</td>
+<td>{% if loc.gbp_url %}<a href="{{ loc.gbp_url }}" target="_blank">View</a>{% else %}-{% endif %}</td>
+<td>{% if loc.is_primary %}<span class="badge badge-active">Primary</span>{% else %}-{% endif %}</td></tr>
+{% endfor %}</tbody></table></div>{% endif %}
+
+{% if time_entries|length > 0 %}
+<div class="card"><h3>⏱️ Time Entries</h3>
+<table><thead><tr><th>Worker</th><th>Task</th><th>Start</th><th>End</th><th>Hours</th></tr></thead><tbody>
+{% for te in time_entries %}
+<tr><td>{{ te.user_name or '' }}</td><td>{{ te.task_title or '' }}</td>
+<td>{{ te.start_time or '' }}</td><td>{{ te.end_time or '' }}</td>
+<td><strong>{{ te.hours or 0 }}h</strong></td></tr>
+{% endfor %}</tbody></table></div>{% endif %}
+
+{% if files|length > 0 %}
+<div class="card"><h3>📎 Attached Files</h3>
+<table><thead><tr><th>File</th><th>Size</th><th>Type</th><th>Action</th></tr></thead><tbody>
+{% for f in files %}
+<tr><td>{{ f.filename }}</td><td>{{ "{:,.0f}".format(f.file_size / 1024) }} KB</td><td>{{ f.mime_type or '' }}</td>
+<td><a href="/api/files/{{ f.id }}/download" class="btn btn-sm btn-outline">Download</a></td></tr>
+{% endfor %}</tbody></table></div>{% endif %}
+
 <!-- Add Credential Modal -->
 <div class="modal-overlay" id="addCredModal"><div class="modal"><div class="modal-header"><h3>Add Credential</h3><button onclick="closeModal('addCredModal')" class="modal-close">×</button></div>
 <div class="modal-body">

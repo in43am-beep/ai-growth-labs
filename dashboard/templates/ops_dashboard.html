@@ -1,0 +1,100 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Operations Manager — AI Growth Labs OS</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/static/css/dashboard.css"></head><body>
+<aside class="sidebar"><div class="sidebar-brand">AI Growth<span>Labs</span></div>
+<nav><div class="nav-section">Operations</div>
+<a href="/dashboard" class="active">📊 Dashboard</a>
+<a href="/monitor">📡 Team Monitor</a>
+<a href="/invoices">💰 Invoices</a>
+<a href="/content-pipeline">📝 Content Pipeline</a>
+<a href="/knowledge">📚 Knowledge Base</a>
+<a href="/settings">⚙️ Settings</a>
+<a href="/team-chat">💬 Team Chat</a>
+</nav>
+<div class="sidebar-user"><div class="user-avatar">{{ user.full_name[:2]|upper }}</div>
+<div><strong>{{ user.full_name }}</strong><small>Ops Manager</small></div></div></aside>
+<main class="main">
+<div class="header-bar"><h1>Operations Dashboard</h1><span>Team performance, deadlines & workload</span>
+<div class="header-actions">
+<input type="text" id="searchInput" placeholder="Search..." class="search-input" onkeyup="globalSearch(this.value)">
+<div id="searchResults" class="search-results"></div>
+</div></div>
+
+<div class="stats-grid">
+<div class="stat-card"><div class="stat-num">{{ stats.total_workers }}</div><div class="stat-label">Team Members</div></div>
+<div class="stat-card"><div class="stat-num">{{ stats.active_projects }}</div><div class="stat-label">Active Projects</div></div>
+<div class="stat-card"><div class="stat-num" style="{% if stats.overdue_count > 0 %}color:#ef4444{% endif %}">{{ stats.overdue_count }}</div><div class="stat-label">Overdue Tasks</div></div>
+<div class="stat-card"><div class="stat-num">{{ stats.scheduled_count }}</div><div class="stat-label">Scheduled Tasks</div></div>
+</div>
+
+<!-- Overdue Tasks Alert -->
+{% if overdue_tasks %}
+<div class="card" style="border-left:4px solid #ef4444">
+<h3 style="color:#ef4444">⚠️ Overdue Tasks ({{ overdue_tasks|length }})</h3>
+<table><thead><tr><th>Task</th><th>Project</th><th>Client</th><th>Assigned To</th><th>Due Date</th></tr></thead><tbody>
+{% for t in overdue_tasks %}
+<tr style="background:rgba(239,68,68,0.05)">
+<td>{{ t.title }}</td><td>{{ t.project_title }}</td><td>{{ t.business_name }}</td>
+<td>{{ t.assigned_name or 'Unassigned' }}</td>
+<td style="color:#ef4444;font-weight:600">{{ t.due_date }}</td></tr>
+{% endfor %}</tbody></table></div>
+{% endif %}
+
+<!-- Team Workload -->
+<div class="card"><h3>👥 Team Workload & Performance</h3>
+<table><thead><tr><th>Worker</th><th>Role</th><th>Active</th><th>Pending</th><th>Completed</th><th>Overdue</th><th>Hours</th><th>Score</th></tr></thead><tbody>
+{% for w in workers %}
+<tr><td><strong>{{ w.full_name }}</strong></td>
+<td><span class="badge">{{ w.role }}</span></td>
+<td>{{ w.active_tasks }}</td><td>{{ w.pending_tasks }}</td>
+<td style="color:#22c55e">{{ w.completed_tasks }}</td>
+<td style="{% if w.overdue_tasks > 0 %}color:#ef4444;font-weight:600{% endif %}">{{ w.overdue_tasks }}</td>
+<td>{{ w.total_hours }}h</td>
+<td><div class="perf-score {% if w.perf_score >= 80 %}score-good{% elif w.perf_score >= 50 %}score-ok{% else %}score-low{% endif %}">{{ w.perf_score }}%</div></td></tr>
+{% endfor %}</tbody></table></div>
+
+<!-- Active Projects -->
+<div class="card"><h3>📋 Active Projects</h3>
+<table><thead><tr><th>Project</th><th>Client</th><th>Worker</th><th>Progress</th><th>Priority</th></tr></thead><tbody>
+{% for p in projects %}
+<tr><td>{{ p.title }}</td><td>{{ p.business_name }}</td><td>{{ p.worker_name or 'Unassigned' }}</td>
+<td><div class="progress-bar" style="width:120px;display:inline-block"><div class="progress-fill" style="width:{{ p.progress }}%"></div></div> {{ p.progress }}%</td>
+<td><span class="badge badge-{{ p.priority }}">{{ p.priority }}</span></td></tr>
+{% endfor %}</tbody></table></div>
+
+<!-- Scheduled Tasks -->
+{% if scheduled_tasks %}
+<div class="card"><h3>🔄 Scheduled / Recurring Tasks</h3>
+<table><thead><tr><th>Task</th><th>Frequency</th><th>Assigned</th><th>Next Run</th></tr></thead><tbody>
+{% for st in scheduled_tasks %}
+<tr><td>{{ st.title }}</td><td><span class="badge">{{ st.frequency }}</span></td>
+<td>{{ st.assigned_name or 'Unassigned' }}</td><td>{{ st.next_run or 'Not set' }}</td></tr>
+{% endfor %}</tbody></table></div>
+{% endif %}
+
+<script>
+let searchTimeout;
+function globalSearch(q){
+    clearTimeout(searchTimeout);
+    const box=document.getElementById('searchResults');
+    if(q.length<2){box.innerHTML='';box.style.display='none';return}
+    searchTimeout=setTimeout(()=>{
+        fetch('/api/search?q='+encodeURIComponent(q)).then(r=>r.json()).then(d=>{
+            if(!d.results.length){box.innerHTML='<div class="sr-item">No results</div>';box.style.display='block';return}
+            box.innerHTML=d.results.map(r=>`<a href="${r.url}" class="sr-item"><span class="sr-type">${r.type}</span><strong>${r.title}</strong><small>${r.subtitle||''}</small></a>`).join('');
+            box.style.display='block';
+        })
+    },300);
+}
+document.addEventListener('click',e=>{if(!e.target.closest('.header-actions'))document.getElementById('searchResults').style.display='none'});
+</script>
+<style>
+.perf-score{display:inline-block;padding:4px 10px;border-radius:4px;font-weight:700;font-size:13px}
+.score-good{background:#d1fae5;color:#059669}.score-ok{background:#fef3c7;color:#d97706}.score-low{background:#fee2e2;color:#dc2626}
+.search-input{background:#0d1f3c;border:1px solid #1e3a5f;color:#fff;padding:8px 14px;border-radius:6px;width:250px;font-size:13px}
+.search-results{position:absolute;top:100%;right:0;background:#0d1f3c;border:1px solid #1e3a5f;border-radius:8px;width:350px;max-height:400px;overflow-y:auto;display:none;z-index:100}
+.sr-item{display:block;padding:10px 14px;border-bottom:1px solid #1e3a5f;color:#e2e8f0;text-decoration:none}
+.sr-item:hover{background:#162544}.sr-type{background:#22D3EE;color:#0A1628;padding:2px 6px;border-radius:3px;font-size:10px;font-weight:600;margin-right:6px}
+</style>
+</main></body></html>

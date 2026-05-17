@@ -1,4 +1,4 @@
-"""Database module using SQLite for the Agency OS v2"""
+"""Database module using SQLite for the Agency OS v3 — Full Feature Implementation"""
 import sqlite3
 import json
 import os
@@ -18,17 +18,18 @@ def init_db():
     conn = get_db()
     c = conn.cursor()
     
-    # Users table
+    # Users table — added 'client' and 'ops_manager' roles
     c.execute('''CREATE TABLE IF NOT EXISTS users (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         username TEXT UNIQUE NOT NULL,
         password_hash TEXT NOT NULL,
         full_name TEXT NOT NULL,
         email TEXT,
-        role TEXT NOT NULL CHECK(role IN ('super_admin','worker','tech_seo','social_media','finance','sales')),
+        role TEXT NOT NULL CHECK(role IN ('super_admin','worker','tech_seo','social_media','finance','sales','ops_manager','client')),
         rank TEXT DEFAULT 'junior',
         salary REAL DEFAULT 0,
         is_active INTEGER DEFAULT 1,
+        linked_client_id INTEGER,
         created_at TEXT DEFAULT (datetime('now')),
         last_login TEXT
     )''')
@@ -52,7 +53,7 @@ def init_db():
         updated_at TEXT DEFAULT (datetime('now'))
     )''')
     
-    # Client credentials table (NEW)
+    # Client credentials table
     c.execute('''CREATE TABLE IF NOT EXISTS client_credentials (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         client_id INTEGER REFERENCES clients(id),
@@ -110,7 +111,7 @@ def init_db():
         user_id INTEGER REFERENCES users(id),
         title TEXT NOT NULL,
         message TEXT,
-        type TEXT DEFAULT 'info' CHECK(type IN ('info','warning','success','task','urgent','chat_request')),
+        type TEXT DEFAULT 'info' CHECK(type IN ('info','warning','success','task','urgent','chat_request','deadline')),
         is_read INTEGER DEFAULT 0,
         link TEXT,
         created_at TEXT DEFAULT (datetime('now'))
@@ -122,8 +123,9 @@ def init_db():
         client_id INTEGER REFERENCES clients(id),
         website_url TEXT NOT NULL,
         audit_data TEXT,
+        report_data TEXT,
         overall_score INTEGER,
-        status TEXT DEFAULT 'pending' CHECK(status IN ('pending','processing','completed','failed')),
+        status TEXT DEFAULT 'pending',
         report_pdf_path TEXT,
         ai_provider TEXT,
         created_by INTEGER REFERENCES users(id),
@@ -207,7 +209,7 @@ def init_db():
         updated_at TEXT DEFAULT (datetime('now'))
     )''')
     
-    # Team chat system (NEW)
+    # Team chat system
     c.execute('''CREATE TABLE IF NOT EXISTS team_chats (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         from_user_id INTEGER REFERENCES users(id),
@@ -217,7 +219,7 @@ def init_db():
         created_at TEXT DEFAULT (datetime('now'))
     )''')
     
-    # Chat requests (NEW)
+    # Chat requests
     c.execute('''CREATE TABLE IF NOT EXISTS chat_requests (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         from_user_id INTEGER REFERENCES users(id),
@@ -227,7 +229,7 @@ def init_db():
         resolved_at TEXT
     )''')
     
-    # Suggestions (NEW)
+    # Suggestions
     c.execute('''CREATE TABLE IF NOT EXISTS suggestions (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         user_id INTEGER REFERENCES users(id),
@@ -239,7 +241,7 @@ def init_db():
         created_at TEXT DEFAULT (datetime('now'))
     )''')
     
-    # API Settings (NEW)
+    # API Settings — added twilio
     c.execute('''CREATE TABLE IF NOT EXISTS api_settings (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         provider TEXT UNIQUE NOT NULL CHECK(provider IN ('claude','chatgpt','gemini','twilio','smtp')),
@@ -250,7 +252,7 @@ def init_db():
         updated_at TEXT DEFAULT (datetime('now'))
     )''')
     
-    # Client reports (NEW)
+    # Client reports
     c.execute('''CREATE TABLE IF NOT EXISTS client_reports (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         client_id INTEGER REFERENCES clients(id),
@@ -277,7 +279,7 @@ def init_db():
         created_at TEXT DEFAULT (datetime('now'))
     )''')
     
-    # Package task templates (NEW)
+    # Package task templates
     c.execute('''CREATE TABLE IF NOT EXISTS package_tasks (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         package TEXT NOT NULL CHECK(package IN ('Growth Starter','Growth Pro','Growth Elite')),
@@ -287,6 +289,168 @@ def init_db():
         is_automated INTEGER DEFAULT 0,
         dna_prompt TEXT,
         order_num INTEGER DEFAULT 0
+    )''')
+    
+    # =============== NEW TABLES (Expert Analysis Implementation) ===============
+    
+    # Time entries — start/stop timer on tasks
+    c.execute('''CREATE TABLE IF NOT EXISTS time_entries (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        user_id INTEGER REFERENCES users(id),
+        task_id INTEGER REFERENCES tasks(id),
+        project_id INTEGER REFERENCES projects(id),
+        start_time TEXT NOT NULL,
+        end_time TEXT,
+        hours REAL DEFAULT 0,
+        description TEXT,
+        created_at TEXT DEFAULT (datetime('now'))
+    )''')
+    
+    # Invoices — professional invoice generation
+    c.execute('''CREATE TABLE IF NOT EXISTS invoices (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        client_id INTEGER REFERENCES clients(id),
+        invoice_number TEXT UNIQUE,
+        items TEXT,
+        subtotal REAL DEFAULT 0,
+        tax_rate REAL DEFAULT 0,
+        tax_amount REAL DEFAULT 0,
+        total REAL DEFAULT 0,
+        status TEXT DEFAULT 'draft' CHECK(status IN ('draft','sent','paid','overdue','cancelled')),
+        due_date TEXT,
+        paid_date TEXT,
+        notes TEXT,
+        created_by INTEGER REFERENCES users(id),
+        created_at TEXT DEFAULT (datetime('now'))
+    )''')
+    
+    # Keyword rankings — track keyword positions over time
+    c.execute('''CREATE TABLE IF NOT EXISTS keyword_rankings (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        client_id INTEGER REFERENCES clients(id),
+        keyword TEXT NOT NULL,
+        position INTEGER,
+        previous_position INTEGER,
+        search_volume INTEGER DEFAULT 0,
+        url TEXT,
+        tracked_date TEXT DEFAULT (date('now')),
+        created_at TEXT DEFAULT (datetime('now'))
+    )''')
+    
+    # Contracts — client agreements
+    c.execute('''CREATE TABLE IF NOT EXISTS contracts (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        client_id INTEGER REFERENCES clients(id),
+        title TEXT NOT NULL,
+        terms TEXT,
+        start_date TEXT,
+        end_date TEXT,
+        monthly_value REAL DEFAULT 0,
+        status TEXT DEFAULT 'draft' CHECK(status IN ('draft','sent','signed','active','expired','cancelled')),
+        signed_date TEXT,
+        created_by INTEGER REFERENCES users(id),
+        created_at TEXT DEFAULT (datetime('now'))
+    )''')
+    
+    # Client locations — multi-location support
+    c.execute('''CREATE TABLE IF NOT EXISTS client_locations (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        client_id INTEGER REFERENCES clients(id),
+        location_name TEXT NOT NULL,
+        address TEXT,
+        city TEXT,
+        state TEXT,
+        zip_code TEXT,
+        phone TEXT,
+        gbp_url TEXT,
+        is_primary INTEGER DEFAULT 0,
+        created_at TEXT DEFAULT (datetime('now'))
+    )''')
+    
+    # File attachments
+    c.execute('''CREATE TABLE IF NOT EXISTS file_attachments (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        entity_type TEXT NOT NULL,
+        entity_id INTEGER NOT NULL,
+        filename TEXT NOT NULL,
+        filepath TEXT NOT NULL,
+        file_size INTEGER DEFAULT 0,
+        mime_type TEXT,
+        uploaded_by INTEGER REFERENCES users(id),
+        created_at TEXT DEFAULT (datetime('now'))
+    )''')
+    
+    # Generated content — AI content pipeline
+    c.execute('''CREATE TABLE IF NOT EXISTS generated_content (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        client_id INTEGER REFERENCES clients(id),
+        project_id INTEGER REFERENCES projects(id),
+        content_type TEXT DEFAULT 'blog' CHECK(content_type IN ('blog','meta_title','meta_desc','social_post','landing_page','faq','schema','backlink_plan')),
+        title TEXT,
+        content TEXT,
+        ai_provider TEXT,
+        status TEXT DEFAULT 'draft' CHECK(status IN ('draft','review','approved','published','rejected')),
+        created_by INTEGER REFERENCES users(id),
+        reviewed_by INTEGER REFERENCES users(id),
+        created_at TEXT DEFAULT (datetime('now'))
+    )''')
+    
+    # Scheduled tasks — recurring task support
+    c.execute('''CREATE TABLE IF NOT EXISTS scheduled_tasks (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        project_id INTEGER REFERENCES projects(id),
+        title TEXT NOT NULL,
+        description TEXT,
+        frequency TEXT DEFAULT 'weekly' CHECK(frequency IN ('daily','weekly','biweekly','monthly')),
+        assigned_to INTEGER REFERENCES users(id),
+        next_run TEXT,
+        last_run TEXT,
+        is_active INTEGER DEFAULT 1,
+        created_by INTEGER REFERENCES users(id),
+        created_at TEXT DEFAULT (datetime('now'))
+    )''')
+    
+    # Knowledge base — internal wiki
+    c.execute('''CREATE TABLE IF NOT EXISTS knowledge_base (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        title TEXT NOT NULL,
+        content TEXT,
+        category TEXT DEFAULT 'general',
+        tags TEXT,
+        created_by INTEGER REFERENCES users(id),
+        updated_at TEXT DEFAULT (datetime('now')),
+        created_at TEXT DEFAULT (datetime('now'))
+    )''')
+    
+    # Voice call logs — Twilio integration tracking
+    c.execute('''CREATE TABLE IF NOT EXISTS voice_calls (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        client_id INTEGER,
+        caller_number TEXT,
+        agent_number TEXT,
+        direction TEXT DEFAULT 'inbound' CHECK(direction IN ('inbound','outbound')),
+        duration INTEGER DEFAULT 0,
+        recording_url TEXT,
+        transcript TEXT,
+        status TEXT DEFAULT 'completed',
+        notes TEXT,
+        handled_by INTEGER REFERENCES users(id),
+        created_at TEXT DEFAULT (datetime('now'))
+    )''')
+
+    # Performance reviews — worker scoring
+    c.execute('''CREATE TABLE IF NOT EXISTS performance_reviews (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        user_id INTEGER REFERENCES users(id),
+        review_period TEXT,
+        tasks_completed INTEGER DEFAULT 0,
+        tasks_on_time INTEGER DEFAULT 0,
+        on_time_pct REAL DEFAULT 0,
+        quality_score REAL DEFAULT 0,
+        overall_score REAL DEFAULT 0,
+        reviewer_id INTEGER REFERENCES users(id),
+        comments TEXT,
+        created_at TEXT DEFAULT (datetime('now'))
     )''')
     
     # Create default super admin
@@ -346,7 +510,7 @@ def _insert_package_tasks(c):
         ]
         
         elite_tasks = pro_tasks + [
-            ('AI SEO', 'Full DNA-Level Audit', 'Complete 100+ factor audit across 12 DNA pillars', 1, 'Run complete DNA-level SEO audit covering all 12 pillars (100+ factors): Technical SEO (crawlability, indexability, speed, mobile, architecture, security, structured data), On-Page (titles, metas, headers, keywords, content quality, media, internal links, UX), Content (topic coverage, semantic SEO, intent match, freshness, helpfulness, E-E-A-T, depth), Entity SEO, Internal Linking, Off-Page (backlinks, referring domains, brand mentions, citations, social signals), Local SEO (GBP, NAP, local citations, geo relevance), User Behavior (CTR, bounce rate, dwell time, engagement), Conversion (CTA, trust, forms), Competitor DNA (authority, content gap, keyword gap, entity gap, UX gap, topical depth gap), Indexing (crawl budget, canonical, duplicates), AI/Programmatic SEO. Score each pillar 0-10. Generate priority roadmap.'),
+            ('AI SEO', 'Full DNA-Level Audit', 'Complete 100+ factor audit across 12 DNA pillars', 1, 'Run complete DNA-level SEO audit covering all 12 pillars (100+ factors): Technical SEO, On-Page, Content, Entity SEO, Internal Linking, Off-Page, Local SEO, User Behavior, Conversion, Competitor DNA, Indexing, AI/Programmatic SEO. Score each pillar 0-10. Generate priority roadmap.'),
             ('AI SEO', 'Programmatic SEO Setup', 'Create scalable page templates for city/service combos', 1, 'Design programmatic SEO strategy: Identify scalable page patterns (city+service, service+niche). Create template structures. Plan internal linking between programmatic pages. Estimate traffic potential per template.'),
             ('AI SEO', 'Predictive SEO Analysis', 'Forecast ranking opportunities using AI trends', 1, 'Analyze search trends for the niche: Identify rising keywords, seasonal patterns, emerging topics. Predict ranking opportunities for next 90 days. Recommend content calendar based on trend predictions.'),
             ('Content', 'AI Content Engine (20+/mo)', 'Generate 20+ optimized content pieces monthly', 0, None),
@@ -355,7 +519,7 @@ def _insert_package_tasks(c):
             ('Social Media', 'All Platform Management', 'Manage all social media platforms (6+)', 0, None),
             ('Ads', 'Facebook + Google Ads ($5K+)', 'Full ad management with $5K+ monthly budget', 0, None),
             ('Off-Page', 'Link Building Campaign', 'Strategic outreach for high-authority backlinks', 0, None),
-            ('Off-Page', 'Backlink Structure File', 'Create detailed backlink acquisition plan document', 1, 'Generate backlink strategy: Identify 50+ link opportunities (guest posts, directories, resource pages, broken links, competitor backlinks). Prioritize by DA, relevance, difficulty. Create outreach templates for each type.'),
+            ('Off-Page', 'Backlink Structure File', 'Create detailed backlink acquisition plan document', 1, 'Generate backlink strategy: Identify 50+ link opportunities. Prioritize by DA, relevance, difficulty. Create outreach templates for each type.'),
             ('Reporting', 'Weekly Strategy Calls', 'Weekly client strategy calls with reports', 0, None),
         ]
         
@@ -380,7 +544,7 @@ def _insert_demo_data(c):
         if c.fetchone()[0] > 0:
             return
         
-        # Demo workers
+        # Demo workers — including ops_manager
         workers = [
             ('sarah_k', 'Sarah Kim', 'sarah@aigrowth-labs.com', 'tech_seo', 'senior', 5500),
             ('alex_r', 'Alex Rodriguez', 'alex@aigrowth-labs.com', 'tech_seo', 'lead', 7000),
@@ -389,6 +553,7 @@ def _insert_demo_data(c):
             ('lisa_c', 'Lisa Chen', 'lisa@aigrowth-labs.com', 'sales', 'senior', 5500),
             ('marcus_j', 'Marcus Johnson', 'marcus@aigrowth-labs.com', 'social_media', 'mid', 4500),
             ('rachel_g', 'Rachel Green', 'rachel@aigrowth-labs.com', 'finance', 'senior', 5500),
+            ('ops_mike', 'Michael Torres', 'mike@aigrowth-labs.com', 'ops_manager', 'lead', 6500),
         ]
         pw = bcrypt.hash("password123")
         for uname, name, email, role, rank, salary in workers:
@@ -408,6 +573,13 @@ def _insert_demo_data(c):
         for biz, contact, email, phone, web, ind, loc, status, pkg, pmt in clients:
             c.execute('INSERT INTO clients (business_name, contact_name, email, phone, website, industry, location, status, package, monthly_payment) VALUES (?,?,?,?,?,?,?,?,?,?)',
                       (biz, contact, email, phone, web, ind, loc, status, pkg, pmt))
+        
+        # Create client portal users for active clients
+        for i, (biz, contact, email, phone, web, ind, loc, status, pkg, pmt) in enumerate(clients):
+            if status == 'active':
+                uname = f"client_{i+1}"
+                c.execute('INSERT OR IGNORE INTO users (username, password_hash, full_name, email, role, rank, salary, linked_client_id) VALUES (?,?,?,?,?,?,?,?)',
+                          (uname, pw, contact, email, 'client', 'client', 0, i+1))
         
         # Demo credentials
         creds = [
@@ -434,23 +606,23 @@ def _insert_demo_data(c):
             c.execute('INSERT INTO projects (client_id, title, description, service_type, status, priority, assigned_worker_id, team_leader_id, progress) VALUES (?,?,?,?,?,?,?,?,?)',
                       (cid, title, desc, stype, status, prio, worker, leader, prog))
         
-        # Demo tasks
+        # Demo tasks with due dates for deadline tracking
         tasks = [
-            (1, 'Keyword Research', 'Research local dental keywords for Austin market', 'completed', 2, 'high', 1),
-            (1, 'GBP Optimization', 'Optimize Google Business Profile', 'completed', 2, 'high', 2),
-            (1, 'Citation Building', 'Build citations across 50+ directories', 'in_progress', 2, 'medium', 3),
-            (1, 'On-Page SEO', 'Optimize title tags, meta descriptions, schema', 'in_progress', 2, 'high', 4),
-            (1, 'Content Calendar', 'Create 3-month content calendar', 'pending', 4, 'medium', 5),
-            (1, 'Link Building', 'Outreach to local associations and blogs', 'pending', 2, 'medium', 6),
-            (2, 'Legal Keyword Analysis', 'Deep keyword research for PI terms in Dallas', 'completed', 3, 'urgent', 1),
-            (2, 'Technical SEO Audit', 'Complete technical audit', 'completed', 3, 'high', 2),
-            (2, 'Google Ads Setup', 'Set up search campaigns for PI keywords', 'in_progress', 6, 'urgent', 3),
-            (2, 'Landing Page Creation', 'Create conversion-optimized landing pages', 'in_progress', 4, 'high', 4),
-            (2, 'Content Strategy', 'Plan legal blog content for topical authority', 'pending', 4, 'medium', 5),
+            (1, 'Keyword Research', 'Research local dental keywords for Austin market', 'completed', 2, 'high', 1, '2026-05-01'),
+            (1, 'GBP Optimization', 'Optimize Google Business Profile', 'completed', 2, 'high', 2, '2026-05-05'),
+            (1, 'Citation Building', 'Build citations across 50+ directories', 'in_progress', 2, 'medium', 3, '2026-05-20'),
+            (1, 'On-Page SEO', 'Optimize title tags, meta descriptions, schema', 'in_progress', 2, 'high', 4, '2026-05-15'),
+            (1, 'Content Calendar', 'Create 3-month content calendar', 'pending', 4, 'medium', 5, '2026-05-25'),
+            (1, 'Link Building', 'Outreach to local associations and blogs', 'pending', 2, 'medium', 6, '2026-06-01'),
+            (2, 'Legal Keyword Analysis', 'Deep keyword research for PI terms in Dallas', 'completed', 3, 'urgent', 1, '2026-04-25'),
+            (2, 'Technical SEO Audit', 'Complete technical audit', 'completed', 3, 'high', 2, '2026-04-30'),
+            (2, 'Google Ads Setup', 'Set up search campaigns for PI keywords', 'in_progress', 6, 'urgent', 3, '2026-05-08'),
+            (2, 'Landing Page Creation', 'Create conversion-optimized landing pages', 'in_progress', 4, 'high', 4, '2026-05-12'),
+            (2, 'Content Strategy', 'Plan legal blog content for topical authority', 'pending', 4, 'medium', 5, '2026-05-30'),
         ]
-        for pid, title, desc, status, assigned, prio, order in tasks:
-            c.execute('INSERT INTO tasks (project_id, title, description, status, assigned_to, priority, order_num) VALUES (?,?,?,?,?,?,?)',
-                      (pid, title, desc, status, assigned, prio, order))
+        for pid, title, desc, status, assigned, prio, order, due in tasks:
+            c.execute('INSERT INTO tasks (project_id, title, description, status, assigned_to, priority, order_num, due_date) VALUES (?,?,?,?,?,?,?,?)',
+                      (pid, title, desc, status, assigned, prio, order, due))
         
         # Demo notifications
         notifs = [
@@ -499,7 +671,7 @@ def _insert_demo_data(c):
             c.execute('INSERT INTO sales_leads (business_name, contact_name, email, phone, website, industry, location, source, status, assigned_to) VALUES (?,?,?,?,?,?,?,?,?,?)',
                       (biz, contact, email, phone, web, ind, loc, src, status, 6))
         
-        # Demo social posts with engagement data
+        # Demo social posts
         social_posts = [
             (1, 'instagram', '5 Tips for Maintaining Your Smile Between Dental Visits', 'published', '2026-05-01', json.dumps({"likes": 142, "comments": 23, "shares": 18, "reach": 3200})),
             (1, 'facebook', 'Meet Dr. Chen - Your Austin Dental Expert', 'published', '2026-05-03', json.dumps({"likes": 89, "comments": 15, "shares": 12, "reach": 2100})),
@@ -513,23 +685,101 @@ def _insert_demo_data(c):
         
         # Demo suggestions
         suggestions = [
-            (2, 1, 'Add FAQ Schema to dental pages', 'The SmileBright site could benefit from FAQ schema markup on service pages. This would help with featured snippets.', 'approved', 'Good suggestion, implement it.'),
-            (3, 2, 'Consider video testimonials', 'Martinez Legal could get better conversion with video testimonials from past clients on their PI landing page.', 'pending', None),
+            (2, 1, 'Add FAQ Schema to dental pages', 'The SmileBright site could benefit from FAQ schema markup on service pages.', 'approved', 'Good suggestion, implement it.'),
+            (3, 2, 'Consider video testimonials', 'Martinez Legal could get better conversion with video testimonials.', 'pending', None),
         ]
         for uid, pid, title, desc, status, response in suggestions:
             c.execute('INSERT INTO suggestions (user_id, project_id, title, description, status, admin_response) VALUES (?,?,?,?,?,?)',
                       (uid, pid, title, desc, status, response))
         
-        # Demo API settings
+        # Demo API settings — include twilio
         api_settings = [
             ('claude', None, 0, json.dumps({"model": "claude-sonnet-4-20250514", "max_tokens": 4096})),
             ('chatgpt', None, 0, json.dumps({"model": "gpt-4.5", "max_tokens": 4096})),
             ('gemini', None, 0, json.dumps({"model": "gemini-pro", "max_tokens": 4096})),
             ('smtp', None, 0, json.dumps({"host": "smtp.gmail.com", "port": 587, "from_email": ""})),
+            ('twilio', None, 0, json.dumps({"account_sid": "", "auth_token": "", "phone_number": ""})),
         ]
         for provider, key, active, config in api_settings:
             c.execute('INSERT OR IGNORE INTO api_settings (provider, api_key, is_active, config_json) VALUES (?,?,?,?)',
                       (provider, key, active, config))
+        
+        # Demo keyword rankings
+        keywords = [
+            (1, 'dentist austin tx', 8, 12, 2400, 'https://smilebright-dental.com'),
+            (1, 'dental cleaning austin', 5, 9, 880, 'https://smilebright-dental.com/services/cleaning'),
+            (1, 'emergency dentist austin', 15, 22, 1200, 'https://smilebright-dental.com/emergency'),
+            (2, 'personal injury lawyer dallas', 12, 18, 5400, 'https://martinezlegal.com'),
+            (2, 'car accident attorney dallas', 18, 25, 3200, 'https://martinezlegal.com/car-accident'),
+            (5, 'hvac repair phoenix', 6, 11, 3800, 'https://phoenixhvacpro.com'),
+            (5, 'ac installation phoenix az', 9, 14, 2200, 'https://phoenixhvacpro.com/ac-install'),
+        ]
+        for cid, kw, pos, prev, vol, url in keywords:
+            c.execute('INSERT INTO keyword_rankings (client_id, keyword, position, previous_position, search_volume, url) VALUES (?,?,?,?,?,?)',
+                      (cid, kw, pos, prev, vol, url))
+        
+        # Demo time entries
+        time_data = [
+            (2, 1, 1, '2026-05-05 09:00', '2026-05-05 11:30', 2.5, 'Keyword research for dental market'),
+            (2, 2, 1, '2026-05-06 10:00', '2026-05-06 12:00', 2.0, 'GBP optimization setup'),
+            (3, 7, 2, '2026-05-07 09:00', '2026-05-07 13:00', 4.0, 'Legal keyword deep analysis'),
+            (4, 10, 2, '2026-05-08 14:00', '2026-05-08 17:00', 3.0, 'Landing page design'),
+        ]
+        for uid, tid, pid, start, end, hours, desc in time_data:
+            c.execute('INSERT INTO time_entries (user_id, task_id, project_id, start_time, end_time, hours, description) VALUES (?,?,?,?,?,?,?)',
+                      (uid, tid, pid, start, end, hours, desc))
+        
+        # Demo invoices
+        invoices = [
+            (1, 'INV-2026-001', json.dumps([{"desc": "Growth Pro - Monthly SEO", "qty": 1, "rate": 2997}]), 2997, 0, 0, 2997, 'paid', '2026-05-01', '2026-05-01'),
+            (2, 'INV-2026-002', json.dumps([{"desc": "Growth Elite - Full Service", "qty": 1, "rate": 6997}]), 6997, 0, 0, 6997, 'paid', '2026-05-01', '2026-05-02'),
+            (4, 'INV-2026-004', json.dumps([{"desc": "Growth Starter - Basic SEO", "qty": 1, "rate": 997}]), 997, 0, 0, 997, 'sent', '2026-05-15', None),
+            (6, 'INV-2026-006', json.dumps([{"desc": "Growth Elite - Full Service", "qty": 1, "rate": 6997}]), 6997, 0, 0, 6997, 'overdue', '2026-04-15', None),
+        ]
+        for cid, inv_num, items, sub, tax_r, tax_a, total, status, due, paid in invoices:
+            c.execute('INSERT INTO invoices (client_id, invoice_number, items, subtotal, tax_rate, tax_amount, total, status, due_date, paid_date, created_by) VALUES (?,?,?,?,?,?,?,?,?,?,1)',
+                      (cid, inv_num, items, sub, tax_r, tax_a, total, status, due, paid))
+        
+        # Demo contracts
+        contracts = [
+            (1, 'SEO Service Agreement - SmileBright', 'Monthly SEO services including local SEO, content, GBP optimization', '2026-04-01', '2026-09-30', 2997, 'active', '2026-04-01'),
+            (2, 'Full Service Agreement - Martinez Legal', 'Complete SEO + Ads + Content marketing', '2026-03-15', '2027-03-14', 6997, 'active', '2026-03-15'),
+            (6, 'MedSpa Marketing Agreement', 'Full digital marketing package', '2026-01-01', '2026-12-31', 6997, 'active', '2026-01-01'),
+        ]
+        for cid, title, terms, start, end, val, status, signed in contracts:
+            c.execute('INSERT INTO contracts (client_id, title, terms, start_date, end_date, monthly_value, status, signed_date, created_by) VALUES (?,?,?,?,?,?,?,?,1)',
+                      (cid, title, terms, start, end, val, status, signed))
+        
+        # Demo client locations
+        locations = [
+            (1, 'SmileBright - Main Office', '123 Dental Ave', 'Austin', 'TX', '78701', '(512) 555-0101', 'https://g.co/smilebright', 1),
+            (1, 'SmileBright - North Austin', '456 North Loop', 'Austin', 'TX', '78756', '(512) 555-0102', None, 0),
+            (2, 'Martinez Legal - Downtown', '789 Commerce St', 'Dallas', 'TX', '75201', '(214) 555-0202', 'https://g.co/martinezlegal', 1),
+        ]
+        for cid, name, addr, city, state, zip_code, phone, gbp, primary in locations:
+            c.execute('INSERT INTO client_locations (client_id, location_name, address, city, state, zip_code, phone, gbp_url, is_primary) VALUES (?,?,?,?,?,?,?,?,?)',
+                      (cid, name, addr, city, state, zip_code, phone, gbp, primary))
+        
+        # Demo knowledge base
+        kb_articles = [
+            ('Local SEO Checklist', '1. Claim GBP listing\n2. Optimize NAP consistency\n3. Build citations\n4. Get reviews\n5. Local content\n6. Schema markup\n7. Internal linking', 'seo', 'local,gbp,citations'),
+            ('Client Onboarding Process', '1. Sign agreement\n2. Collect credentials\n3. Run initial audit\n4. Create project plan\n5. Assign team\n6. Kickoff call\n7. Begin execution', 'process', 'onboarding,client'),
+            ('Content Writing Guidelines', 'All content must be:\n- Original and unique\n- 1500+ words for blog posts\n- Include target keyword in title, H1, first paragraph\n- Use related entities naturally\n- Include internal links to 3+ relevant pages', 'content', 'writing,guidelines'),
+        ]
+        for title, content, cat, tags in kb_articles:
+            c.execute('INSERT INTO knowledge_base (title, content, category, tags, created_by) VALUES (?,?,?,?,1)',
+                      (title, content, cat, tags))
+        
+        # Demo activity log
+        activities = [
+            (1, 'Created client', 'Added SmileBright Dental as new client', 'client', 1),
+            (2, 'Completed task', 'Finished keyword research for SmileBright', 'task', 1),
+            (1, 'Generated report', 'Monthly report for Martinez Legal', 'report', 1),
+            (6, 'Updated lead', 'Elite Fitness moved to proposal stage', 'lead', 2),
+        ]
+        for uid, action, details, etype, eid in activities:
+            c.execute('INSERT INTO activity_log (user_id, action, details, entity_type, entity_id) VALUES (?,?,?,?,?)',
+                      (uid, action, details, etype, eid))
         
     except Exception as e:
         print(f"Demo data error: {e}")

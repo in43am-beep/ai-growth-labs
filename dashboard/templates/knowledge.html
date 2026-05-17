@@ -1,0 +1,76 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Knowledge Base — AI Growth Labs OS</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/static/css/dashboard.css"></head><body>
+<aside class="sidebar"><div class="sidebar-brand">AI Growth<span>Labs</span></div>
+<nav><div class="nav-section">Resources</div>
+<a href="/dashboard">📊 Dashboard</a>
+<a href="/knowledge" class="active">📚 Knowledge Base</a>
+<a href="/team-chat">💬 Team Chat</a>
+</nav>
+<div class="sidebar-user"><div class="user-avatar">{{ user.full_name[:2]|upper }}</div>
+<div><strong>{{ user.full_name }}</strong><small>{{ user.role }}</small></div></div></aside>
+<main class="main">
+<div class="header-bar"><h1>📚 Knowledge Base</h1><span>Internal wiki, guides, SOPs</span>
+<div class="header-actions">
+<button class="btn btn-primary" onclick="document.getElementById('newArticleModal').style.display='flex'">+ New Article</button>
+<a href="/dashboard" class="btn btn-outline">← Back</a>
+</div></div>
+
+<div class="kb-grid">
+{% for a in articles %}
+<div class="card kb-card" onclick="viewArticle({{ a.id }}, '{{ a.title|e }}')">
+<div class="kb-cat"><span class="badge">{{ a.category }}</span></div>
+<h3>{{ a.title }}</h3>
+<p style="color:#94a3b8;font-size:13px;margin:8px 0">{{ (a.content or '')[:150] }}...</p>
+<div style="display:flex;justify-content:space-between;font-size:12px;color:#64748b">
+<span>By {{ a.author_name or 'System' }}</span>
+<span>{{ a.updated_at[:10] if a.updated_at else '' }}</span>
+</div>
+{% if a.tags %}<div style="margin-top:8px">{% for tag in a.tags.split(',') %}<span class="tag">{{ tag.strip() }}</span>{% endfor %}</div>{% endif %}
+</div>
+{% endfor %}
+{% if not articles %}<div class="card" style="text-align:center;padding:60px"><p style="color:#64748b">No articles yet. Create your first knowledge base article!</p></div>{% endif %}
+</div>
+
+<!-- View Article Modal -->
+<div id="viewArticleModal" class="modal" style="display:none">
+<div class="modal-content" style="max-width:700px">
+<div class="modal-header"><h3 id="viewTitle"></h3><button onclick="this.closest('.modal').style.display='none'" class="modal-close">&times;</button></div>
+<div id="viewContent" style="white-space:pre-wrap;line-height:1.8;color:#e2e8f0"></div>
+</div></div>
+
+<!-- New Article Modal -->
+<div id="newArticleModal" class="modal" style="display:none">
+<div class="modal-content">
+<div class="modal-header"><h3>New Article</h3><button onclick="this.closest('.modal').style.display='none'" class="modal-close">&times;</button></div>
+<div class="form-group"><label>Title</label><input id="kb_title" type="text" class="form-input" placeholder="Article title..."></div>
+<div class="form-group"><label>Category</label>
+<select id="kb_cat" class="form-input"><option value="seo">SEO</option><option value="process">Process</option><option value="content">Content</option><option value="technical">Technical</option><option value="general">General</option></select></div>
+<div class="form-group"><label>Content</label><textarea id="kb_content" class="form-input" rows="10" placeholder="Write your article..."></textarea></div>
+<div class="form-group"><label>Tags (comma separated)</label><input id="kb_tags" type="text" class="form-input" placeholder="seo, local, guide"></div>
+<button class="btn btn-primary btn-full" onclick="createArticle()">Save Article</button>
+</div></div>
+
+<script>
+const articles={{ articles|tojson }};
+function viewArticle(id){
+    const a=articles.find(x=>x.id===id);
+    if(!a)return;
+    document.getElementById('viewTitle').textContent=a.title;
+    document.getElementById('viewContent').textContent=a.content||'';
+    document.getElementById('viewArticleModal').style.display='flex';
+}
+function createArticle(){
+    fetch('/api/knowledge',{method:'POST',headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({title:document.getElementById('kb_title').value,content:document.getElementById('kb_content').value,
+            category:document.getElementById('kb_cat').value,tags:document.getElementById('kb_tags').value})})
+    .then(r=>r.json()).then(d=>{alert(d.message);location.reload()});
+}
+</script>
+<style>
+.kb-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:16px}
+.kb-card{cursor:pointer;transition:transform .2s}.kb-card:hover{transform:translateY(-2px);border-color:#22D3EE}
+.kb-cat{margin-bottom:8px}.tag{background:#1e3a5f;color:#22D3EE;padding:2px 8px;border-radius:3px;font-size:11px;margin-right:4px}
+</style>
+</main></body></html>
