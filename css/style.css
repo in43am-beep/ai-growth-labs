@@ -436,6 +436,31 @@ img { max-width: 100%; height: auto; display: block; }
   color: var(--gray-400);
   opacity: 0.6;
 }
+.trust-badge {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: var(--white);
+  border: 1px solid var(--gray-200);
+  border-radius: var(--radius);
+  padding: 12px 20px;
+  transition: var(--transition);
+}
+.trust-badge:hover {
+  border-color: var(--secondary);
+  box-shadow: var(--shadow-sm);
+}
+.trust-badge-icon {
+  font-size: 1.6rem;
+}
+.trust-badge-text {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--gray-700);
+  line-height: 1.3;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
 
 /* ============ SERVICES ============ */
 .services-grid {
