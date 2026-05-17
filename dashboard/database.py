@@ -5,7 +5,8 @@ import os
 from datetime import datetime, timedelta
 from passlib.hash import bcrypt
 
-DB_PATH = os.environ.get("DB_PATH", os.path.join(os.path.dirname(__file__), "agency.db"))
+_default_db = "/data/agency.db" if os.path.isdir("/data") else os.path.join(os.path.dirname(__file__), "agency.db")
+DB_PATH = os.environ.get("DB_PATH", _default_db)
 
 def get_db():
     conn = sqlite3.connect(DB_PATH)
