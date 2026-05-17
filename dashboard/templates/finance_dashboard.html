@@ -7,17 +7,18 @@
 <a href="#payments-section">💰Payments</a>
 <a href="#expenses-section">📋Expenses</a>
 <a href="#salaries-section">👷Salaries</a>
-<a href="/invoices">💰Invoices</a>
+<a href="#invoices-section">🧾Invoices</a>
 <a href="#reports-section">📄Reports</a>
+<a href="#export-section">📥Export</a>
+<a href="/analytics">📈Analytics</a>
 <a href="/team-chat">💬Team Chat</a>
 </nav>
 <div class="sidebar-user"><div class="user-avatar">{{ user.full_name[:2]|upper }}</div>
 <div><strong>{{ user.full_name }}</strong><small>Finance & Accounts</small></div></div></aside>
 <main class="main">
 <div class="header-bar"><h1>Finance Dashboard</h1><span>Payment Tracking, Expenses & P&L</span>
-<div class="header-actions"><a href="/invoices" class="btn btn-primary">💰 Invoices</a>
-<button class="btn btn-secondary" onclick="openModal('addExpenseModal')">+ Add Expense</button>
-<a href="/api/export/payments" class="btn btn-outline" download>📥 Export CSV</a>
+<div class="header-actions"><button class="btn btn-primary" onclick="openModal('addExpenseModal')">+ Add Expense</button>
+<button class="btn btn-secondary" onclick="openModal('createInvoiceModal')">+ Create Invoice</button>
 <a href="/logout" class="btn btn-outline">Logout</a></div></div>
 
 <div class="stats-grid">
@@ -45,18 +46,6 @@
 <td><strong>${{ "{:,.0f}".format(e.amount) }}</strong></td><td>{{ e.date }}</td></tr>
 {% endfor %}</tbody></table></div>
 
-{% if invoices %}
-<div class="card"><h3>🧾 Recent Invoices</h3>
-<table><thead><tr><th>Invoice #</th><th>Client</th><th>Amount</th><th>Status</th><th>Action</th></tr></thead><tbody>
-{% for inv in invoices %}
-<tr><td>{{ inv.invoice_number }}</td><td>{{ inv.business_name }}</td><td>${{ "{:,.0f}".format(inv.total) }}</td>
-<td><span class="badge badge-{{ inv.status }}">{{ inv.status }}</span></td>
-<td><a href="/api/invoices/{{ inv.id }}/pdf" target="_blank" class="btn btn-sm btn-outline">PDF</a></td></tr>
-{% endfor %}</tbody></table>
-<a href="/invoices" class="btn btn-sm btn-primary" style="margin-top:8px">View All Invoices →</a>
-</div>
-{% endif %}
-
 <div class="card" id="salaries-section"><h3>👷 Staff Salaries</h3>
 <table><thead><tr><th>Name</th><th>Role</th><th>Rank</th><th>Monthly Salary</th></tr></thead><tbody>
 {% for w in workers %}
@@ -64,6 +53,32 @@
 {% endfor %}
 <tr style="border-top:2px solid #00D4FF"><td colspan="3"><strong>Total Monthly Payroll</strong></td><td><strong>${{ "{:,.0f}".format(stats.total_salaries) }}</strong></td></tr>
 </tbody></table></div>
+
+<!-- Invoices Section -->
+<div class="card" id="invoices-section"><h3>🧾 Invoices</h3>
+<div id="invoices-list"><p style="color:#64748B">Loading invoices...</p></div></div>
+
+<!-- Data Export Section -->
+<div class="card" id="export-section"><h3>📥 Data Export (CSV)</h3>
+<div class="tools-grid">
+<div class="tool-card"><h4>Clients</h4><p>Export all client data</p><a href="/api/export/clients" class="btn btn-sm btn-primary">📥 Download</a></div>
+<div class="tool-card"><h4>Payments</h4><p>Export payment records</p><a href="/api/export/payments" class="btn btn-sm btn-primary">📥 Download</a></div>
+<div class="tool-card"><h4>Invoices</h4><p>Export invoice data</p><a href="/api/export/invoices" class="btn btn-sm btn-primary">📥 Download</a></div>
+<div class="tool-card"><h4>Expenses</h4><p>Export expense records</p><a href="/api/export/expenses" class="btn btn-sm btn-primary">📥 Download</a></div>
+<div class="tool-card"><h4>Time Entries</h4><p>Export time tracking</p><a href="/api/export/time_entries" class="btn btn-sm btn-primary">📥 Download</a></div>
+<div class="tool-card"><h4>Projects</h4><p>Export project data</p><a href="/api/export/projects" class="btn btn-sm btn-primary">📥 Download</a></div>
+</div></div>
+
+<!-- Create Invoice Modal -->
+<div class="modal-overlay" id="createInvoiceModal"><div class="modal"><div class="modal-header"><h3>Create Invoice</h3><button onclick="closeModal('createInvoiceModal')" class="modal-close">&times;</button></div>
+<div class="modal-body">
+<select id="inv_client" class="form-select"><option value="">Select Client</option>{% for p in payments %}<option value="{{ p.client_id }}">{{ p.business_name }}</option>{% endfor %}</select>
+<input id="inv_due" type="date" class="form-input" placeholder="Due Date">
+<div id="inv-items"><div class="inv-item" style="display:flex;gap:6px;margin-bottom:6px"><input placeholder="Description" class="form-input inv-desc" style="flex:3"><input placeholder="Qty" type="number" value="1" class="form-input inv-qty" style="flex:1"><input placeholder="Rate" type="number" class="form-input inv-rate" style="flex:1"></div></div>
+<button class="btn btn-sm btn-secondary" onclick="addInvItem()">+ Add Line</button>
+<textarea id="inv_notes" placeholder="Notes (optional)" class="form-input" rows="2"></textarea>
+<button class="btn btn-primary btn-full" onclick="createInvoice()">Create Invoice</button>
+</div></div></div>
 
 <!-- Add Expense Modal -->
 <div class="modal-overlay" id="addExpenseModal"><div class="modal"><div class="modal-header"><h3>Add Expense</h3><button onclick="closeModal('addExpenseModal')" class="modal-close">×</button></div>
@@ -81,5 +96,22 @@ function addExpense(){fetch('/api/expenses',{method:'POST',headers:{'Content-Typ
     amount:parseFloat(document.getElementById('ex_amount').value),date:document.getElementById('ex_date').value})}).then(()=>location.reload())}
 function generateReport(clientId){fetch('/api/reports/generate',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({client_id:clientId,report_type:'monthly'})})
     .then(r=>r.json()).then(r=>{if(r.id){window.open('/api/reports/'+r.id+'/download','_blank')}else{alert(r.error||'Error')}})}
+function addInvItem(){const c=document.getElementById('inv-items');const d=document.createElement('div');d.className='inv-item';d.style='display:flex;gap:6px;margin-bottom:6px';
+d.innerHTML='<input placeholder="Description" class="form-input inv-desc" style="flex:3"><input placeholder="Qty" type="number" value="1" class="form-input inv-qty" style="flex:1"><input placeholder="Rate" type="number" class="form-input inv-rate" style="flex:1">';c.appendChild(d)}
+function createInvoice(){const items=[];document.querySelectorAll('.inv-item').forEach(row=>{
+const desc=row.querySelector('.inv-desc').value;const qty=parseFloat(row.querySelector('.inv-qty').value)||1;const rate=parseFloat(row.querySelector('.inv-rate').value)||0;
+if(desc)items.push({description:desc,quantity:qty,rate:rate})});
+if(!items.length){alert('Add at least one line item');return}
+fetch('/api/invoices',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({
+client_id:parseInt(document.getElementById('inv_client').value),due_date:document.getElementById('inv_due').value,
+items:items,notes:document.getElementById('inv_notes').value})}).then(r=>r.json()).then(r=>{if(r.id){alert('Invoice '+r.invoice_number+' created! Total: $'+r.total);location.reload()}else{alert(r.error||'Error')}})}
+// Load invoices
+fetch('/api/invoices').then(r=>r.json()).then(d=>{const el=document.getElementById('invoices-list');
+if(!d.invoices||!d.invoices.length){el.innerHTML='<p style="color:#64748B">No invoices yet. Create one above.</p>';return}
+let html='<table><thead><tr><th>Invoice #</th><th>Client</th><th>Total</th><th>Due</th><th>Status</th><th>Actions</th></tr></thead><tbody>';
+d.invoices.forEach(inv=>{html+='<tr><td>'+inv.invoice_number+'</td><td>'+(inv.business_name||'-')+'</td><td><strong>$'+inv.total.toFixed(2)+'</strong></td><td>'+(inv.due_date||'-')+'</td><td><span class="badge badge-'+inv.status+'">'+inv.status+'</span></td><td><a href="/api/invoices/'+inv.id+'/download" target="_blank" class="btn btn-sm btn-primary">View</a> ';
+if(inv.status!=='paid')html+='<button class="btn btn-sm btn-success" onclick="markPaid('+inv.id+')">Mark Paid</button>';
+html+='</td></tr>'});html+='</tbody></table>';el.innerHTML=html})
+function markPaid(id){fetch('/api/invoices/'+id+'/status',{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({status:'paid'})}).then(()=>location.reload())}
 </script>
 </main></body></html>

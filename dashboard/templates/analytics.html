@@ -1,0 +1,101 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Analytics — AI Growth Labs OS</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/static/css/dashboard.css">
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<style>
+.chart-container{position:relative;height:280px;margin-top:12px}
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.forecast-bar{display:flex;align-items:center;gap:12px;padding:8px 0;border-bottom:1px solid #1E3A5F}
+.forecast-month{min-width:80px;color:#94A3B8;font-size:.85rem}
+.forecast-bar-fill{height:24px;border-radius:4px;background:linear-gradient(90deg,#22D3EE,#3B82F6);min-width:20px;transition:width .3s}
+.forecast-val{color:#F1F5F9;font-weight:600;font-size:.85rem;min-width:80px;text-align:right}
+@media(max-width:768px){.grid-2{grid-template-columns:1fr}}
+</style></head><body>
+<aside class="sidebar"><div class="sidebar-brand">AI Growth<span>Labs</span></div>
+<nav><div class="nav-section">Main</div>
+<a href="/dashboard">📊Dashboard</a>
+<a href="/analytics" class="active">📈Analytics</a>
+<a href="/activity">📜Activity Log</a>
+<a href="/performance">📊Performance</a>
+<a href="/settings">⚙️API Settings</a>
+</nav>
+<div class="sidebar-user"><div class="user-avatar">{{ user.full_name[:2]|upper }}</div>
+<div><strong>{{ user.full_name }}</strong><small>{{ user.role|replace("_"," ")|title }}</small></div></div></aside>
+<main class="main">
+<div class="header-bar"><h1>📈 Analytics & Revenue</h1><span>Revenue forecasting and business intelligence</span>
+<div class="header-actions"><a href="/dashboard" class="btn btn-outline">← Dashboard</a></div></div>
+
+<div class="stats-grid" id="rev-stats">
+<div class="stat-card"><div class="stat-label">Monthly Revenue</div><div class="stat-value cyan" id="mrr-val">—</div></div>
+<div class="stat-card"><div class="stat-label">Pipeline Value</div><div class="stat-value" id="pipeline-val">—</div></div>
+<div class="stat-card"><div class="stat-label">Contract MRR</div><div class="stat-value green" id="contract-val">—</div></div>
+<div class="stat-card"><div class="stat-label">Overdue</div><div class="stat-value" id="overdue-val" style="color:#EF4444">—</div></div>
+</div>
+
+<div class="grid-2">
+<div class="card"><h3>📊 Revenue Forecast (6 months)</h3>
+<div id="forecast-bars" style="padding:12px 0"></div></div>
+<div class="card"><h3>📦 Revenue by Package</h3>
+<div class="chart-container"><canvas id="packageChart"></canvas></div></div>
+</div>
+
+<div class="grid-2">
+<div class="card"><h3>✅ Tasks by Status</h3>
+<div class="chart-container"><canvas id="taskStatusChart"></canvas></div></div>
+<div class="card"><h3>🏢 Clients by Industry</h3>
+<div class="chart-container"><canvas id="industryChart"></canvas></div></div>
+</div>
+
+<div class="grid-2">
+<div class="card"><h3>🔥 Task Priority Distribution</h3>
+<div class="chart-container"><canvas id="priorityChart"></canvas></div></div>
+<div class="card"><h3>🛠️ Projects by Service</h3>
+<div class="chart-container"><canvas id="serviceChart"></canvas></div></div>
+</div>
+
+<div class="card"><h3>🏆 Top Performers</h3>
+<div id="top-workers"></div></div>
+
+<script>
+const colors=['#22D3EE','#34D399','#FBBF24','#A855F7','#EF4444','#60A5FA','#F472B6','#FB923C','#14B8A6','#E11D48'];
+const chartDefaults={responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{color:'#CBD5E1',font:{size:11}}}}};
+
+function makeDoughnut(canvasId,labels,data){
+new Chart(document.getElementById(canvasId),{type:'doughnut',data:{labels:labels,datasets:[{data:data,backgroundColor:colors.slice(0,labels.length),borderWidth:0}]},options:{...chartDefaults,cutout:'60%'}});
+}
+
+// Load revenue data
+fetch('/api/analytics/revenue').then(r=>r.json()).then(d=>{
+document.getElementById('mrr-val').textContent='$'+d.mrr.toLocaleString();
+document.getElementById('pipeline-val').textContent='$'+d.pipeline_value.toLocaleString();
+document.getElementById('contract-val').textContent='$'+d.contract_mrr.toLocaleString();
+document.getElementById('overdue-val').textContent='$'+d.overdue_total.toLocaleString();
+
+// Forecast bars
+const maxVal=Math.max(...d.forecast.map(f=>f.projected))||1;
+let fh='';d.forecast.forEach(f=>{const pct=Math.round(f.projected/maxVal*100);
+fh+='<div class="forecast-bar"><span class="forecast-month">'+f.month+'</span><div class="forecast-bar-fill" style="width:'+pct+'%"></div><span class="forecast-val">$'+f.projected.toLocaleString()+'</span></div>'});
+document.getElementById('forecast-bars').innerHTML=fh;
+
+// Package chart
+if(d.by_package.length){makeDoughnut('packageChart',d.by_package.map(p=>p.package||'N/A'),d.by_package.map(p=>p.mrr))}
+else{document.getElementById('packageChart').parentElement.innerHTML+='<p style="color:#64748B;text-align:center">No package data</p>'}
+});
+
+// Load overview data
+fetch('/api/analytics/overview').then(r=>r.json()).then(d=>{
+// Tasks by status
+const ts=d.task_by_status;if(Object.keys(ts).length){makeDoughnut('taskStatusChart',Object.keys(ts).map(k=>k.replace('_',' ')),Object.values(ts))}
+// Priority
+const tp=d.task_by_priority;if(Object.keys(tp).length){makeDoughnut('priorityChart',Object.keys(tp),Object.values(tp))}
+// Industry
+const bi=d.by_industry;if(Object.keys(bi).length){makeDoughnut('industryChart',Object.keys(bi),Object.values(bi))}
+// Service
+const bs=d.by_service;if(Object.keys(bs).length){makeDoughnut('serviceChart',Object.keys(bs).map(k=>(k||'').replace('_',' ')),Object.values(bs))}
+// Top workers
+let wh='';d.top_workers.forEach((w,i)=>{wh+='<div style="display:flex;align-items:center;gap:12px;padding:8px 0;border-bottom:1px solid #1E3A5F"><span style="color:#FBBF24;font-weight:700;min-width:24px">#'+(i+1)+'</span><span style="color:#F1F5F9;flex:1">'+w.full_name+'</span><span style="color:#64748B;font-size:.8rem">'+w.role.replace('_',' ')+'</span><span style="color:#22D3EE;font-weight:600">'+w.tasks_done+' tasks</span></div>'});
+document.getElementById('top-workers').innerHTML=wh||'<p style="color:#64748B">No data yet</p>';
+});
+</script>
+</main></body></html>

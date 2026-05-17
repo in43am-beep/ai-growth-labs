@@ -5,6 +5,9 @@
 <aside class="sidebar"><div class="sidebar-brand">AI Growth<span>Labs</span></div>
 <nav><div class="nav-section">Main</div><a href="/dashboard">📊Dashboard</a>
 <a href="#" class="active">👤Client</a>
+<a href="/rankings/{{ client.id }}">📈Rankings</a>
+<a href="#files-section">📁Files</a>
+<a href="#locations-section">📍Locations</a>
 </nav>
 <div class="sidebar-user"><div class="user-avatar">{{ user.full_name[:2]|upper }}</div>
 <div><strong>{{ user.full_name }}</strong><small>{{ user.role|replace("_"," ")|title }}</small></div></div></aside>
@@ -12,6 +15,8 @@
 <div class="header-bar"><h1>{{ client.business_name }}</h1><span>{{ client.industry }} | {{ client.location }} | {{ client.package or 'No Package' }}</span>
 <div class="header-actions"><a href="/dashboard" class="btn btn-outline">← Back</a>
 <button class="btn btn-primary" onclick="generateReport({{ client.id }})">📄 Generate Report</button>
+<button class="btn btn-secondary" onclick="generateWhiteLabelReport({{ client.id }})">🏷️ White-Label Report</button>
+<a href="/rankings/{{ client.id }}" class="btn btn-secondary">📈 Rankings Chart</a>
 {% if user.role in ('super_admin','finance') %}<button class="btn btn-secondary" onclick="sendReport()">📧 Send Report to Client</button>{% endif %}
 </div></div>
 
@@ -84,63 +89,30 @@
 <td>{{ p.paid_date or '-' }}</td><td><span class="badge badge-{{ p.status }}">{{ p.status }}</span></td></tr>
 {% endfor %}</tbody></table></div>{% endif %}
 
-{% if invoices|length > 0 %}
-<div class="card"><h3>🧾 Invoices</h3>
-<table><thead><tr><th>Invoice #</th><th>Amount</th><th>Status</th><th>Due Date</th><th>Action</th></tr></thead><tbody>
-{% for inv in invoices %}
-<tr><td>{{ inv.invoice_number }}</td><td style="font-weight:600">${{ "{:,.0f}".format(inv.total) }}</td>
-<td><span class="badge badge-{{ inv.status }}">{{ inv.status }}</span></td><td>{{ inv.due_date or '' }}</td>
-<td><a href="/api/invoices/{{ inv.id }}/pdf" target="_blank" class="btn btn-sm btn-outline">View PDF</a></td></tr>
-{% endfor %}</tbody></table></div>{% endif %}
+<!-- File Uploads Section -->
+<div class="card" id="files-section"><h3>📁 File Attachments</h3>
+<form id="uploadForm" style="display:flex;gap:8px;align-items:center;margin-bottom:12px">
+<input type="file" id="fileInput" class="form-input" style="flex:1">
+<select id="fileType" class="form-select" style="width:140px"><option value="client">General</option><option value="report">Report</option><option value="contract">Contract</option><option value="invoice">Invoice</option></select>
+<button type="button" class="btn btn-primary" onclick="uploadFile()">📤 Upload</button>
+</form>
+<div id="files-list"><p style="color:#64748B">Loading files...</p></div></div>
 
-{% if keyword_rankings|length > 0 %}
-<div class="card"><h3>📈 Keyword Rankings</h3>
-<table><thead><tr><th>Keyword</th><th>Position</th><th>Change</th><th>Search Volume</th><th>URL</th></tr></thead><tbody>
-{% for r in keyword_rankings %}
-<tr><td><strong>{{ r.keyword }}</strong></td><td style="font-size:16px;font-weight:700">#{{ r.position }}</td>
-<td>{% set change = (r.previous_position or r.position) - r.position %}
-{% if change > 0 %}<span style="color:#22c55e;font-weight:600">▲ +{{ change }}</span>
-{% elif change < 0 %}<span style="color:#ef4444;font-weight:600">▼ {{ change }}</span>
-{% else %}<span style="color:#94a3b8">—</span>{% endif %}</td>
-<td>{{ "{:,}".format(r.search_volume) }}</td>
-<td style="max-width:200px;overflow:hidden;text-overflow:ellipsis">{{ r.url or '' }}</td></tr>
-{% endfor %}</tbody></table></div>{% endif %}
+<!-- Locations Section -->
+<div class="card" id="locations-section"><h3>📍 Business Locations</h3>
+<div id="locations-list"><p style="color:#64748B">Loading...</p></div>
+<button class="btn btn-secondary" onclick="openModal('addLocationModal')" style="margin-top:8px">+ Add Location</button></div>
 
-{% if contracts|length > 0 %}
-<div class="card"><h3>📝 Contracts</h3>
-<table><thead><tr><th>Title</th><th>Monthly Value</th><th>Start</th><th>End</th><th>Status</th></tr></thead><tbody>
-{% for ct in contracts %}
-<tr><td>{{ ct.title }}</td><td>${{ "{:,.0f}".format(ct.monthly_value) }}</td>
-<td>{{ ct.start_date or '' }}</td><td>{{ ct.end_date or '' }}</td>
-<td><span class="badge badge-{{ ct.status }}">{{ ct.status }}</span></td></tr>
-{% endfor %}</tbody></table></div>{% endif %}
-
-{% if locations|length > 0 %}
-<div class="card"><h3>📍 Locations</h3>
-<table><thead><tr><th>Location</th><th>Address</th><th>City</th><th>Phone</th><th>GBP</th><th>Primary</th></tr></thead><tbody>
-{% for loc in locations %}
-<tr><td>{{ loc.location_name }}</td><td>{{ loc.address or '' }}</td><td>{{ loc.city or '' }}, {{ loc.state or '' }}</td>
-<td>{{ loc.phone or '' }}</td>
-<td>{% if loc.gbp_url %}<a href="{{ loc.gbp_url }}" target="_blank">View</a>{% else %}-{% endif %}</td>
-<td>{% if loc.is_primary %}<span class="badge badge-active">Primary</span>{% else %}-{% endif %}</td></tr>
-{% endfor %}</tbody></table></div>{% endif %}
-
-{% if time_entries|length > 0 %}
-<div class="card"><h3>⏱️ Time Entries</h3>
-<table><thead><tr><th>Worker</th><th>Task</th><th>Start</th><th>End</th><th>Hours</th></tr></thead><tbody>
-{% for te in time_entries %}
-<tr><td>{{ te.user_name or '' }}</td><td>{{ te.task_title or '' }}</td>
-<td>{{ te.start_time or '' }}</td><td>{{ te.end_time or '' }}</td>
-<td><strong>{{ te.hours or 0 }}h</strong></td></tr>
-{% endfor %}</tbody></table></div>{% endif %}
-
-{% if files|length > 0 %}
-<div class="card"><h3>📎 Attached Files</h3>
-<table><thead><tr><th>File</th><th>Size</th><th>Type</th><th>Action</th></tr></thead><tbody>
-{% for f in files %}
-<tr><td>{{ f.filename }}</td><td>{{ "{:,.0f}".format(f.file_size / 1024) }} KB</td><td>{{ f.mime_type or '' }}</td>
-<td><a href="/api/files/{{ f.id }}/download" class="btn btn-sm btn-outline">Download</a></td></tr>
-{% endfor %}</tbody></table></div>{% endif %}
+<!-- Add Location Modal -->
+<div class="modal-overlay" id="addLocationModal"><div class="modal"><div class="modal-header"><h3>Add Location</h3><button onclick="closeModal('addLocationModal')" class="modal-close">&times;</button></div>
+<div class="modal-body">
+<input id="loc_name" placeholder="Location Name (e.g. Downtown Office)" class="form-input">
+<input id="loc_address" placeholder="Address" class="form-input">
+<div style="display:flex;gap:6px"><input id="loc_city" placeholder="City" class="form-input" style="flex:2"><input id="loc_state" placeholder="State" class="form-input" style="flex:1"><input id="loc_zip" placeholder="ZIP" class="form-input" style="flex:1"></div>
+<input id="loc_phone" placeholder="Phone" class="form-input">
+<input id="loc_gbp" placeholder="Google Business Profile URL" class="form-input">
+<button class="btn btn-primary btn-full" onclick="addLocation()">Add Location</button>
+</div></div></div>
 
 <!-- Add Credential Modal -->
 <div class="modal-overlay" id="addCredModal"><div class="modal"><div class="modal-header"><h3>Add Credential</h3><button onclick="closeModal('addCredModal')" class="modal-close">×</button></div>
@@ -164,5 +136,29 @@ function generateReport(clientId){fetch('/api/reports/generate',{method:'POST',h
     .then(r=>r.json()).then(r=>{if(r.id){window.open('/api/reports/'+r.id+'/download','_blank')}else{alert(r.error||'Error')}})}
 function markSent(reportId){fetch('/api/reports/'+reportId+'/send',{method:'POST'}).then(()=>location.reload())}
 function sendReport(){generateReport({{ client.id }})}
+function generateWhiteLabelReport(clientId){fetch('/api/reports/white-label',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({client_id:clientId})}).then(r=>r.json()).then(r=>{if(r.id){window.open('/api/reports/'+r.id+'/white-label','_blank')}else{alert(r.error||'Error')}})}
+
+// File upload
+function uploadFile(){const input=document.getElementById('fileInput');if(!input.files.length){alert('Select a file');return}
+const fd=new FormData();fd.append('file',input.files[0]);fd.append('related_type',document.getElementById('fileType').value);fd.append('related_id',{{ client.id }});
+fetch('/api/upload',{method:'POST',body:fd}).then(r=>r.json()).then(r=>{if(r.filename){alert('File uploaded!');location.reload()}else{alert(r.detail||r.error||'Error')}})}
+// Load files
+fetch('/api/attachments/client/{{ client.id }}').then(r=>r.json()).then(d=>{const el=document.getElementById('files-list');
+if(!d.attachments||!d.attachments.length){el.innerHTML='<p style="color:#64748B">No files uploaded yet.</p>';return}
+let html='<table><thead><tr><th>File</th><th>Type</th><th>Size</th><th>Uploaded By</th><th>Date</th><th>Download</th></tr></thead><tbody>';
+d.attachments.forEach(f=>{html+='<tr><td>'+f.filename+'</td><td><span class="badge badge-active">'+f.related_type+'</span></td><td>'+(f.filesize/1024).toFixed(1)+' KB</td><td>'+(f.uploader_name||'-')+'</td><td>'+(f.created_at||'').slice(0,10)+'</td><td><a href="/uploads/'+f.filepath+'" target="_blank" class="btn btn-sm btn-primary">📥</a></td></tr>'});
+html+='</tbody></table>';el.innerHTML=html})
+
+// Load locations
+fetch('/api/locations/{{ client.id }}').then(r=>r.json()).then(d=>{const el=document.getElementById('locations-list');
+if(!d.locations||!d.locations.length){el.innerHTML='<p style="color:#64748B">No locations added yet.</p>';return}
+let html='<table><thead><tr><th>Name</th><th>Address</th><th>Phone</th><th>GBP</th></tr></thead><tbody>';
+d.locations.forEach(l=>{html+='<tr><td><strong>'+l.location_name+'</strong></td><td>'+(l.address||'')+', '+(l.city||'')+', '+(l.state||'')+' '+(l.zip_code||'')+'</td><td>'+(l.phone||'-')+'</td><td>'+(l.gbp_url?'<a href="'+l.gbp_url+'" target="_blank" class="btn btn-sm btn-primary">View</a>':'-')+'</td></tr>'});
+html+='</tbody></table>';el.innerHTML=html})
+
+function addLocation(){fetch('/api/locations',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({
+client_id:{{ client.id }},location_name:document.getElementById('loc_name').value,address:document.getElementById('loc_address').value,
+city:document.getElementById('loc_city').value,state:document.getElementById('loc_state').value,zip_code:document.getElementById('loc_zip').value,
+phone:document.getElementById('loc_phone').value,gbp_url:document.getElementById('loc_gbp').value})}).then(()=>{closeModal('addLocationModal');location.reload()})}
 </script>
 </main></body></html>

@@ -5,39 +5,121 @@
 <aside class="sidebar"><div class="sidebar-brand">AI Growth<span>Labs</span></div>
 <nav><div class="nav-section">Main</div><a href="/dashboard">📊Dashboard</a>
 <a href="/settings" class="active">⚙️API Settings</a>
+<a href="/analytics">📈Analytics</a>
 <a href="/monitor">📡Team Monitor</a>
 <a href="/team-chat">💬Team Chat</a>
 </nav>
 <div class="sidebar-user"><div class="user-avatar">{{ user.full_name[:2]|upper }}</div>
 <div><strong>{{ user.full_name }}</strong><small>Super Admin</small></div></div></aside>
 <main class="main">
-<div class="header-bar"><h1>⚙️ API Settings</h1><span>Configure AI providers and integrations</span>
-<div class="header-actions"><a href="/dashboard" class="btn btn-outline">← Back to Dashboard</a></div></div>
+<div class="header-bar"><h1>⚙️ API Settings & Integrations</h1><span>Configure AI providers, communication, billing, and analytics integrations</span>
+<div class="header-actions"><a href="/dashboard" class="btn btn-outline">← Back to Dashboard</a>
+<button class="btn btn-primary" onclick="checkAllStatus()">🔄 Check All Status</button></div></div>
 
+<h2 style="margin:20px 0 10px;color:#CBD5E1;font-size:14px;text-transform:uppercase;letter-spacing:1px">🤖 AI Providers</h2>
 <div class="settings-grid">
-{% for s in api_settings %}
+{% for s in api_settings %}{% if s.provider in ['claude','chatgpt','gemini'] %}
 <div class="card setting-card"><h3>
-{% if s.provider == 'claude' %}🟣 Claude Sonnet{% elif s.provider == 'chatgpt' %}🟢 ChatGPT{% elif s.provider == 'gemini' %}🔵 Google Gemini{% elif s.provider == 'smtp' %}📧 Email (SMTP){% else %}🔧 {{ s.provider }}{% endif %}
+{% if s.provider == 'claude' %}🟣 Claude Sonnet{% elif s.provider == 'chatgpt' %}🟢 ChatGPT{% elif s.provider == 'gemini' %}🔵 Google Gemini{% endif %}
 </h3>
 <div class="setting-status">Status: {% if s.is_active %}<span class="badge badge-active">Active</span>{% else %}<span class="badge badge-pending">Not Configured</span>{% endif %}</div>
 <input id="api_key_{{ s.provider }}" type="password" value="{{ s.api_key or '' }}" placeholder="Paste API Key here..." class="form-input">
-<button class="btn btn-primary btn-full" onclick="saveApiKey('{{ s.provider }}')">Save & Activate</button>
+<small style="color:#64748B">
+{% if s.provider == 'claude' %}Get key from <a href="https://console.anthropic.com/settings/keys" target="_blank">console.anthropic.com</a>
+{% elif s.provider == 'chatgpt' %}Get key from <a href="https://platform.openai.com/api-keys" target="_blank">platform.openai.com</a>
+{% elif s.provider == 'gemini' %}Get key from <a href="https://aistudio.google.com/app/apikey" target="_blank">aistudio.google.com</a>
+{% endif %}</small>
+<button class="btn btn-primary btn-full" onclick="saveApiKey('{{ s.provider }}')" style="margin-top:8px">Save & Activate</button>
 </div>
-{% endfor %}
+{% endif %}{% endfor %}
 </div>
 
-<div class="card"><h3>📋 How It Works</h3>
+<h2 style="margin:30px 0 10px;color:#CBD5E1;font-size:14px;text-transform:uppercase;letter-spacing:1px">📞 Communication Integrations</h2>
+<div class="settings-grid">
+{% for s in api_settings %}{% if s.provider in ['smtp','twilio','whatsapp','slack'] %}
+<div class="card setting-card"><h3>
+{% if s.provider == 'smtp' %}📧 Email (SMTP)
+{% elif s.provider == 'twilio' %}📞 Twilio Voice/SMS
+{% elif s.provider == 'whatsapp' %}💬 WhatsApp Business
+{% elif s.provider == 'slack' %}🔔 Slack Notifications
+{% endif %}</h3>
+<div class="setting-status">Status: {% if s.is_active %}<span class="badge badge-active">Active</span>{% else %}<span class="badge badge-pending">Not Configured</span>{% endif %}</div>
+<input id="api_key_{{ s.provider }}" type="password" value="{{ s.api_key or '' }}" placeholder="{% if s.provider == 'smtp' %}SMTP Password / App Password{% elif s.provider == 'twilio' %}Twilio Auth Token{% elif s.provider == 'whatsapp' %}WhatsApp API Token{% elif s.provider == 'slack' %}Slack Bot Token or Webhook URL{% endif %}" class="form-input">
+{% if s.provider == 'smtp' %}
+<input id="smtp_from" placeholder="From Email Address" class="form-input" style="margin-top:6px">
+<small style="color:#64748B">For Gmail: use an App Password from <a href="https://myaccount.google.com/apppasswords" target="_blank">Google Account Security</a></small>
+{% elif s.provider == 'twilio' %}
+<input id="twilio_sid" placeholder="Account SID" class="form-input" style="margin-top:6px">
+<input id="twilio_phone" placeholder="Twilio Phone Number (+1...)" class="form-input" style="margin-top:6px">
+<small style="color:#64748B">Get from <a href="https://console.twilio.com" target="_blank">console.twilio.com</a> — Voice, SMS, AI agent</small>
+{% elif s.provider == 'whatsapp' %}
+<input id="wa_phone_id" placeholder="Phone Number ID" class="form-input" style="margin-top:6px">
+<small style="color:#64748B">Get from <a href="https://developers.facebook.com/apps" target="_blank">Meta Developer Portal</a> → WhatsApp → API Setup</small>
+{% elif s.provider == 'slack' %}
+<input id="slack_channel" placeholder="Channel (#notifications)" value="#notifications" class="form-input" style="margin-top:6px">
+<small style="color:#64748B">Create webhook at <a href="https://api.slack.com/apps" target="_blank">api.slack.com/apps</a> → Incoming Webhooks</small>
+{% endif %}
+<button class="btn btn-primary btn-full" onclick="saveApiKey('{{ s.provider }}')" style="margin-top:8px">Save & Activate</button>
+</div>
+{% endif %}{% endfor %}
+</div>
+
+<h2 style="margin:30px 0 10px;color:#CBD5E1;font-size:14px;text-transform:uppercase;letter-spacing:1px">💰 Billing & Analytics</h2>
+<div class="settings-grid">
+{% for s in api_settings %}{% if s.provider in ['stripe','google_search_console'] %}
+<div class="card setting-card"><h3>
+{% if s.provider == 'stripe' %}💳 Stripe Billing
+{% elif s.provider == 'google_search_console' %}📊 Google Search Console
+{% endif %}</h3>
+<div class="setting-status">Status: {% if s.is_active %}<span class="badge badge-active">Active</span>{% else %}<span class="badge badge-pending">Not Configured</span>{% endif %}</div>
+<input id="api_key_{{ s.provider }}" type="password" value="{{ s.api_key or '' }}" placeholder="{% if s.provider == 'stripe' %}Stripe Secret Key (sk_live_...){% elif s.provider == 'google_search_console' %}OAuth Refresh Token{% endif %}" class="form-input">
+{% if s.provider == 'stripe' %}
+<input id="stripe_pub" placeholder="Publishable Key (pk_live_...)" class="form-input" style="margin-top:6px">
+<input id="stripe_webhook" placeholder="Webhook Secret (whsec_...)" class="form-input" style="margin-top:6px">
+<small style="color:#64748B">Get from <a href="https://dashboard.stripe.com/apikeys" target="_blank">dashboard.stripe.com</a> → Developers → API Keys</small>
+{% elif s.provider == 'google_search_console' %}
+<input id="gsc_client_id" placeholder="OAuth Client ID" class="form-input" style="margin-top:6px">
+<input id="gsc_client_secret" placeholder="OAuth Client Secret" class="form-input" style="margin-top:6px">
+<input id="gsc_property" placeholder="Property URL (https://example.com)" class="form-input" style="margin-top:6px">
+<small style="color:#64748B">Setup at <a href="https://console.cloud.google.com/apis/credentials" target="_blank">Google Cloud Console</a> → Enable Search Console API</small>
+{% endif %}
+<button class="btn btn-primary btn-full" onclick="saveApiKey('{{ s.provider }}')" style="margin-top:8px">Save & Activate</button>
+</div>
+{% endif %}{% endfor %}
+</div>
+
+<div class="card" style="margin-top:30px"><h3>📋 Integration Guide</h3>
 <div class="info-grid">
-<div class="info-item"><h4>1. Paste API Key</h4><p>Get your API key from Claude, ChatGPT, or Gemini and paste it above.</p></div>
-<div class="info-item"><h4>2. System Activates</h4><p>Once saved, the AI provider becomes available for all automated tasks.</p></div>
-<div class="info-item"><h4>3. Auto DNA Audits</h4><p>Workers can run automated SEO audits using the configured AI provider.</p></div>
-<div class="info-item"><h4>4. Task Automation</h4><p>Tasks marked as "automated" will use AI to analyze and generate results.</p></div>
+<div class="info-item"><h4>🤖 AI Providers</h4><p>Powers: SEO audits, content generation, competitor analysis, AI chat assistant. Need at least ONE AI key.</p></div>
+<div class="info-item"><h4>📧 SMTP</h4><p>Powers: Email reports to clients, payment reminders, notification emails. Gmail App Password works.</p></div>
+<div class="info-item"><h4>📞 Twilio</h4><p>Powers: Inbound/outbound calls, AI voice agent, SMS alerts, call recording. $1/mo + per-call cost.</p></div>
+<div class="info-item"><h4>💬 WhatsApp</h4><p>Powers: Client updates via WhatsApp, report sharing, appointment reminders. Needs Meta Business account.</p></div>
+<div class="info-item"><h4>🔔 Slack</h4><p>Powers: Team notifications on new leads, task completions, payments received. Free with any Slack plan.</p></div>
+<div class="info-item"><h4>💳 Stripe</h4><p>Powers: Recurring billing, auto-invoicing, payment processing, subscription management. 2.9% + 30¢ per transaction.</p></div>
+<div class="info-item"><h4>📊 Google Search Console</h4><p>Powers: Real keyword rankings, click data, impression data, CTR tracking. Free — needs OAuth setup.</p></div>
+<div class="info-item"><h4>🔄 Demo Mode</h4><p>All integrations work in demo mode without API keys — realistic sample data is returned. Add real keys for production.</p></div>
 </div></div>
+
+<div id="status-panel" style="display:none;margin-top:20px" class="card">
+<h3>🔄 Integration Status</h3>
+<div id="status-list"></div>
+</div>
 
 <script>
 function saveApiKey(provider){
     const key=document.getElementById('api_key_'+provider).value;
     fetch('/api/settings/api',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({provider:provider,api_key:key})})
     .then(r=>r.json()).then(r=>{alert(r.message||r.error);location.reload()})}
+
+function checkAllStatus(){
+    fetch('/api/integrations/status').then(r=>r.json()).then(data=>{
+        const panel=document.getElementById('status-panel');
+        const list=document.getElementById('status-list');
+        panel.style.display='block';
+        list.innerHTML=data.integrations.map(i=>`<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid #1E3A5F">
+            <span style="font-weight:600">${i.provider}</span>
+            <span class="badge badge-${i.status==='active'?'active':i.status==='configured'?'warning':'pending'}">${i.status.toUpperCase()}</span>
+        </div>`).join('')
+    })}
 </script>
 </main></body></html>

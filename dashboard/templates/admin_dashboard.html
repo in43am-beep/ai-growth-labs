@@ -9,21 +9,23 @@
 <a href="#tasks-section">✅Tasks</a>
 <a href="#workers-section">👷Workers</a>
 <a href="#payments-section">💰Payments</a>
-<a href="/audit">🔍SEO Audit</a>
-<a href="/invoices">💰Invoices</a>
-<a href="/content-pipeline">📝Content Pipeline</a>
-<a href="/knowledge">📚Knowledge Base</a>
+<a href="#audit-section">🔍SEO Audit</a>
 <a href="/monitor">📡Team Monitor</a>
 <a href="/team-chat">💬Team Chat</a>
+<a href="#invoices-section">🧨Invoices</a>
+<a href="#rankings-section">📈Rankings</a>
+<a href="#contracts-section">📄Contracts</a>
+<a href="/analytics">📈Analytics</a>
+<a href="/activity">📜Activity Log</a>
+<a href="/performance">📊Performance</a>
 <a href="/settings">⚙️API Settings</a>
 </nav>
 <div class="sidebar-user"><div class="user-avatar">{{ user.full_name[:2]|upper }}</div>
 <div><strong>{{ user.full_name }}</strong><small>{{ user.role }}</small></div></div></aside>
 <main class="main">
 <div class="header-bar"><h1>Super Admin Dashboard</h1><span>Agency Operating System — Complete Overview</span>
+<div style="position:relative;margin:8px 0"><input id="globalSearch" placeholder="🔍 Search clients, projects, tasks..." class="form-input" style="width:320px" oninput="doSearch(this.value)"><div id="searchResults" style="position:absolute;top:100%;left:0;width:320px;background:#0F172A;border:1px solid #1E3A5F;border-radius:8px;display:none;z-index:100;max-height:300px;overflow-y:auto"></div></div>
 <div class="header-actions">
-<input type="text" id="searchInput" placeholder="Search..." class="search-input" onkeyup="globalSearch(this.value)" style="width:200px">
-<div id="searchResults" class="search-results"></div>
 <button class="btn btn-primary" onclick="openModal('addClientModal')">+ Add Client</button>
 <button class="btn btn-secondary" onclick="openModal('addProjectModal')">+ New Project</button>
 <button class="btn btn-secondary" onclick="openModal('addWorkerModal')">+ Add Worker</button>
@@ -38,8 +40,6 @@
 <div class="stat-card"><div class="stat-label">Active Clients</div><div class="stat-value">{{ stats.active_clients }}</div><div class="stat-sub">Currently active</div></div>
 <div class="stat-card"><div class="stat-label">Active Projects</div><div class="stat-value">{{ stats.active_projects }}</div><div class="stat-sub">In progress</div></div>
 <div class="stat-card"><div class="stat-label">Task Completion</div><div class="stat-value">{{ stats.task_completion }}%</div><div class="stat-sub">{{ stats.completed_tasks }}/{{ stats.total_tasks }} tasks</div></div>
-<div class="stat-card"><div class="stat-label">Overdue Tasks</div><div class="stat-value" style="{% if stats.overdue_tasks > 0 %}color:#ef4444{% endif %}">{{ stats.overdue_tasks }}</div><div class="stat-sub">Need attention</div></div>
-<div class="stat-card"><div class="stat-label">Invoice Revenue</div><div class="stat-value">${{ "{:,.0f}".format(stats.invoice_total) }}</div><div class="stat-sub">${{ "{:,.0f}".format(stats.invoice_pending) }} pending</div></div>
 </div>
 
 {% if suggestions|length > 0 %}
@@ -95,16 +95,17 @@
 <td><button class="btn btn-sm btn-primary" onclick="generateReport({{ p.client_id }})">📄 Generate</button></td></tr>
 {% endfor %}</tbody></table></div>
 
-<!-- Activity Timeline -->
-{% if activities %}
-<div class="card"><h3>📅 Recent Activity</h3>
-<div class="timeline">
-{% for a in activities[:10] %}
-<div class="timeline-item"><span class="timeline-dot"></span>
-<div><strong>{{ a.user_name or 'System' }}</strong> {{ a.action }}<br><small style="color:#94a3b8">{{ a.details }} | {{ a.created_at }}</small></div></div>
-{% endfor %}
-</div></div>
-{% endif %}
+<!-- Invoices Section -->
+<div class="card" id="invoices-section"><h3>🧨 Invoices</h3>
+<div id="admin-invoices"><p style="color:#64748B">Loading...</p></div></div>
+
+<!-- Rankings Overview -->
+<div class="card" id="rankings-section"><h3>📈 Keyword Rankings Overview</h3>
+<div id="admin-rankings"><p style="color:#64748B">Loading...</p></div></div>
+
+<!-- Contracts -->
+<div class="card" id="contracts-section"><h3>📄 Active Contracts</h3>
+<div id="admin-contracts"><p style="color:#64748B">Loading...</p></div></div>
 
 <div class="card" id="audit-section"><h3>🔍 Run SEO DNA Audit</h3>
 <p>Paste a client's website URL and select an AI provider to run a complete DNA-level audit.</p>
@@ -127,7 +128,7 @@
 <div class="modal-overlay" id="addProjectModal"><div class="modal"><div class="modal-header"><h3>New Project</h3><button onclick="closeModal('addProjectModal')" class="modal-close">×</button></div>
 <div class="modal-body"><select id="np_client" class="form-select">{% for c in clients %}<option value="{{ c.id }}">{{ c.business_name }}</option>{% endfor %}</select>
 <input id="np_title" placeholder="Project Title" class="form-input"><textarea id="np_desc" placeholder="Description" class="form-input"></textarea>
-<select id="np_service" class="form-select"><option>Local SEO</option><option>AI SEO</option><option>GBP Optimization</option><option>Reputation Management</option><option>Content Creation</option><option>Social Media</option><option>Paid Advertising</option></select>
+<select id="np_service" class="form-select"><option>Local SEO</option><option>AI SEO</option><option>GBP Optimization</option><option>Reputation Management</option><option>Content Creation</option><option>Social Media</option><option>Paid Advertising</option><option>Link Building</option><option>Technical SEO Audit</option><option>Schema Markup</option><option>Citation Building</option><option>Review Management</option><option>Competitor Analysis</option></select>
 <select id="np_worker" class="form-select">{% for w in workers %}<option value="{{ w.id }}">{{ w.full_name }} ({{ w.role }})</option>{% endfor %}</select>
 <button class="btn btn-primary btn-full" onclick="addProject()">Create Project</button></div></div></div>
 
@@ -135,8 +136,7 @@
 <div class="modal-overlay" id="addWorkerModal"><div class="modal"><div class="modal-header"><h3>Add Worker</h3><button onclick="closeModal('addWorkerModal')" class="modal-close">×</button></div>
 <div class="modal-body"><input id="nw_username" placeholder="Username" class="form-input"><input id="nw_name" placeholder="Full Name" class="form-input">
 <input id="nw_email" placeholder="Email" class="form-input"><input id="nw_password" placeholder="Password" class="form-input" type="password">
-<select id="nw_role" class="form-select"><option value="worker">Worker</option><option value="tech_seo">Tech SEO</option><option value="sales">Sales</option><option value="social_media">Social Media</option><option value="finance">Finance</option><option value="ops_manager">Operations Manager</option><option value="client">Client Portal</option></select>
-<input id="nw_linked_client" placeholder="Linked Client ID (for client role)" type="number" class="form-input">
+<select id="nw_role" class="form-select"><option value="worker">Worker</option><option value="tech_seo">Tech SEO</option><option value="content_writer">Content Writer</option><option value="link_builder">Link Builder</option><option value="social_media">Social Media</option><option value="finance">Finance</option><option value="sales">Sales</option><option value="account_manager">Account Manager</option><option value="operations_manager">Operations Manager</option></select>
 <select id="nw_rank" class="form-select"><option value="junior">Junior</option><option value="mid">Mid</option><option value="senior">Senior</option><option value="lead">Lead</option></select>
 <input id="nw_salary" placeholder="Monthly Salary" type="number" class="form-input">
 <button class="btn btn-primary btn-full" onclick="addWorker()">Add Worker</button></div></div></div>
@@ -172,27 +172,37 @@ function generateReport(clientId){api('/api/reports/generate',{client_id:clientI
 
 function updateSuggestion(id,status){apiPut('/api/suggestions/'+id,{status:status,admin_response:status=='approved'?'Approved by admin':'Rejected'}).then(()=>location.reload())}
 
-let searchTimeout;
-function globalSearch(q){
-    clearTimeout(searchTimeout);
-    const box=document.getElementById('searchResults');
-    if(q.length<2){box.innerHTML='';box.style.display='none';return}
-    searchTimeout=setTimeout(()=>{
-        fetch('/api/search?q='+encodeURIComponent(q)).then(r=>r.json()).then(d=>{
-            if(!d.results.length){box.innerHTML='<div class="sr-item">No results</div>';box.style.display='block';return}
-            box.innerHTML=d.results.map(r=>`<a href="${r.url}" class="sr-item"><span class="sr-type">${r.type}</span><strong>${r.title}</strong><small>${r.subtitle||''}</small></a>`).join('');
-            box.style.display='block';
-        })
-    },300);
-}
-document.addEventListener('click',e=>{if(!e.target.closest('.header-actions'))document.getElementById('searchResults').style.display='none'});
+// Load invoices
+fetch('/api/invoices').then(r=>r.json()).then(d=>{const el=document.getElementById('admin-invoices');
+if(!d.invoices||!d.invoices.length){el.innerHTML='<p style="color:#64748B">No invoices yet.</p>';return}
+let html='<table><thead><tr><th>#</th><th>Client</th><th>Total</th><th>Status</th><th>Due</th><th>View</th></tr></thead><tbody>';
+d.invoices.forEach(i=>{html+='<tr><td>'+i.invoice_number+'</td><td>'+(i.business_name||'-')+'</td><td><strong>$'+i.total.toFixed(2)+'</strong></td><td><span class="badge badge-'+i.status+'">'+i.status+'</span></td><td>'+(i.due_date||'-')+'</td><td><a href="/api/invoices/'+i.id+'/download" target="_blank" class="btn btn-sm btn-primary">View</a></td></tr>'});
+html+='</tbody></table>';el.innerHTML=html})
+
+// Load rankings for all clients
+fetch('/api/rankings/0').then(r=>r.json()).then(d=>{const el=document.getElementById('admin-rankings');
+if(!d.rankings||!d.rankings.length){el.innerHTML='<p style="color:#64748B">No rankings tracked yet.</p>';return}
+let html='<table><thead><tr><th>Client</th><th>Keyword</th><th>Position</th><th>Change</th><th>Volume</th></tr></thead><tbody>';
+d.rankings.forEach(r=>{const change=r.previous_position?r.previous_position-r.position:0;const arrow=change>0?'<span style="color:#34D399">▲'+change+'</span>':change<0?'<span style="color:#EF4444">▼'+Math.abs(change)+'</span>':'—';
+html+='<tr><td>'+r.client_id+'</td><td><strong>'+r.keyword+'</strong></td><td>'+r.position+'</td><td>'+arrow+'</td><td>'+r.search_volume+'</td></tr>'});
+html+='</tbody></table>';el.innerHTML=html}).catch(()=>{document.getElementById('admin-rankings').innerHTML='<p style="color:#64748B">Rankings loading error</p>'})
+
+// Load contracts
+fetch('/api/contracts').then(r=>r.json()).then(d=>{const el=document.getElementById('admin-contracts');
+if(!d.contracts||!d.contracts.length){el.innerHTML='<p style="color:#64748B">No contracts yet.</p>';return}
+let html='<table><thead><tr><th>Client</th><th>Title</th><th>Period</th><th>Monthly Value</th><th>Status</th></tr></thead><tbody>';
+d.contracts.forEach(c=>{html+='<tr><td>'+c.client_id+'</td><td>'+c.title+'</td><td>'+c.start_date+' to '+c.end_date+'</td><td><strong>$'+(c.monthly_value||0).toFixed(2)+'</strong></td><td><span class="badge badge-'+c.status+'">'+c.status+'</span></td></tr>'});
+html+='</tbody></table>';el.innerHTML=html}).catch(()=>{document.getElementById('admin-contracts').innerHTML='<p style="color:#64748B">Contracts loading error</p>'})
+
+// Global search
+let searchTimer;
+function doSearch(q){clearTimeout(searchTimer);const el=document.getElementById('searchResults');
+if(q.length<2){el.style.display='none';return}
+searchTimer=setTimeout(()=>{fetch('/api/search?q='+encodeURIComponent(q)).then(r=>r.json()).then(d=>{
+if(!d.results.length){el.innerHTML='<div style="padding:12px;color:#64748B">No results found</div>';el.style.display='block';return}
+let h='';d.results.forEach(r=>{const icon=r.type==='client'?'👤':r.type==='project'?'📋':'✅';
+h+='<a href="'+r.link+'" style="display:block;padding:8px 12px;color:#CBD5E1;text-decoration:none;border-bottom:1px solid #1E3A5F">'+icon+' <strong>'+r.title+'</strong><br><small style="color:#64748B">'+r.type+' • '+r.subtitle+'</small></a>'});
+el.innerHTML=h;el.style.display='block'})},300)}
+document.addEventListener('click',e=>{if(!e.target.closest('#globalSearch')&&!e.target.closest('#searchResults'))document.getElementById('searchResults').style.display='none'})
 </script>
-<style>
-.search-input{background:#0d1f3c;border:1px solid #1e3a5f;color:#fff;padding:8px 14px;border-radius:6px;font-size:13px}
-.search-results{position:absolute;top:100%;right:0;background:#0d1f3c;border:1px solid #1e3a5f;border-radius:8px;width:350px;max-height:400px;overflow-y:auto;display:none;z-index:100}
-.sr-item{display:block;padding:10px 14px;border-bottom:1px solid #1e3a5f;color:#e2e8f0;text-decoration:none}
-.sr-item:hover{background:#162544}.sr-type{background:#22D3EE;color:#0A1628;padding:2px 6px;border-radius:3px;font-size:10px;font-weight:600;margin-right:6px}
-.timeline{padding-left:20px}.timeline-item{position:relative;padding:8px 0 8px 20px;border-left:2px solid #1e3a5f}
-.timeline-dot{position:absolute;left:-6px;top:12px;width:10px;height:10px;border-radius:50%;background:#22D3EE}
-</style>
 </main></body></html>
