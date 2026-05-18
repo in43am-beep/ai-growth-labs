@@ -92,8 +92,9 @@ document.addEventListener('DOMContentLoaded', () => {
     counterObserver.observe(counterSection);
   }
 
-  // Form validation
+  // Form validation (skip forms with custom onsubmit handlers)
   document.querySelectorAll('form').forEach(form => {
+    if (form.getAttribute('onsubmit')) return;
     form.addEventListener('submit', (e) => {
       e.preventDefault();
       const btn = form.querySelector('.btn');

@@ -4,293 +4,656 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Free SEO DNA Audit | AI Growth Labs — 100+ Factors Analyzed</title>
-  <meta name="description" content="Get a free DNA-level SEO audit of your website. We analyze 100+ ranking factors across 12 pillars — Technical SEO, Content, Schema, Performance, and more.">
+  <meta name="keywords" content="free seo audit, free dna seo audit, free website audit, local seo audit, free gbp audit, seo analysis, 100 ranking factors">
+  <link rel="canonical" href="https://aigrowthabs.com/pages/free-audit.html">
+  <link rel="alternate" hreflang="en-us" href="https://aigrowthabs.com/pages/free-audit.html" />
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://aigrowthabs.com/pages/free-audit.html">
+  <meta property="og:image" content="https://aigrowthabs.com/assets/images/og-default.jpg">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:image" content="https://aigrowthabs.com/assets/images/og-default.jpg">
+  <meta property="og:description" content="Get your website analyzed across 100+ ranking factors and 12 DNA pillars — completely free. Real data, not estimates.">
+  <meta property="og:title" content="Free SEO DNA Audit | AI Growth Labs — 100+ Factors Analyzed">
+  <meta name="description" content="Get your website analyzed across 100+ ranking factors and 12 DNA pillars — completely free. Real data, not estimates.">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="../css/style.css">
   <style>
-    .audit-hero{background:linear-gradient(135deg,#0A1628 0%,#0f2847 50%,#1a1a4e 100%);padding:80px 0;text-align:center}
-    .audit-hero h1{font-size:clamp(2rem,5vw,3.2rem);color:#fff;margin-bottom:12px}
-    .audit-hero .highlight{background:linear-gradient(135deg,#22D3EE,#7c3aed);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
-    .audit-hero p{color:#94a3b8;font-size:1.1rem;max-width:700px;margin:0 auto 30px}
-    .audit-form-card{background:#0d1f3c;border:2px solid #1e3a5f;border-radius:16px;padding:40px;max-width:600px;margin:0 auto}
-    .audit-form-card h3{color:#22D3EE;margin-bottom:8px;font-size:1.3rem}
-    .audit-form-card .sub{color:#94a3b8;font-size:0.9rem;margin-bottom:24px}
-    .form-row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
-    .form-group{margin-bottom:16px}
-    .form-group label{display:block;color:#e2e8f0;font-size:0.85rem;font-weight:600;margin-bottom:6px}
-    .form-group input,.form-group select{width:100%;padding:12px 16px;border-radius:8px;border:1px solid #1e3a5f;background:#0A1628;color:#fff;font-size:0.95rem;outline:none;transition:border-color 0.3s}
-    .form-group input:focus,.form-group select:focus{border-color:#22D3EE}
-    .form-group input::placeholder{color:#64748b}
-    .audit-submit{width:100%;padding:16px;border:none;border-radius:10px;background:linear-gradient(135deg,#22D3EE,#7c3aed);color:#fff;font-size:1.1rem;font-weight:700;cursor:pointer;transition:transform 0.2s,box-shadow 0.2s}
-    .audit-submit:hover{transform:translateY(-2px);box-shadow:0 8px 25px rgba(34,211,238,0.3)}
-    .audit-submit:disabled{opacity:0.5;cursor:not-allowed;transform:none}
-    .pillars-strip{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin:30px 0}
-    .pill{background:#0d1f3c;border:1px solid #1e3a5f;border-radius:20px;padding:6px 14px;color:#94a3b8;font-size:0.8rem}
-    .loading-overlay{display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(10,22,40,0.96);z-index:9999;flex-direction:column;align-items:center;justify-content:center}
-    .loading-overlay.show{display:flex}
-    .spinner{width:70px;height:70px;border:5px solid #1e3a5f;border-top:5px solid #22D3EE;border-radius:50%;animation:spin 1s linear infinite}
-    @keyframes spin{to{transform:rotate(360deg)}}
-    .loading-text{color:#22D3EE;font-size:1.3rem;margin-top:20px;font-weight:700}
-    .loading-sub{color:#94a3b8;font-size:1rem;margin-top:8px;transition:opacity 0.3s}
-    .results-section{display:none;padding:60px 0}
-    .results-section.show{display:block}
-    .score-hero{text-align:center;margin-bottom:40px}
-    .score-circle{width:180px;height:180px;border-radius:50%;display:flex;flex-direction:column;align-items:center;justify-content:center;margin:0 auto 20px;border:8px solid;position:relative}
-    .score-circle .number{font-size:56px;font-weight:900;color:#fff;line-height:1}
-    .score-circle .label{font-size:14px;color:#94a3b8;margin-top:4px}
-    .maturity-badge{display:inline-block;padding:8px 20px;border-radius:20px;font-weight:700;font-size:0.95rem;margin-top:10px}
-    .pillar-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:20px;margin:30px 0}
-    .pillar-card{background:#0d1f3c;border:1px solid #1e3a5f;border-radius:12px;padding:20px;transition:transform 0.2s}
-    .pillar-card:hover{transform:translateY(-3px)}
-    .pillar-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
-    .pillar-header h4{color:#e2e8f0;font-size:0.95rem;margin:0}
-    .pillar-score{font-size:1.3rem;font-weight:800}
-    .pillar-bar{height:6px;background:#1e3a5f;border-radius:3px;margin-bottom:12px;overflow:hidden}
-    .pillar-bar-fill{height:100%;border-radius:3px;transition:width 1s ease}
-    .check-item{display:flex;align-items:flex-start;gap:8px;padding:6px 0;font-size:0.82rem;color:#cbd5e1;border-bottom:1px solid #1e3a5f20}
-    .check-item:last-child{border:none}
-    .check-icon{flex-shrink:0;width:18px;height:18px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:bold;margin-top:1px}
-    .check-pass{background:#22c55e20;color:#22c55e}
-    .check-fail{background:#ef444420;color:#ef4444}
-    .check-warn{background:#f59e0b20;color:#f59e0b}
-    .check-info{background:#22D3EE20;color:#22D3EE}
-    .issues-section{margin:40px 0}
-    .issues-section h3{font-size:1.2rem;margin-bottom:16px}
-    .issue-card{background:#0d1f3c;border-left:4px solid;padding:14px 18px;border-radius:0 8px 8px 0;margin-bottom:10px;font-size:0.9rem;color:#e2e8f0}
-    .issue-critical{border-color:#ef4444}
-    .issue-warning{border-color:#f59e0b}
-    .issue-quickwin{border-color:#7c3aed}
-    .issue-passed{border-color:#22c55e}
-    .package-cta{background:linear-gradient(135deg,#0d1f3c,#1a1a4e);border:2px solid #7c3aed;border-radius:16px;padding:40px;text-align:center;margin:40px 0}
-    .package-cta h3{color:#7c3aed;font-size:1.5rem;margin-bottom:8px}
-    .package-cta .price{font-size:2.5rem;font-weight:900;color:#22D3EE;margin:10px 0}
-    .package-cta .reason{color:#94a3b8;font-size:1rem;margin-bottom:20px;max-width:500px;margin-left:auto;margin-right:auto}
-    .package-cta .cta-btn{display:inline-block;padding:16px 40px;background:linear-gradient(135deg,#7c3aed,#22D3EE);color:#fff;border-radius:10px;font-weight:700;font-size:1.1rem;text-decoration:none;transition:transform 0.2s}
-    .package-cta .cta-btn:hover{transform:translateY(-2px)}
-    .action-buttons{display:flex;gap:12px;justify-content:center;flex-wrap:wrap;margin:30px 0}
-    .action-btn{padding:12px 24px;border-radius:8px;font-weight:600;font-size:0.9rem;cursor:pointer;border:none;transition:transform 0.2s}
-    .action-btn:hover{transform:translateY(-2px)}
-    .btn-pdf{background:#22c55e;color:#fff}
-    .btn-email{background:#3b82f6;color:#fff}
-    .btn-new{background:#7c3aed;color:#fff}
-    .error-msg{background:#ef444420;border:1px solid #ef4444;color:#fca5a5;padding:12px;border-radius:8px;margin-top:12px;display:none;font-size:0.9rem}
-    @media(max-width:600px){.form-row{grid-template-columns:1fr}.pillar-grid{grid-template-columns:1fr}}
-    @media print{
-      body{background:#fff !important;color:#000 !important}
-      .header,.footer,.audit-hero,.loading-overlay,.action-buttons,.package-cta,.nav-toggle{display:none !important}
-      .results-section{display:block !important}
-      .pillar-card,.issue-card{border:1px solid #ccc;background:#f9f9f9 !important}
-      .score-circle{border-color:#333 !important}
-      .pillar-header h4,.check-item{color:#333 !important}
-    }
+    .audit-results { display:none; margin-top:40px; }
+    .audit-results.show { display:block; }
+    .score-circle { width:120px; height:120px; border-radius:50%; display:flex; align-items:center; justify-content:center; flex-direction:column; margin:0 auto 20px; border:6px solid; }
+    .score-circle.grade-a { border-color:#00D4FF; background:rgba(0,212,255,0.1); }
+    .score-circle.grade-b { border-color:#4CAF50; background:rgba(76,175,80,0.1); }
+    .score-circle.grade-c { border-color:#FF9800; background:rgba(255,152,0,0.1); }
+    .score-circle.grade-d { border-color:#F44336; background:rgba(244,67,54,0.1); }
+    .score-number { font-size:2.2rem; font-weight:800; color:var(--white); }
+    .score-grade { font-size:0.85rem; font-weight:600; color:var(--gray-300); }
+    .audit-section { background:var(--navy-800); border-radius:12px; padding:24px; margin-bottom:20px; border:1px solid rgba(255,255,255,0.06); }
+    .audit-section-header { display:flex; align-items:center; gap:12px; margin-bottom:16px; }
+    .audit-section-icon { font-size:1.5rem; }
+    .audit-section-title { font-size:1.1rem; font-weight:700; color:var(--white); flex:1; }
+    .audit-section-score { font-size:1.1rem; font-weight:700; padding:4px 14px; border-radius:20px; }
+    .score-good { background:rgba(76,175,80,0.2); color:#4CAF50; }
+    .score-warn { background:rgba(255,152,0,0.2); color:#FF9800; }
+    .score-bad { background:rgba(244,67,54,0.2); color:#F44336; }
+    .findings-list, .recs-list { list-style:none; padding:0; margin:0; }
+    .findings-list li { padding:6px 0; color:var(--gray-300); font-size:0.9rem; border-bottom:1px solid rgba(255,255,255,0.04); }
+    .findings-list li:last-child { border-bottom:none; }
+    .recs-title { font-size:0.9rem; font-weight:600; color:var(--cyan); margin:16px 0 8px; }
+    .recs-list li { padding:5px 0 5px 20px; color:var(--gray-300); font-size:0.85rem; position:relative; }
+    .recs-list li::before { content:"→"; position:absolute; left:0; color:var(--cyan); }
+    .priorities-box { background:linear-gradient(135deg, rgba(0,212,255,0.1), rgba(0,212,255,0.02)); border:1px solid rgba(0,212,255,0.2); border-radius:12px; padding:24px; margin-top:24px; }
+    .priorities-box h3 { color:var(--cyan); margin-bottom:16px; font-size:1.1rem; }
+    .priority-item { padding:10px 0; color:var(--gray-200); font-size:0.95rem; border-bottom:1px solid rgba(255,255,255,0.06); }
+    .priority-item:last-child { border-bottom:none; }
+    .audit-loading { text-align:center; padding:60px 20px; }
+    .audit-loading .spinner { width:50px; height:50px; border:4px solid rgba(0,212,255,0.2); border-top-color:var(--cyan); border-radius:50%; animation:spin 1s linear infinite; margin:0 auto 20px; }
+    @keyframes spin { to { transform:rotate(360deg); } }
+    .audit-meta { text-align:center; margin-bottom:30px; }
+    .audit-meta h2 { font-size:1.6rem; color:var(--white); margin-bottom:8px; }
+    .audit-meta p { color:var(--gray-300); font-size:0.9rem; }
+    .demo-note { background:rgba(255,152,0,0.1); border:1px solid rgba(255,152,0,0.3); border-radius:8px; padding:12px 16px; color:#FF9800; font-size:0.85rem; text-align:center; margin-top:20px; }
+    .cta-after-audit { text-align:center; margin-top:30px; padding:30px; background:linear-gradient(135deg, var(--navy-800), var(--navy-900)); border-radius:12px; border:1px solid rgba(0,212,255,0.15); }
+    .cta-after-audit h3 { color:var(--white); margin-bottom:10px; }
+    .cta-after-audit p { color:var(--gray-300); margin-bottom:20px; font-size:0.9rem; }
+    .dna-pillars{display:flex;flex-wrap:wrap;gap:10px;justify-content:center;margin:24px 0 32px;}
+    .dna-pill{background:rgba(0,212,255,0.08);border:1px solid rgba(0,212,255,0.2);color:var(--gray-200);padding:6px 14px;border-radius:50px;font-size:0.8rem;font-weight:600;display:inline-flex;align-items:center;gap:5px;}
+    .dna-pill .pill-icon{font-size:0.9rem;}
+    .dna-crawl-animation{text-align:center;padding:40px 20px;}
+    .dna-crawl-animation .crawl-helix{font-size:2.5rem;margin-bottom:16px;animation:pulse 2s infinite;}
+    @keyframes pulse{0%,100%{opacity:1;transform:scale(1);}50%{opacity:0.6;transform:scale(1.05);}}
+    .dna-pillar-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:16px;margin-top:24px;}
+    .dna-pillar-card{background:var(--navy-800);border-radius:12px;padding:20px;border:1px solid rgba(255,255,255,0.06);}
+    .dna-pillar-card .pillar-header{display:flex;align-items:center;gap:10px;margin-bottom:12px;}
+    .dna-pillar-card .pillar-icon{font-size:1.3rem;}
+    .dna-pillar-card .pillar-name{font-weight:700;color:var(--white);font-size:0.95rem;flex:1;}
+    .dna-pillar-card .pillar-score{font-weight:700;padding:3px 12px;border-radius:20px;font-size:0.85rem;}
+    .dna-pillar-card .pillar-bar{height:6px;background:rgba(255,255,255,0.1);border-radius:3px;margin-bottom:10px;overflow:hidden;}
+    .dna-pillar-card .pillar-bar-fill{height:100%;border-radius:3px;transition:width 1.5s ease;}
+    .dna-pillar-card .pillar-details{font-size:0.8rem;color:var(--gray-300);}
+    .audit-export-btns{display:flex;gap:12px;justify-content:center;margin:24px 0;flex-wrap:wrap;}
+    .audit-export-btns .btn-export{display:inline-flex;align-items:center;gap:6px;padding:10px 20px;border-radius:8px;font-weight:600;font-size:0.85rem;cursor:pointer;border:none;text-decoration:none;transition:all 0.3s ease;}
+    .btn-pdf{background:rgba(244,67,54,0.15);color:#F44336;border:1px solid rgba(244,67,54,0.3);}
+    .btn-pdf:hover{background:rgba(244,67,54,0.25);}
+    .btn-email-report{background:rgba(0,212,255,0.15);color:var(--cyan);border:1px solid rgba(0,212,255,0.3);}
+    .btn-email-report:hover{background:rgba(0,212,255,0.25);}
+    .btn-run-another{background:rgba(76,175,80,0.15);color:#4CAF50;border:1px solid rgba(76,175,80,0.3);}
+    .btn-run-another:hover{background:rgba(76,175,80,0.25);}
   </style>
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "LocalBusiness",
+    "name": "AI Growth Labs",
+    "description": "AI-powered SEO, reputation management, and lead generation agency for USA local businesses.",
+    "url": "https://aigrowthabs.com",
+    "telephone": "+1-800-555-0199",
+    "areaServed": "United States",
+    "serviceType": ["Local SEO", "Reputation Management", "AI SEO", "Google Business Profile Optimization", "PPC Advertising", "Social Media Management", "Content Creation", "Video SEO", "Conversion Rate Optimization", "E-Commerce SEO"]
+  }
+  </script>
 </head>
 <body>
-  <header class="header"><div class="container"><nav class="nav"><a href="../index.html" class="nav-logo">AI<span>Growth</span>Labs</a><div class="nav-links"><div class="nav-dropdown"><a href="#">Services</a><div class="nav-dropdown-content"><a href="local-seo.html">Local SEO</a><a href="gbp-optimization.html">GBP Optimization</a><a href="reputation-management.html">Reputation Management</a><a href="ai-seo.html">AI SEO Services</a><a href="paid-advertising.html">Facebook & Google Ads</a><a href="social-media.html">Social Media Management</a><a href="content-creation.html">Content Creation</a><a href="cro.html">CRO</a><a href="ecommerce-seo.html">E-Commerce SEO</a><a href="video-seo.html">Video SEO</a></div></div><div class="nav-dropdown"><a href="#">Industries</a><div class="nav-dropdown-content"><a href="seo-for-dentists.html">Dentists</a><a href="seo-for-lawyers.html">Lawyers</a><a href="seo-for-restaurants.html">Restaurants</a><a href="seo-for-plumbers.html">Plumbers</a><a href="seo-for-hvac.html">HVAC</a><a href="seo-for-medical-spas.html">Medical Spas</a><a href="seo-for-auto-repair.html">Auto Repair</a><a href="seo-for-electricians.html">Electricians</a><a href="seo-for-gyms.html">Gyms</a><a href="seo-for-roofing.html">Roofing</a><a href="seo-for-real-estate.html">Real Estate</a><a href="seo-for-pet-services.html">Pet Services</a></div></div><a href="case-studies.html">Case Studies</a><a href="about.html">About</a><a href="blog.html">Blog</a><a href="contact.html">Contact</a><div class="nav-cta"><a href="free-audit.html" class="btn btn-primary">Free Audit</a></div></div><button class="nav-toggle" aria-label="Toggle menu"><span></span><span></span><span></span></button></nav></div></header>
+  <header class="header">
+  <div class="container">
+    <nav class="nav">
+      <a href="../index.html" class="nav-logo">AI<span>Growth</span>Labs</a>
+      <div class="nav-links">
+        <div class="nav-dropdown">
+          <a href="#">Services</a>
+          <div class="nav-dropdown-content">
+            <a href="../pages/local-seo.html">Local SEO</a>
+            <a href="../pages/gbp-optimization.html">GBP Optimization</a>
+            <a href="../pages/reputation-management.html">Reputation Management</a>
+            <a href="../pages/ai-seo.html">AI SEO Services</a>
+            <a href="../pages/paid-advertising.html">Facebook &amp; Google Ads</a>
+            <a href="../pages/social-media.html">Social Media Management</a>
+            <a href="../pages/content-creation.html">Content Creation</a>
+            <a href="../pages/video-seo.html">Video SEO</a>
+            <a href="../pages/cro.html">CRO</a>
+            <a href="../pages/ecommerce-seo.html">E-Commerce SEO</a>
+            <a href="../pages/email-marketing.html">Email Marketing</a>
+            <a href="../pages/web-design.html">Web Design</a>
+            <a href="../pages/geo-optimization.html">GEO / AI Search</a>
+            <a href="../pages/geofencing.html">Geofencing</a>
+            <a href="../pages/analytics-reporting.html">Analytics &amp; Reporting</a>
+            <a href="../pages/lead-nurture.html">Lead Nurture</a>
+            <a href="../pages/programmatic-ads.html">Programmatic Ads</a>
+            <a href="../pages/digital-pr.html">Digital PR</a>
+            <a href="../pages/sales-enablement.html">Sales Enablement</a>
+            <a href="../pages/ux-design.html">UX/UI Design</a>
+            <a href="../pages/marketing-consulting.html">Marketing Consulting</a>
+            <a href="../pages/brand-strategy.html">Brand Strategy</a>
+            <a href="../pages/influencer-marketing.html">Influencer Marketing</a>
+            <a href="../pages/marketplace-marketing.html">Marketplace Marketing</a>
+            <a href="../pages/link-building.html">Link Building</a>
+          </div>
+        </div>
+        <div class="nav-dropdown">
+          <a href="#">Industries</a>
+          <div class="nav-dropdown-content">
+            <a href="../pages/seo-for-dentists.html">SEO for Dentists</a>
+            <a href="../pages/seo-for-lawyers.html">SEO for Lawyers</a>
+            <a href="../pages/seo-for-restaurants.html">SEO for Restaurants</a>
+            <a href="../pages/seo-for-plumbers.html">SEO for Plumbers</a>
+            <a href="../pages/seo-for-hvac.html">SEO for HVAC</a>
+            <a href="../pages/seo-for-medical-spas.html">SEO for Medical Spas</a>
+            <a href="../pages/seo-for-real-estate.html">SEO for Real Estate</a>
+            <a href="../pages/seo-for-gyms.html">SEO for Gyms</a>
+            <a href="../pages/seo-for-auto-repair.html">SEO for Auto Repair</a>
+            <a href="../pages/seo-for-electricians.html">SEO for Electricians</a>
+            <a href="../pages/seo-for-roofing.html">SEO for Roofing</a>
+            <a href="../pages/seo-for-pet-services.html">SEO for Pet Services</a>
+          <a href="../pages/seo-for-cleaning.html">SEO for Cleaning</a>
+          <a href="../pages/seo-for-movers.html">SEO for Movers</a>
+          <a href="../pages/seo-for-insurance.html">SEO for Insurance</a>
+          <a href="../pages/seo-for-financial-advisors.html">SEO for Financial Advisors</a>
+          <a href="../pages/seo-for-chiropractors.html">SEO for Chiropractors</a>
+          <a href="../pages/seo-for-landscaping.html">SEO for Landscaping</a>
+          <a href="../pages/seo-for-photographers.html">SEO for Photographers</a>
+          <a href="../pages/seo-for-salons.html">SEO for Salons</a>
+          <a href="../pages/seo-for-veterinarians.html">SEO for Veterinarians</a>
+          <a href="../pages/seo-for-construction.html">SEO for Construction</a>
+          </div>
+        </div>
+        <a href="../pages/case-studies.html">Case Studies</a>
+        <a href="../pages/about.html">About</a>
+        <a href="../pages/blog.html">Blog</a>
+        <a href="../pages/contact.html">Contact</a>
+        <a href="tel:+18005550199" class="nav-phone">(800) 555-0199</a>
+          <div class="nav-cta">
+          <a href="../pages/free-audit.html" class="btn btn-primary">Free Audit</a>
+        </div>
+      </div>
+      <button class="nav-toggle" aria-label="Toggle menu">
+        <span></span><span></span><span></span>
+      </button>
+    </nav>
+  </div>
+</header>
 
-  <section class="audit-hero" id="auditHero">
+  <section class="page-hero">
     <div class="container">
       <h1>Free <span class="highlight">DNA-Level</span> SEO Audit</h1>
       <p>Get your website analyzed across 100+ ranking factors and 12 DNA pillars — completely free. Real data, not estimates.</p>
-      <div class="pillars-strip">
-        <span class="pill">🔧 Technical SEO</span><span class="pill">📄 On-Page</span><span class="pill">📝 Content</span>
-        <span class="pill">🧠 Entity SEO</span><span class="pill">🔗 Linking</span><span class="pill">📊 Schema</span>
-        <span class="pill">🖼️ Media</span><span class="pill">📱 Social</span><span class="pill">🔒 Security</span>
-        <span class="pill">📲 Mobile</span><span class="pill">🗂️ Indexability</span><span class="pill">⚡ Performance</span>
-      </div>
-      <div class="audit-form-card">
-        <h3>Get Your Free DNA Audit Now</h3>
-        <p class="sub">Fill out the form — your real-time audit starts instantly. No credit card, no obligations.</p>
-        <form id="auditForm" onsubmit="runAudit(event)">
-          <div class="form-group"><label>Website URL *</label><input type="url" id="fWebsite" placeholder="https://yourwebsite.com" required></div>
-          <div class="form-row">
-            <div class="form-group"><label>Business Name *</label><input type="text" id="fBusiness" placeholder="Your Business Name" required></div>
-            <div class="form-group"><label>Your Name</label><input type="text" id="fName" placeholder="John Smith"></div>
-          </div>
-          <div class="form-row">
-            <div class="form-group"><label>Email *</label><input type="email" id="fEmail" placeholder="you@email.com" required></div>
-            <div class="form-group"><label>Phone</label><input type="tel" id="fPhone" placeholder="(555) 123-4567"></div>
-          </div>
-          <div class="form-row">
-            <div class="form-group"><label>Industry</label>
-              <select id="fIndustry"><option value="general">Select industry</option><option value="dental">Dental</option><option value="legal">Law Firm</option><option value="restaurant">Restaurant</option><option value="plumbing">Plumbing</option><option value="hvac">HVAC</option><option value="medical">Medical/MedSpa</option><option value="realestate">Real Estate</option><option value="auto">Auto Repair</option><option value="roofing">Roofing</option><option value="electrician">Electrician</option><option value="gym">Gym/Fitness</option><option value="pet">Pet Services</option><option value="ecommerce">E-Commerce</option><option value="other">Other</option></select>
-            </div>
-            <div class="form-group"><label>City & State</label><input type="text" id="fCity" placeholder="Dallas, TX"></div>
-          </div>
-          <button type="submit" class="audit-submit" id="auditBtn">🔍 Run Free DNA Audit Now</button>
-          <div class="error-msg" id="errorMsg"></div>
-          <p style="text-align:center;font-size:0.78rem;color:#64748b;margin-top:12px">100% Free. Real crawl data. Instant results.</p>
-        </form>
+      <div class="dna-pillars">
+        <span class="dna-pill"><span class="pill-icon">🔧</span> Technical SEO</span>
+        <span class="dna-pill"><span class="pill-icon">📄</span> On-Page</span>
+        <span class="dna-pill"><span class="pill-icon">📝</span> Content</span>
+        <span class="dna-pill"><span class="pill-icon">🧠</span> Entity SEO</span>
+        <span class="dna-pill"><span class="pill-icon">🔗</span> Linking</span>
+        <span class="dna-pill"><span class="pill-icon">📊</span> Schema</span>
+        <span class="dna-pill"><span class="pill-icon">🖼️</span> Media</span>
+        <span class="dna-pill"><span class="pill-icon">📱</span> Social</span>
+        <span class="dna-pill"><span class="pill-icon">🔒</span> Security</span>
+        <span class="dna-pill"><span class="pill-icon">📲</span> Mobile</span>
+        <span class="dna-pill"><span class="pill-icon">🗂️</span> Indexability</span>
+        <span class="dna-pill"><span class="pill-icon">⚡</span> Performance</span>
       </div>
     </div>
   </section>
 
-  <!-- Results Section (hidden until audit completes) -->
-  <section class="results-section section" id="resultsSection">
+  <section class="section" id="audit-form-section">
     <div class="container">
-      <div class="score-hero" id="scoreHero"></div>
-      <div class="action-buttons">
-        <button class="action-btn btn-pdf" onclick="window.print()">🖨️ Download PDF Report</button>
-        <button class="action-btn btn-email" id="emailBtn" onclick="emailReport()">📧 Email Report to Client</button>
-        <button class="action-btn btn-new" onclick="location.reload()">🔍 Run Another Audit</button>
+      <div class="service-detail-grid">
+        <div>
+          <h2>What Your <span class="highlight">DNA Audit</span> Reveals</h2>
+          <div class="feature-list">
+            <div class="feature-item"><div class="feature-item-icon">🧬</div><div><h4>12 DNA Pillar Scores</h4><p>Individual scores for Technical SEO, On-Page, Content, Entity SEO, Linking, Schema, Media, Social, Security, Mobile, Indexability, and Performance.</p></div></div>
+            <div class="feature-item"><div class="feature-item-icon">📊</div><div><h4>100+ Ranking Factors</h4><p>Every factor Google uses to rank your site — analyzed in real-time with actionable findings.</p></div></div>
+            <div class="feature-item"><div class="feature-item-icon">📄</div><div><h4>Downloadable PDF Report</h4><p>Get a professional PDF report you can share with your team or stakeholders.</p></div></div>
+            <div class="feature-item"><div class="feature-item-icon">📧</div><div><h4>Email Report to Client</h4><p>Send the audit report directly to any email address — perfect for agencies and consultants.</p></div></div>
+            <div class="feature-item"><div class="feature-item-icon">🔍</div><div><h4>Live On-Page Results</h4><p>View your complete DNA audit results right on this page with visual pillar scoring.</p></div></div>
+            <div class="feature-item"><div class="feature-item-icon">📝</div><div><h4>Custom Recommendations</h4><p>Prioritized action items for each DNA pillar to improve your overall SEO health.</p></div></div>
+          </div>
+        </div>
+        <div>
+          <div class="audit-form">
+            <h3 style="margin-bottom:8px;">Get Your Free DNA Audit Now</h3>
+            <p style="color:var(--text-light);font-size:0.9rem;margin-bottom:24px;">Fill out the form — your real-time audit starts instantly. No credit card, no obligations.</p>
+            <form id="auditForm" onsubmit="runAudit(event)">
+              <div class="form-group"><label>Business Name *</label><input type="text" id="business_name" placeholder="Your business name" required></div>
+              <div class="form-group"><label>Full Name *</label><input type="text" id="contact_name" placeholder="Your full name" required></div>
+              <div class="form-group"><label>Email *</label><input type="email" id="email" placeholder="your@email.com" required></div>
+              <div class="form-group"><label>Phone * <span style="font-size:0.75rem;color:var(--text-light);font-weight:400;">(include country code, e.g. +971, +1, +44)</span></label><input type="tel" id="phone" placeholder="+971 5X XXX XXXX" required></div>
+              <div class="form-group"><label>Website URL *</label><input type="url" id="website" placeholder="https://yourwebsite.com" required></div>
+              <div class="form-group"><label>Business Type</label>
+                <select id="industry">
+                  <option value="">Select your industry</option>
+                  <option value="dental">Dental Practice</option>
+                  <option value="legal">Law Firm</option>
+                  <option value="restaurant">Restaurant</option>
+                  <option value="plumbing">Plumbing Company</option>
+                  <option value="hvac">HVAC Company</option>
+                  <option value="medical">Medical Practice</option>
+                  <option value="medspa">Med Spa</option>
+                  <option value="realestate">Real Estate</option>
+                  <option value="auto">Auto Repair</option>
+                  <option value="gym">Gym & Fitness</option>
+                  <option value="electrician">Electrician</option>
+                  <option value="roofing">Roofing</option>
+                  <option value="pet">Pet Services</option>
+                  <option value="cleaning">Cleaning Company</option>
+                  <option value="moving">Moving Company</option>
+                  <option value="insurance">Insurance Agency</option>
+                  <option value="financial">Financial Advisor</option>
+                  <option value="chiropractic">Chiropractor</option>
+                  <option value="landscaping">Landscaping</option>
+                  <option value="photography">Photographer</option>
+                  <option value="salon">Salon &amp; Beauty</option>
+                  <option value="veterinary">Veterinarian</option>
+                  <option value="construction">Construction</option>
+                  <option value="ecommerce">E-Commerce</option>
+                  <option value="other">Other</option>
+                </select>
+              </div>
+              <div class="form-group"><label>City & State</label><input type="text" id="city" placeholder="e.g., New York, NY"></div>
+              <div class="form-group"><label>Main Goal</label>
+                <select id="main_goal">
+                  <option value="">Select your main goal</option>
+                  <option value="reviews">More Reviews</option>
+                  <option value="rankings">Higher Google Rankings</option>
+                  <option value="leads">More Leads</option>
+                  <option value="all">All of the Above</option>
+                </select>
+              </div>
+              <button type="submit" class="btn btn-primary" id="auditBtn" style="width:100%;justify-content:center;">🔍 Run Free DNA Audit Now</button>
+              <p style="text-align:center;font-size:0.8rem;color:var(--text-light);margin-top:12px;">100% Free. Real crawl data. Instant results.</p>
+            </form>
+          </div>
+        </div>
       </div>
-      <h2 style="color:#22D3EE;margin:30px 0 15px">📊 12 DNA Pillar Scores</h2>
-      <div class="pillar-grid" id="pillarGrid"></div>
-      <div id="issuesContainer"></div>
-      <div id="packageCta"></div>
     </div>
   </section>
 
-  <div class="loading-overlay" id="loadingOverlay">
-    <div class="spinner"></div>
-    <div class="loading-text">🧬 Running DNA-Level SEO Audit...</div>
-    <div class="loading-sub" id="loadingStatus">Crawling your website and analyzing 100+ factors</div>
-  </div>
-
-  <footer class="footer"><div class="container"><div class="footer-grid"><div><a href="../index.html" class="footer-logo">AI<span>Growth</span>Labs</a><p style="color:var(--gray-400);margin-top:10px;max-width:300px">AI-powered SEO and digital marketing agency helping local businesses dominate online.</p></div><div><h4>Services</h4><a href="local-seo.html">Local SEO</a><a href="gbp-optimization.html">GBP Optimization</a><a href="ai-seo.html">AI SEO</a><a href="content-creation.html">Content Creation</a></div><div><h4>Company</h4><a href="about.html">About Us</a><a href="case-studies.html">Case Studies</a><a href="blog.html">Blog</a><a href="contact.html">Contact</a></div><div><h4>Legal</h4><a href="privacy-policy.html">Privacy Policy</a><a href="terms.html">Terms of Service</a><a href="disclaimer.html">Disclaimer</a></div></div><div class="footer-bottom"><p>&copy; 2026 AI Growth Labs. All rights reserved.</p></div></div></footer>
-
-<script>
-const API_URL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
-  ? 'http://localhost:8000' : 'https://19a32eed4b31-tunnel-tsidubgl.devinapps.com';
-const API_AUTH = 'Basic ' + btoa('user:a80f1ee44acc5270e9d2e170a44b1fda');
-
-async function runAudit(e) {
-  e.preventDefault();
-  const btn = document.getElementById('auditBtn');
-  const overlay = document.getElementById('loadingOverlay');
-  const errorMsg = document.getElementById('errorMsg');
-  errorMsg.style.display = 'none';
-  btn.disabled = true;
-  btn.textContent = 'Analyzing...';
-  overlay.classList.add('show');
-
-  const statuses = ['Checking Technical SEO...','Analyzing On-Page factors...','Evaluating Content Quality...','Scanning Entity SEO...','Checking Internal Links...','Analyzing Structured Data...','Checking Images & Media...','Scanning Social Presence...','Verifying Security Headers...','Testing Mobile Friendliness...','Checking Indexability...','Measuring Performance...'];
-  let si = 0;
-  const interval = setInterval(() => { document.getElementById('loadingStatus').textContent = statuses[si % statuses.length]; si++; }, 2000);
-
-  try {
-    const hdrs = {'Content-Type': 'application/json'};
-    if (API_URL.includes('devinapps.com')) hdrs['Authorization'] = API_AUTH;
-    const resp = await fetch(API_URL + '/api/public/free-audit', {
-      method: 'POST',
-      headers: hdrs,
-      body: JSON.stringify({
-        website: document.getElementById('fWebsite').value,
-        business_name: document.getElementById('fBusiness').value,
-        contact_name: document.getElementById('fName').value,
-        email: document.getElementById('fEmail').value,
-        phone: document.getElementById('fPhone').value,
-        industry: document.getElementById('fIndustry').value,
-        city: document.getElementById('fCity').value
-      })
-    });
-    clearInterval(interval);
-    if (!resp.ok) { const err = await resp.json(); throw new Error(err.detail || 'Audit failed'); }
-    const data = await resp.json();
-    overlay.classList.remove('show');
-    renderResults(data);
-  } catch (err) {
-    clearInterval(interval);
-    overlay.classList.remove('show');
-    btn.disabled = false;
-    btn.textContent = '🔍 Run Free DNA Audit Now';
-    errorMsg.textContent = 'Error: ' + err.message;
-    errorMsg.style.display = 'block';
-  }
-}
-
-function scoreColor(s) { return s >= 80 ? '#22c55e' : s >= 60 ? '#22D3EE' : s >= 40 ? '#f59e0b' : '#ef4444'; }
-
-function renderResults(data) {
-  const a = data.audit;
-  const pkg = data.suggested_package;
-  document.getElementById('auditHero').style.display = 'none';
-  const rs = document.getElementById('resultsSection');
-  rs.classList.add('show');
-
-  // Score hero
-  const c = scoreColor(a.overall_score);
-  document.getElementById('scoreHero').innerHTML = `
-    <h2 style="color:#e2e8f0;font-size:1.8rem;margin-bottom:20px">SEO DNA Audit Report — ${a.domain}</h2>
-    <div class="score-circle" style="border-color:${c};box-shadow:0 0 30px ${c}40">
-      <div class="number" style="color:${c}">${a.overall_score}</div>
-      <div class="label">Overall Score</div>
+  <!-- Loading State -->
+  <section class="section audit-loading" id="audit-loading" style="display:none;">
+    <div class="container">
+      <div class="dna-crawl-animation">
+        <div class="crawl-helix">🧬</div>
+        <div class="spinner"></div>
+      </div>
+      <h3 style="color:var(--white);">Running DNA-Level SEO Audit...</h3>
+      <p style="color:var(--gray-300);">Crawling your website and analyzing 100+ factors across 12 DNA pillars.</p>
     </div>
-    <div class="maturity-badge" style="background:${c}20;color:${c};border:1px solid ${c}">${a.maturity_level}</div>
-    <p style="color:#94a3b8;margin-top:12px;font-size:0.9rem">Audited: ${a.timestamp} | URL: ${a.url}</p>`;
+  </section>
 
-  // Pillar grid
-  const grid = document.getElementById('pillarGrid');
-  grid.innerHTML = '';
-  const pillarOrder = ['technical','onpage','content','entity','linking','schema','media','social','security','mobile','indexability','performance'];
-  pillarOrder.forEach(key => {
-    const p = a.pillars[key];
-    if (!p) return;
-    const sc = a.pillar_scores[key] || 0;
-    const col = scoreColor(sc);
-    let checksHtml = '';
-    (p.checks || []).forEach(ch => {
-      const icon = ch.status === 'pass' ? 'check-pass' : ch.status === 'fail' ? 'check-fail' : ch.status === 'warning' ? 'check-warn' : 'check-info';
-      const sym = ch.status === 'pass' ? '✓' : ch.status === 'fail' ? '✗' : ch.status === 'warning' ? '!' : 'i';
-      checksHtml += `<div class="check-item"><span class="check-icon ${icon}">${sym}</span><span><b>${ch.factor}:</b> ${ch.detail}</span></div>`;
-    });
-    grid.innerHTML += `
-      <div class="pillar-card">
-        <div class="pillar-header"><h4>${p.name}</h4><span class="pillar-score" style="color:${col}">${sc}%</span></div>
-        <div class="pillar-bar"><div class="pillar-bar-fill" style="width:${sc}%;background:${col}"></div></div>
-        ${checksHtml}
-      </div>`;
-  });
+  <!-- Audit Results -->
+  <section class="section audit-results" id="audit-results">
+    <div class="container">
+      <div class="audit-meta">
+        <h2 id="result-title">📊 12 DNA Pillar Scores</h2>
+        <p id="result-meta"></p>
+      </div>
 
-  // Issues
-  let issuesHtml = '';
-  if (a.critical_issues && a.critical_issues.length) {
-    issuesHtml += '<div class="issues-section"><h3 style="color:#ef4444">🚨 Critical Issues (' + a.critical_issues.length + ')</h3>';
-    a.critical_issues.forEach(i => { issuesHtml += `<div class="issue-card issue-critical">${i}</div>`; });
-    issuesHtml += '</div>';
-  }
-  if (a.warnings && a.warnings.length) {
-    issuesHtml += '<div class="issues-section"><h3 style="color:#f59e0b">⚠️ Warnings (' + a.warnings.length + ')</h3>';
-    a.warnings.forEach(i => { issuesHtml += `<div class="issue-card issue-warning">${i}</div>`; });
-    issuesHtml += '</div>';
-  }
-  if (a.quick_wins && a.quick_wins.length) {
-    issuesHtml += '<div class="issues-section"><h3 style="color:#7c3aed">🚀 Quick Wins (' + a.quick_wins.length + ')</h3>';
-    a.quick_wins.forEach(i => { issuesHtml += `<div class="issue-card issue-quickwin">${i}</div>`; });
-    issuesHtml += '</div>';
-  }
-  if (a.passed && a.passed.length) {
-    issuesHtml += '<div class="issues-section"><h3 style="color:#22c55e">✅ Passed Checks (' + a.passed.length + ')</h3>';
-    a.passed.forEach(i => { issuesHtml += `<div class="issue-card issue-passed">${i}</div>`; });
-    issuesHtml += '</div>';
-  }
-  document.getElementById('issuesContainer').innerHTML = issuesHtml;
+      <!-- Export Buttons -->
+      <div class="audit-export-btns">
+        <button class="btn-export btn-pdf" id="btn-download-pdf" onclick="downloadPDF()">🖨️ Download PDF Report</button>
+        <button class="btn-export btn-email-report" id="btn-email-report" onclick="emailReport()">📧 Email Report to Client</button>
+        <button class="btn-export btn-run-another" onclick="runAnother()">🔍 Run Another Audit</button>
+      </div>
+      
+      <div style="text-align:center;">
+        <div class="score-circle" id="score-circle">
+          <div class="score-number" id="score-number">0</div>
+          <div class="score-grade" id="score-grade">Grade</div>
+        </div>
+      </div>
 
-  // Package CTA
-  if (pkg) {
-    document.getElementById('packageCta').innerHTML = `
-      <div class="package-cta">
-        <p style="color:#94a3b8;font-size:0.9rem;margin-bottom:8px">Based on your audit results, we recommend:</p>
-        <h3>📦 ${pkg.name}</h3>
-        <div class="price">${pkg.price}</div>
-        <p class="reason">${pkg.reason}</p>
-        <a href="../pages/contact.html" class="cta-btn">Book a FREE Strategy Call →</a>
-        <p style="color:#64748b;font-size:0.8rem;margin-top:15px">No obligation. We'll walk you through your audit results and create a custom roadmap.</p>
-      </div>`;
-  }
+      <!-- DNA Pillar Grid -->
+      <div class="dna-pillar-grid" id="dna-pillar-grid"></div>
 
-  rs.scrollIntoView({behavior: 'smooth'});
-  window._auditData = data;
-}
+      <div id="sections-container"></div>
 
-function emailReport() {
-  const email = document.getElementById('fEmail').value;
-  if (email) {
-    alert('Audit report will be sent to: ' + email + '\n\nNote: Email delivery requires SMTP configuration in dashboard Settings.');
-  }
-}
-</script>
+      <div class="priorities-box" id="priorities-box">
+        <h3>Top 3 Priorities</h3>
+        <div id="priorities-list"></div>
+      </div>
+
+      <div class="demo-note" id="demo-note"></div>
+
+      <div class="cta-after-audit">
+        <h3>Want a Deeper Analysis?</h3>
+        <p>Our team can provide a comprehensive deep-dive with an actionable implementation plan tailored to your business.</p>
+        <a href="contact.html" class="btn btn-primary">Schedule a Free Strategy Call &rarr;</a>
+      </div>
+    </div>
+  </section>
+
+  <section class="section section-dark">
+    <div class="container">
+      <div class="text-center">
+        <div class="section-title">What Happens <span class="highlight">After</span> Your Audit?</div>
+      </div>
+      <div class="process-grid">
+        <div class="process-step"><div class="process-number">1</div><h4>We Analyze</h4><p style="color:var(--gray-300);">Our AI performs a comprehensive analysis of your online presence in seconds.</p></div>
+        <div class="process-step"><div class="process-number">2</div><h4>You Review</h4><p style="color:var(--gray-300);">You get a detailed audit report with specific findings and scores.</p></div>
+        <div class="process-step"><div class="process-number">3</div><h4>We Strategize</h4><p style="color:var(--gray-300);">We schedule a free strategy call to walk through the results and recommend next steps.</p></div>
+        <div class="process-step"><div class="process-number">4</div><h4>You Decide</h4><p style="color:var(--gray-300);">No pressure. Take the insights and implement them yourself, or let us handle everything.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <footer class="footer">
+  <div class="container">
+    <div class="footer-grid">
+      <div class="footer-brand">
+        <a href="../index.html" class="nav-logo">AI<span>Growth</span>Labs</a>
+        <p>AI-powered local SEO and reputation management for USA businesses.</p>
+      </div>
+      <div>
+        <h4>Services</h4>
+        <div class="footer-links">
+          <a href="../pages/local-seo.html">Local SEO</a>
+          <a href="../pages/gbp-optimization.html">GBP Optimization</a>
+          <a href="../pages/reputation-management.html">Reputation Management</a>
+          <a href="../pages/ai-seo.html">AI SEO</a>
+          <a href="../pages/paid-advertising.html">Paid Advertising</a>
+          <a href="../pages/social-media.html">Social Media</a>
+          <a href="../pages/content-creation.html">Content Creation</a>
+          <a href="../pages/video-seo.html">Video SEO</a>
+          <a href="../pages/cro.html">CRO</a>
+          <a href="../pages/ecommerce-seo.html">E-Commerce SEO</a>
+          <a href="../pages/email-marketing.html">Email Marketing</a>
+          <a href="../pages/web-design.html">Web Design</a>
+          <a href="../pages/geo-optimization.html">GEO / AI Search</a>
+          <a href="../pages/geofencing.html">Geofencing</a>
+          <a href="../pages/analytics-reporting.html">Analytics &amp; Reporting</a>
+          <a href="../pages/lead-nurture.html">Lead Nurture</a>
+          <a href="../pages/programmatic-ads.html">Programmatic Ads</a>
+          <a href="../pages/digital-pr.html">Digital PR</a>
+          <a href="../pages/sales-enablement.html">Sales Enablement</a>
+          <a href="../pages/ux-design.html">UX/UI Design</a>
+          <a href="../pages/marketing-consulting.html">Marketing Consulting</a>
+          <a href="../pages/brand-strategy.html">Brand Strategy</a>
+          <a href="../pages/influencer-marketing.html">Influencer Marketing</a>
+          <a href="../pages/marketplace-marketing.html">Marketplace Marketing</a>
+          <a href="../pages/link-building.html">Link Building</a>
+        </div>
+      </div>
+      <div>
+        <h4>Industries</h4>
+        <div class="footer-links">
+          <a href="../pages/seo-for-dentists.html">SEO for Dentists</a>
+          <a href="../pages/seo-for-lawyers.html">SEO for Lawyers</a>
+          <a href="../pages/seo-for-restaurants.html">SEO for Restaurants</a>
+          <a href="../pages/seo-for-plumbers.html">SEO for Plumbers</a>
+          <a href="../pages/seo-for-hvac.html">SEO for HVAC</a>
+          <a href="../pages/seo-for-medical-spas.html">SEO for Medical Spas</a>
+          <a href="../pages/seo-for-real-estate.html">SEO for Real Estate</a>
+          <a href="../pages/seo-for-gyms.html">SEO for Gyms</a>
+          <a href="../pages/seo-for-auto-repair.html">SEO for Auto Repair</a>
+          <a href="../pages/seo-for-electricians.html">SEO for Electricians</a>
+          <a href="../pages/seo-for-roofing.html">SEO for Roofing</a>
+          <a href="../pages/seo-for-pet-services.html">SEO for Pet Services</a>
+          <a href="../pages/seo-for-cleaning.html">SEO for Cleaning</a>
+          <a href="../pages/seo-for-movers.html">SEO for Movers</a>
+          <a href="../pages/seo-for-insurance.html">SEO for Insurance</a>
+          <a href="../pages/seo-for-financial-advisors.html">SEO for Financial Advisors</a>
+          <a href="../pages/seo-for-chiropractors.html">SEO for Chiropractors</a>
+          <a href="../pages/seo-for-landscaping.html">SEO for Landscaping</a>
+          <a href="../pages/seo-for-photographers.html">SEO for Photographers</a>
+          <a href="../pages/seo-for-salons.html">SEO for Salons</a>
+          <a href="../pages/seo-for-veterinarians.html">SEO for Veterinarians</a>
+          <a href="../pages/seo-for-construction.html">SEO for Construction</a>
+        </div>
+      </div>
+      <div>
+        <h4>Company</h4>
+        <div class="footer-links">
+          <a href="../pages/about.html">About Us</a>
+          <a href="../pages/case-studies.html">Case Studies</a>
+          <a href="../pages/blog.html">Blog</a>
+          <a href="../pages/contact.html">Contact</a>
+          <a href="../pages/privacy-policy.html">Privacy Policy</a>
+          <a href="../pages/terms.html">Terms &amp; Conditions</a>
+          <a href="../pages/disclaimer.html">Disclaimer</a>
+        </div>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <p>&copy; 2026 AI Growth Labs. All rights reserved.</p>
+      <div class="footer-social">
+        <a href="#" aria-label="Facebook">FB</a>
+        <a href="#" aria-label="Instagram">IG</a>
+        <a href="#" aria-label="LinkedIn">LI</a>
+        <a href="#" aria-label="TikTok">TK</a>
+      </div>
+    </div>
+  </div>
+</footer>
+
+  <script src="../js/main.js"></script>
+  <script src="../js/form-validation.js"></script>
+  <script>
+    // Backend API URL — auto-detect from current page location
+    const API_URL = window.location.protocol + '//' + window.location.host;
+
+    async function runAudit(e) {
+      e.preventDefault();
+
+      // Validate form (email, phone, rate limit)
+      var isValid = AGLFormValidation.validateForm({
+        formId: 'auditForm',
+        emailInput: document.getElementById('email'),
+        phoneInput: document.getElementById('phone'),
+        phoneRequired: true
+      });
+      if (!isValid) return;
+
+      const btn = document.getElementById('auditBtn');
+      const formSection = document.getElementById('audit-form-section');
+      const loading = document.getElementById('audit-loading');
+      const results = document.getElementById('audit-results');
+
+      // Collect form data
+      const data = {
+        business_name: document.getElementById('business_name').value,
+        contact_name: document.getElementById('contact_name').value,
+        email: document.getElementById('email').value,
+        phone: document.getElementById('phone').value,
+        website: document.getElementById('website').value,
+        industry: document.getElementById('industry').value,
+        city: document.getElementById('city').value
+      };
+
+      // Show loading
+      btn.disabled = true;
+      btn.textContent = '🧬 Analyzing DNA...';
+      loading.style.display = 'block';
+      results.classList.remove('show');
+
+      // DNA Pillar definitions
+      const DNA_PILLARS = [
+        { name: 'Technical SEO', icon: '🔧', key: 'technical' },
+        { name: 'On-Page', icon: '📄', key: 'onpage' },
+        { name: 'Content', icon: '📝', key: 'content' },
+        { name: 'Entity SEO', icon: '🧠', key: 'entity' },
+        { name: 'Linking', icon: '🔗', key: 'linking' },
+        { name: 'Schema', icon: '📊', key: 'schema' },
+        { name: 'Media', icon: '🖼️', key: 'media' },
+        { name: 'Social', icon: '📱', key: 'social' },
+        { name: 'Security', icon: '🔒', key: 'security' },
+        { name: 'Mobile', icon: '📲', key: 'mobile' },
+        { name: 'Indexability', icon: '🗂️', key: 'indexability' },
+        { name: 'Performance', icon: '⚡', key: 'performance' }
+      ];
+
+      try {
+        const resp = await fetch(API_URL + '/api/public/free-audit', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(data)
+        });
+
+        if (!resp.ok) { const errData = await resp.json(); throw new Error(errData.detail || 'Audit failed'); }
+        const result = await resp.json();
+        const audit = result.audit;
+        window._lastAuditData = audit;
+        window._lastFormData = data;
+
+        // Hide loading, show results
+        loading.style.display = 'none';
+        results.classList.add('show');
+
+        // Score circle
+        const circle = document.getElementById('score-circle');
+        const grade = audit.overall_score >= 85 ? 'a' : (audit.overall_score >= 70 ? 'b' : (audit.overall_score >= 55 ? 'c' : 'd'));
+        circle.className = 'score-circle grade-' + grade;
+        document.getElementById('score-number').textContent = audit.overall_score;
+        document.getElementById('score-grade').textContent = audit.maturity_level || ('Grade ' + grade.toUpperCase());
+
+        // Title & meta
+        document.getElementById('result-title').textContent = '📊 DNA Audit Results: ' + (audit.domain || data.business_name);
+        document.getElementById('result-meta').textContent = (audit.url || data.website) + ' | ' + (audit.timestamp || new Date().toLocaleDateString());
+
+        // DNA Pillar Grid
+        const pillarGrid = document.getElementById('dna-pillar-grid');
+        pillarGrid.innerHTML = '';
+        const pillarScores = audit.pillar_scores || {};
+        const pillarDetails = audit.pillars || {};
+        DNA_PILLARS.forEach(function(pillar) {
+          const score = pillarScores[pillar.key] || 0;
+          const pData = pillarDetails[pillar.key];
+          const scoreClass = score >= 75 ? 'score-good' : (score >= 55 ? 'score-warn' : 'score-bad');
+          const barColor = score >= 75 ? '#4CAF50' : (score >= 55 ? '#FF9800' : '#F44336');
+          let html = '<div class="dna-pillar-card">';
+          html += '<div class="pillar-header">';
+          html += '<span class="pillar-icon">' + pillar.icon + '</span>';
+          html += '<span class="pillar-name">' + pillar.name + '</span>';
+          html += '<span class="pillar-score ' + scoreClass + '">' + score + '/100</span>';
+          html += '</div>';
+          html += '<div class="pillar-bar"><div class="pillar-bar-fill" style="width:' + score + '%;background:' + barColor + ';"></div></div>';
+          if (pData && pData.checks) {
+            const topChecks = pData.checks.filter(c => c.status !== 'pass').slice(0,2);
+            if (topChecks.length) {
+              html += '<div class="pillar-details">' + topChecks.map(c => c.factor + ': ' + c.detail).join(' • ') + '</div>';
+            }
+          }
+          html += '</div>';
+          pillarGrid.innerHTML += html;
+        });
+
+        // Detailed Sections from pillar checks
+        const container = document.getElementById('sections-container');
+        container.innerHTML = '';
+        DNA_PILLARS.forEach(function(pillar) {
+          const pData = pillarDetails[pillar.key];
+          if (!pData) return;
+          const score = pillarScores[pillar.key] || 0;
+          const scoreClass = score >= 75 ? 'score-good' : (score >= 55 ? 'score-warn' : 'score-bad');
+          let html = '<div class="audit-section">';
+          html += '<div class="audit-section-header">';
+          html += '<span class="audit-section-icon">' + pillar.icon + '</span>';
+          html += '<span class="audit-section-title">' + pData.name + '</span>';
+          html += '<span class="audit-section-score ' + scoreClass + '">' + score + '/100</span>';
+          html += '</div>';
+          html += '<ul class="findings-list">';
+          (pData.checks || []).forEach(function(ch) {
+            const icon = ch.status === 'pass' ? '✓' : ch.status === 'fail' ? '✗' : '!';
+            const color = ch.status === 'pass' ? '#4CAF50' : ch.status === 'fail' ? '#F44336' : '#FF9800';
+            html += '<li><span style="color:' + color + ';font-weight:700;margin-right:8px">' + icon + '</span><b>' + ch.factor + ':</b> ' + ch.detail + '</li>';
+          });
+          html += '</ul>';
+          html += '</div>';
+          container.innerHTML += html;
+        });
+
+        // Priorities from quick_wins and critical_issues
+        const priList = document.getElementById('priorities-list');
+        priList.innerHTML = '';
+        const priorities = (audit.critical_issues || []).concat(audit.quick_wins || []).slice(0, 5);
+        priorities.forEach(function(p) {
+          priList.innerHTML += '<div class="priority-item">' + p + '</div>';
+        });
+
+        // Mode note
+        document.getElementById('demo-note').textContent = result.mode === 'live' ? 'Real-time audit — your website was actually crawled and analyzed across 100+ factors.' : '';
+
+        // Scroll to results
+        results.scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+      } catch (err) {
+        loading.style.display = 'none';
+        alert('Audit could not be completed. Please try again or contact us directly.');
+        console.error(err);
+      }
+
+      // Record this submission for rate limiting
+      AGLFormValidation.recordSubmission('auditForm');
+
+      btn.disabled = false;
+      btn.textContent = '🔍 Run Free DNA Audit Now';
+    }
+
+    // PDF Download
+    function downloadPDF() {
+      const audit = window._lastAuditData;
+      const form = window._lastFormData || {};
+      if (!audit) { alert('No audit data available.'); return; }
+      let text = 'AI GROWTH LABS - DNA-LEVEL SEO AUDIT REPORT\n';
+      text += '='.repeat(50) + '\n\n';
+      text += 'Business: ' + (form.business_name || audit.domain) + '\n';
+      text += 'Website: ' + (audit.url || form.website) + '\n';
+      text += 'Date: ' + (audit.timestamp || new Date().toLocaleDateString()) + '\n';
+      text += 'Overall Score: ' + audit.overall_score + '/100 (' + (audit.maturity_level || '') + ')\n\n';
+      text += '12 DNA PILLAR SCORES\n' + '-'.repeat(30) + '\n';
+      const pillarNames = {technical:'Technical SEO',onpage:'On-Page',content:'Content',entity:'Entity SEO',linking:'Linking',schema:'Schema',media:'Media',social:'Social',security:'Security',mobile:'Mobile',indexability:'Indexability',performance:'Performance'};
+      const ps = audit.pillar_scores || {};
+      Object.keys(pillarNames).forEach(function(k) { text += pillarNames[k] + ': ' + (ps[k]||0) + '/100\n'; });
+      text += '\nDETAILED FINDINGS\n' + '-'.repeat(30) + '\n';
+      const pillars = audit.pillars || {};
+      Object.keys(pillars).forEach(function(k) {
+        const p = pillars[k];
+        text += '\n' + p.name + ' (' + (ps[k]||0) + '/100)\n';
+        (p.checks || []).forEach(function(ch) { text += '  ' + (ch.status==='pass'?'✓':ch.status==='fail'?'✗':'!') + ' ' + ch.factor + ': ' + ch.detail + '\n'; });
+      });
+      if (audit.critical_issues && audit.critical_issues.length) {
+        text += '\nCRITICAL ISSUES\n' + '-'.repeat(30) + '\n';
+        audit.critical_issues.forEach(function(p, i) { text += (i+1) + '. ' + p + '\n'; });
+      }
+      if (audit.quick_wins && audit.quick_wins.length) {
+        text += '\nQUICK WINS\n' + '-'.repeat(30) + '\n';
+        audit.quick_wins.forEach(function(p, i) { text += (i+1) + '. ' + p + '\n'; });
+      }
+      text += '\n\nGenerated by AI Growth Labs | aigrowthabs.com\n';
+      const blob = new Blob([text], { type: 'text/plain' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'SEO-DNA-Audit-' + (audit.domain || 'report').replace(/\s+/g, '-') + '.txt';
+      a.click();
+      URL.revokeObjectURL(url);
+    }
+
+    // Email Report
+    function emailReport() {
+      const audit = window._lastAuditData;
+      const form = window._lastFormData || {};
+      if (!audit) { alert('No audit data available.'); return; }
+      const email = prompt('Enter the email address to send the report to:');
+      if (!email) return;
+      const subject = encodeURIComponent('SEO DNA Audit Report - ' + (form.business_name || audit.domain));
+      let body = 'SEO DNA Audit Report for ' + (form.business_name || audit.domain) + '\n\n';
+      body += 'Website: ' + (audit.url || form.website) + '\n';
+      body += 'Overall Score: ' + audit.overall_score + '/100 (' + (audit.maturity_level || '') + ')\n\n';
+      body += 'DNA Pillar Scores:\n';
+      const ps = audit.pillar_scores || {};
+      const names = {technical:'Technical SEO',onpage:'On-Page',content:'Content',entity:'Entity SEO',linking:'Linking',schema:'Schema',media:'Media',social:'Social',security:'Security',mobile:'Mobile',indexability:'Indexability',performance:'Performance'};
+      Object.keys(names).forEach(function(k) { body += '  ' + names[k] + ': ' + (ps[k]||0) + '/100\n'; });
+      body += '\n\nFull report at: aigrowthabs.com/pages/free-audit.html';
+      window.location.href = 'mailto:' + email + '?subject=' + subject + '&body=' + encodeURIComponent(body);
+    }
+
+    // Run Another Audit
+    function runAnother() {
+      document.getElementById('audit-results').classList.remove('show');
+      document.getElementById('audit-form-section').scrollIntoView({ behavior: 'smooth' });
+      document.getElementById('auditForm').reset();
+    }
+  </script>
 </body>
 </html>

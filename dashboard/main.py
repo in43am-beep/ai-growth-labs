@@ -50,7 +50,7 @@ _rate_limit_store = {}
 SECRET_KEY = os.environ.get("SECRET_KEY", secrets.token_hex(32))
 ALGORITHM = "HS256"
 TOKEN_EXPIRE = 24
-UPLOAD_DIR = os.environ.get("UPLOAD_DIR", os.path.join(os.path.dirname(__file__), "uploads"))
+UPLOAD_DIR = os.path.join(os.path.dirname(__file__), "uploads")
 os.makedirs(UPLOAD_DIR, exist_ok=True)
 MAX_FILE_SIZE = 10 * 1024 * 1024  # 10MB
 
@@ -62,12 +62,6 @@ os.makedirs(os.path.join(static_dir, "js"), exist_ok=True)
 
 app.mount("/static", StaticFiles(directory=static_dir), name="static")
 templates = Jinja2Templates(directory=templates_dir)
-
-# Mount frontend site directory for serving free-audit and other pages
-site_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)))
-site_css = os.path.join(site_dir, "css")
-if os.path.isdir(site_css):
-    app.mount("/css", StaticFiles(directory=site_css), name="site_css")
 
 @app.on_event("startup")
 def startup():
@@ -102,6 +96,21 @@ def require_role(request: Request, roles: list):
     if user["role"] not in roles:
         raise HTTPException(status_code=403, detail="Access denied")
     return user
+
+# ===== PUBLIC FREE AUDIT PAGE (No Login) =====
+@app.get("/free-audit", response_class=HTMLResponse)
+async def free_audit_page(request: Request):
+    return templates.TemplateResponse("free_audit.html", {"request": request})
+
+@app.get("/audit-results/{audit_id}", response_class=HTMLResponse)
+async def audit_results_page(audit_id: int, request: Request):
+    db = get_db()
+    audit = db.execute("SELECT * FROM seo_audits WHERE id=?", (audit_id,)).fetchone()
+    db.close()
+    if not audit:
+        raise HTTPException(status_code=404, detail="Audit not found")
+    audit_data = json.loads(audit["audit_data"]) if audit["audit_data"] else {}
+    return templates.TemplateResponse("audit_results.html", {"request": request, "audit": audit_data, "audit_record": dict(audit)})
 
 # ===== LOGIN =====
 @app.get("/login", response_class=HTMLResponse)
@@ -153,11 +162,6 @@ def rate_limit(key_prefix: str, max_requests: int = 10, window_seconds: int = 60
 def log_activity(db, user_id, action, details=None, entity_type=None, entity_id=None):
     db.execute("INSERT INTO activity_log (user_id, action, details, entity_type, entity_id) VALUES (?,?,?,?,?)",
                (user_id, action, details, entity_type, entity_id))
-
-# ===== PUBLIC FREE AUDIT PAGE (No Login) =====
-@app.get("/free-audit", response_class=HTMLResponse)
-async def free_audit_page(request: Request):
-    return templates.TemplateResponse("free_audit.html", {"request": request})
 
 # ===== DASHBOARD ROUTER =====
 @app.get("/", response_class=HTMLResponse)
@@ -645,41 +649,9 @@ async def create_social_post(request: Request):
     db.close()
     return {"message": "Post created"}
 
-# ===== REAL SEO AUDIT ENGINE =====
-@app.get("/audit", response_class=HTMLResponse)
-async def audit_page(request: Request):
-    user = require_auth(request)
-    db = get_db()
-    recent_audits = [dict(r) for r in db.execute(
-        "SELECT * FROM seo_audits ORDER BY created_at DESC LIMIT 20").fetchall()]
-    db.close()
-    return templates.TemplateResponse("audit_page.html", {
-        "request": request, "user": user, "recent_audits": recent_audits
-    })
-
-@app.get("/audit/{audit_id}/results", response_class=HTMLResponse)
-async def audit_results_page(audit_id: int, request: Request):
-    user = require_auth(request)
-    db = get_db()
-    audit_row = db.execute("SELECT * FROM seo_audits WHERE id=?", (audit_id,)).fetchone()
-    db.close()
-    if not audit_row:
-        raise HTTPException(status_code=404, detail="Audit not found")
-    audit_data = dict(audit_row)
-    if audit_data.get("report_data"):
-        audit = json.loads(audit_data["report_data"])
-    else:
-        audit = {"domain": audit_data["website_url"], "url": audit_data["website_url"],
-                 "overall_score": audit_data.get("overall_score", 0),
-                 "maturity_level": "Pending", "timestamp": audit_data["created_at"],
-                 "pillars": {}, "pillar_scores": {},
-                 "critical_issues": [], "warnings": [], "quick_wins": [], "passed": []}
-    return templates.TemplateResponse("audit_results.html", {
-        "request": request, "user": user, "audit": audit
-    })
-
 @app.post("/api/audit/run")
 async def run_live_audit(request: Request):
+    """Dashboard SEO audit — REAL website crawl, login required."""
     user = require_auth(request)
     data = await request.json()
     website_url = data.get("website_url", "").strip()
@@ -698,7 +670,7 @@ async def run_live_audit(request: Request):
         audit_result = run_audit(website_url)
         overall_score = audit_result.get("overall_score", 0)
         report_json = json.dumps(audit_result)
-        db.execute("""UPDATE seo_audits SET status='completed', overall_score=?, report_data=?,
+        db.execute("""UPDATE seo_audits SET status='completed', overall_score=?, audit_data=?,
                       completed_at=datetime('now') WHERE id=?""",
                    (overall_score, report_json, audit_id))
         db.commit()
@@ -721,7 +693,7 @@ async def create_audit(request: Request):
     audit_id = c.lastrowid
     db.commit()
     db.close()
-    return {"id": audit_id, "message": "Audit created"}
+    return {"id": audit_id, "message": "Audit created — processing will begin when AI API key is configured"}
 
 @app.post("/api/notifications/{notif_id}/read")
 async def mark_notification_read(notif_id: int, request: Request):
@@ -2664,11 +2636,10 @@ async def public_free_audit(request: Request):
                       VALUES (?,?,?,?,?,?,?,?,?,?)""",
                    (business_name, contact_name, email, phone, industry, city, site_url, "free_audit", "new",
                     json.dumps({"audit_score": real_audit.get("overall_score", 0), "audit_date": datetime.now().isoformat()})))
-        # Also save in seo_audits table
-        db.execute("""INSERT INTO seo_audits (website_url, status, ai_provider, overall_score, report_data, audit_data, completed_at)
-                      VALUES (?,?,?,?,?,?,datetime('now'))""",
+        db.execute("""INSERT INTO seo_audits (website_url, status, ai_provider, overall_score, audit_data, completed_at)
+                      VALUES (?,?,?,?,?,datetime('now'))""",
                    (site_url, "completed", "engine", real_audit.get("overall_score", 0),
-                    json.dumps(real_audit), json.dumps({"source": "public_free_audit", "business": business_name, "email": email})))
+                    json.dumps(real_audit)))
         db.commit()
     except:
         pass

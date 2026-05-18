@@ -5,8 +5,7 @@ import os
 from datetime import datetime, timedelta
 from passlib.hash import bcrypt
 
-_default_db = "/data/agency.db" if os.path.isdir("/data") else os.path.join(os.path.dirname(__file__), "agency.db")
-DB_PATH = os.environ.get("DB_PATH", _default_db)
+DB_PATH = os.environ.get("DB_PATH", os.path.join(os.path.dirname(__file__), "agency.db"))
 
 def get_db():
     conn = sqlite3.connect(DB_PATH)
@@ -123,9 +122,8 @@ def init_db():
         client_id INTEGER REFERENCES clients(id),
         website_url TEXT NOT NULL,
         audit_data TEXT,
-        report_data TEXT,
         overall_score INTEGER,
-        status TEXT DEFAULT 'pending',
+        status TEXT DEFAULT 'pending' CHECK(status IN ('pending','processing','running','completed','failed')),
         report_pdf_path TEXT,
         ai_provider TEXT,
         created_by INTEGER REFERENCES users(id),
