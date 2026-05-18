@@ -435,6 +435,14 @@
     async function runAudit(e) {
       e.preventDefault();
 
+      // Check required fields first
+      var website = document.getElementById('website').value.trim();
+      var email = document.getElementById('email').value.trim();
+      var bname = document.getElementById('business_name').value.trim();
+      if (!website) { alert('Please enter a website URL first.'); return; }
+      if (!bname) { alert('Please enter your business name.'); return; }
+      if (!email) { alert('Please enter your email address.'); return; }
+
       // Validate form (email, phone, rate limit)
       var isValid = AGLFormValidation.validateForm({
         formId: 'auditForm',

@@ -160,6 +160,14 @@ async function runAudit(e) {
   const overlay = document.getElementById('loadingOverlay');
   const errorMsg = document.getElementById('errorMsg');
   errorMsg.style.display = 'none';
+
+  const website = document.getElementById('fWebsite').value.trim();
+  const business = document.getElementById('fBusiness').value.trim();
+  const email = document.getElementById('fEmail').value.trim();
+  if (!website) { errorMsg.textContent = 'Please enter a website URL first.'; errorMsg.style.display = 'block'; return; }
+  if (!business) { errorMsg.textContent = 'Please enter your business name.'; errorMsg.style.display = 'block'; return; }
+  if (!email) { errorMsg.textContent = 'Please enter your email address.'; errorMsg.style.display = 'block'; return; }
+
   btn.disabled = true;
   btn.textContent = 'Analyzing...';
   overlay.classList.add('show');
