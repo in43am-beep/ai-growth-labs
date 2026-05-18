@@ -1,0 +1,141 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>SEO DNA Audit — {{ audit.domain }} — AI Growth Labs</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/static/css/dashboard.css">
+<style>
+.audit-hero{background:linear-gradient(135deg,#0A1628 0%,#162544 50%,#1a1a4e 100%);padding:40px;border-radius:16px;margin-bottom:30px;text-align:center}
+.audit-hero h1{font-size:28px;color:#fff;margin-bottom:10px}
+.audit-hero .domain{font-size:18px;color:#22D3EE;margin-bottom:20px}
+.score-circle{width:150px;height:150px;border-radius:50%;display:inline-flex;flex-direction:column;align-items:center;justify-content:center;margin:20px auto;border:6px solid}
+.score-circle .score-num{font-size:48px;font-weight:800;color:#fff}
+.score-circle .score-label{font-size:12px;color:#94a3b8;text-transform:uppercase}
+.score-excellent{border-color:#22c55e;box-shadow:0 0 30px rgba(34,197,94,0.3)}
+.score-good{border-color:#22D3EE;box-shadow:0 0 30px rgba(34,211,238,0.3)}
+.score-ok{border-color:#f59e0b;box-shadow:0 0 30px rgba(245,158,11,0.3)}
+.score-bad{border-color:#ef4444;box-shadow:0 0 30px rgba(239,68,68,0.3)}
+.maturity{display:inline-block;padding:6px 20px;border-radius:20px;font-weight:700;font-size:14px;margin-top:10px}
+.pillar-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:20px;margin-bottom:30px}
+.pillar-card{background:#0d1f3c;border-radius:12px;padding:20px;border:1px solid #1e3a5f}
+.pillar-card h3{color:#22D3EE;font-size:16px;margin-bottom:10px;display:flex;align-items:center;justify-content:space-between}
+.pillar-score{font-size:24px;font-weight:800}
+.pillar-score.ps-pass{color:#22c55e}.pillar-score.ps-warn{color:#f59e0b}.pillar-score.ps-fail{color:#ef4444}
+.check-item{padding:8px 0;border-bottom:1px solid #1e3a5f1a;display:flex;align-items:flex-start;gap:8px;font-size:13px}
+.check-item:last-child{border:none}
+.check-icon{width:20px;height:20px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:11px}
+.ci-pass{background:#22c55e20;color:#22c55e}.ci-fail{background:#ef444420;color:#ef4444}.ci-warn{background:#f59e0b20;color:#f59e0b}.ci-info{background:#22D3EE20;color:#22D3EE}
+.check-detail{color:#cbd5e1;line-height:1.4}
+.check-factor{color:#e2e8f0;font-weight:600;margin-right:4px}
+.issues-section{margin-bottom:30px}
+.issue-card{background:#0d1f3c;border-radius:10px;padding:16px 20px;margin-bottom:10px;border-left:4px solid}
+.issue-critical{border-color:#ef4444}.issue-warning{border-color:#f59e0b}.issue-pass{border-color:#22c55e}.issue-quick{border-color:#7c3aed}
+.issue-card p{color:#e2e8f0;margin:0;font-size:14px}
+.issue-card .issue-type{font-size:11px;font-weight:700;text-transform:uppercase;margin-bottom:4px}
+.issue-type.t-critical{color:#ef4444}.issue-type.t-warning{color:#f59e0b}.issue-type.t-pass{color:#22c55e}.issue-type.t-quick{color:#7c3aed}
+.score-bar{height:8px;border-radius:4px;background:#1e3a5f;overflow:hidden;margin-top:8px}
+.score-fill{height:100%;border-radius:4px;transition:width 0.8s ease}
+.sf-pass{background:linear-gradient(90deg,#22c55e,#34d399)}.sf-warn{background:linear-gradient(90deg,#f59e0b,#fbbf24)}.sf-fail{background:linear-gradient(90deg,#ef4444,#f87171)}
+.action-bar{display:flex;gap:10px;justify-content:center;margin:20px 0;flex-wrap:wrap}
+.btn-audit{padding:10px 24px;border-radius:8px;font-weight:600;cursor:pointer;font-size:14px;text-decoration:none;border:none}
+.btn-print{background:#7c3aed;color:#fff}.btn-back{background:#1e3a5f;color:#e2e8f0}.btn-new{background:#22D3EE;color:#0A1628}
+@media print{.sidebar,.action-bar,.header-bar{display:none!important}.main{margin:0!important;padding:20px!important}body{background:#fff!important;color:#000!important}.audit-hero{background:#f0f4f8!important}.pillar-card,.issue-card{border:1px solid #ddd!important;background:#fff!important}*{color:#000!important}}
+</style></head><body>
+<aside class="sidebar"><div class="sidebar-brand">AI Growth<span>Labs</span></div>
+<nav><div class="nav-section">Navigation</div>
+<a href="/dashboard">📊 Dashboard</a>
+<a href="/audit" class="active">🔍 SEO Audit</a>
+<a href="/monitor">📡 Monitor</a>
+<a href="/settings">⚙️ Settings</a>
+</nav></aside>
+<main class="main">
+<div class="header-bar"><h1>🔍 DNA-Level SEO Audit Report</h1><span>Comprehensive 12-Pillar Analysis</span>
+<div class="header-actions"><a href="/audit" class="btn btn-secondary">← New Audit</a><a href="/logout" class="btn btn-outline">Logout</a></div></div>
+
+<div class="audit-hero">
+<h1>SEO DNA Audit Report</h1>
+<div class="domain">{{ audit.domain }}</div>
+<div class="score-circle {% if audit.overall_score >= 80 %}score-excellent{% elif audit.overall_score >= 60 %}score-good{% elif audit.overall_score >= 40 %}score-ok{% else %}score-bad{% endif %}">
+<div class="score-num">{{ audit.overall_score }}</div>
+<div class="score-label">Overall Score</div>
+</div>
+<div class="maturity" style="background:{% if audit.overall_score >= 80 %}#22c55e20;color:#22c55e{% elif audit.overall_score >= 60 %}#22D3EE20;color:#22D3EE{% elif audit.overall_score >= 40 %}#f59e0b20;color:#f59e0b{% else %}#ef444420;color:#ef4444{% endif %}">
+{{ audit.maturity_level }}
+</div>
+<p style="color:#94a3b8;margin-top:15px;font-size:13px">Audited: {{ audit.timestamp }} | URL: {{ audit.url }}</p>
+</div>
+
+<div class="action-bar">
+<button class="btn-audit btn-print" onclick="window.print()">🖨️ Print / Save PDF</button>
+<a href="/audit" class="btn-audit btn-new">🔍 Run New Audit</a>
+<a href="/dashboard" class="btn-audit btn-back">📊 Back to Dashboard</a>
+</div>
+
+<!-- Pillar Score Cards -->
+<h2 style="color:#22D3EE;margin:30px 0 15px">📊 12 DNA Pillar Scores</h2>
+<div class="pillar-grid">
+{% for key, pillar in audit.pillars.items() %}
+{% set ps = audit.pillar_scores[key] if audit.pillar_scores else 0 %}
+<div class="pillar-card">
+<h3>{{ pillar.name }}<span class="pillar-score {% if ps >= 70 %}ps-pass{% elif ps >= 40 %}ps-warn{% else %}ps-fail{% endif %}">{{ ps }}%</span></h3>
+<div class="score-bar"><div class="score-fill {% if ps >= 70 %}sf-pass{% elif ps >= 40 %}sf-warn{% else %}sf-fail{% endif %}" style="width:{{ ps }}%"></div></div>
+<div style="margin-top:12px">
+{% for check in pillar.checks %}
+<div class="check-item">
+<div class="check-icon ci-{{ check.status }}">{% if check.status == 'pass' %}✓{% elif check.status == 'fail' %}✗{% elif check.status == 'warn' %}!{% else %}i{% endif %}</div>
+<div><span class="check-factor">{{ check.factor }}:</span> <span class="check-detail">{{ check.detail }}</span></div>
+</div>
+{% endfor %}
+</div>
+</div>
+{% endfor %}
+</div>
+
+<!-- Critical Issues -->
+{% if audit.critical_issues %}
+<h2 style="color:#ef4444;margin:30px 0 15px">🚨 Critical Issues ({{ audit.critical_issues|length }})</h2>
+<div class="issues-section">
+{% for issue in audit.critical_issues %}
+<div class="issue-card issue-critical"><div class="issue-type t-critical">Critical</div><p>{{ issue }}</p></div>
+{% endfor %}
+</div>
+{% endif %}
+
+<!-- Warnings -->
+{% if audit.warnings %}
+<h2 style="color:#f59e0b;margin:30px 0 15px">⚠️ Warnings ({{ audit.warnings|length }})</h2>
+<div class="issues-section">
+{% for warn in audit.warnings %}
+<div class="issue-card issue-warning"><div class="issue-type t-warning">Warning</div><p>{{ warn }}</p></div>
+{% endfor %}
+</div>
+{% endif %}
+
+<!-- Quick Wins -->
+{% if audit.quick_wins %}
+<h2 style="color:#7c3aed;margin:30px 0 15px">🚀 Quick Wins ({{ audit.quick_wins|length }})</h2>
+<div class="issues-section">
+{% for qw in audit.quick_wins %}
+<div class="issue-card issue-quick"><div class="issue-type t-quick">Quick Win</div><p>{{ qw }}</p></div>
+{% endfor %}
+</div>
+{% endif %}
+
+<!-- Passed Checks -->
+{% if audit.passed %}
+<h2 style="color:#22c55e;margin:30px 0 15px">✅ Passed Checks ({{ audit.passed|length }})</h2>
+<div class="issues-section">
+{% for p in audit.passed %}
+<div class="issue-card issue-pass"><div class="issue-type t-pass">Passed</div><p>{{ p }}</p></div>
+{% endfor %}
+</div>
+{% endif %}
+
+<div class="action-bar" style="margin-top:40px">
+<button class="btn-audit btn-print" onclick="window.print()">🖨️ Download PDF Report</button>
+<a href="/audit" class="btn-audit btn-new">🔍 Run Another Audit</a>
+</div>
+
+<div style="text-align:center;padding:30px 0;color:#64748b;font-size:12px">
+<p>Generated by AI Growth Labs — DNA-Level SEO Audit Engine</p>
+<p>This audit analyzes 100+ SEO factors across 12 pillars to provide actionable insights.</p>
+</div>
+</main></body></html>

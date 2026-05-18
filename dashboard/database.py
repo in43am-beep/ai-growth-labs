@@ -123,7 +123,7 @@ def init_db():
         website_url TEXT NOT NULL,
         audit_data TEXT,
         overall_score INTEGER,
-        status TEXT DEFAULT 'pending' CHECK(status IN ('pending','processing','completed','failed')),
+        status TEXT DEFAULT 'pending' CHECK(status IN ('pending','processing','running','completed','failed')),
         report_pdf_path TEXT,
         ai_provider TEXT,
         created_by INTEGER REFERENCES users(id),

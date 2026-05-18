@@ -429,10 +429,8 @@
   <script src="../js/main.js"></script>
   <script src="../js/form-validation.js"></script>
   <script>
-    // Backend API URL — change this to your production domain
-    const API_URL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
-      ? 'http://localhost:8000'
-      : 'https://user:5dfe2494e43dd9ea3b068a0861a8499b@a3fce9995779-tunnel-obhlq5l5.devinapps.com';
+    // Backend API URL — auto-detect from current page location
+    const API_URL = window.location.protocol + '//' + window.location.host;
 
     async function runAudit(e) {
       e.preventDefault();
@@ -491,7 +489,7 @@
           body: JSON.stringify(data)
         });
 
-        if (!resp.ok) throw new Error('Audit failed');
+        if (!resp.ok) { const errData = await resp.json(); throw new Error(errData.detail || 'Audit failed'); }
         const result = await resp.json();
         const audit = result.audit;
         window._lastAuditData = audit;
@@ -503,20 +501,23 @@
 
         // Score circle
         const circle = document.getElementById('score-circle');
-        circle.className = 'score-circle grade-' + audit.grade.toLowerCase();
+        const grade = audit.overall_score >= 85 ? 'a' : (audit.overall_score >= 70 ? 'b' : (audit.overall_score >= 55 ? 'c' : 'd'));
+        circle.className = 'score-circle grade-' + grade;
         document.getElementById('score-number').textContent = audit.overall_score;
-        document.getElementById('score-grade').textContent = 'Grade ' + audit.grade;
+        document.getElementById('score-grade').textContent = audit.maturity_level || ('Grade ' + grade.toUpperCase());
 
         // Title & meta
-        document.getElementById('result-title').textContent = '📊 DNA Audit Results: ' + audit.business_name;
-        document.getElementById('result-meta').textContent = audit.website + ' | ' + audit.audit_date;
+        document.getElementById('result-title').textContent = '📊 DNA Audit Results: ' + (audit.domain || data.business_name);
+        document.getElementById('result-meta').textContent = (audit.url || data.website) + ' | ' + (audit.timestamp || new Date().toLocaleDateString());
 
         // DNA Pillar Grid
         const pillarGrid = document.getElementById('dna-pillar-grid');
         pillarGrid.innerHTML = '';
-        DNA_PILLARS.forEach(function(pillar, idx) {
-          const sectionData = audit.sections && audit.sections[idx];
-          const score = sectionData ? sectionData.score : Math.floor(Math.random() * 40 + 50);
+        const pillarScores = audit.pillar_scores || {};
+        const pillarDetails = audit.pillars || {};
+        DNA_PILLARS.forEach(function(pillar) {
+          const score = pillarScores[pillar.key] || 0;
+          const pData = pillarDetails[pillar.key];
           const scoreClass = score >= 75 ? 'score-good' : (score >= 55 ? 'score-warn' : 'score-bad');
           const barColor = score >= 75 ? '#4CAF50' : (score >= 55 ? '#FF9800' : '#F44336');
           let html = '<div class="dna-pillar-card">';
@@ -526,46 +527,51 @@
           html += '<span class="pillar-score ' + scoreClass + '">' + score + '/100</span>';
           html += '</div>';
           html += '<div class="pillar-bar"><div class="pillar-bar-fill" style="width:' + score + '%;background:' + barColor + ';"></div></div>';
-          if (sectionData && sectionData.findings) {
-            html += '<div class="pillar-details">' + sectionData.findings.slice(0,2).join(' • ') + '</div>';
+          if (pData && pData.checks) {
+            const topChecks = pData.checks.filter(c => c.status !== 'pass').slice(0,2);
+            if (topChecks.length) {
+              html += '<div class="pillar-details">' + topChecks.map(c => c.factor + ': ' + c.detail).join(' • ') + '</div>';
+            }
           }
           html += '</div>';
           pillarGrid.innerHTML += html;
         });
 
-        // Detailed Sections
+        // Detailed Sections from pillar checks
         const container = document.getElementById('sections-container');
         container.innerHTML = '';
-        audit.sections.forEach(function(section) {
-          const scoreClass = section.score >= 75 ? 'score-good' : (section.score >= 55 ? 'score-warn' : 'score-bad');
+        DNA_PILLARS.forEach(function(pillar) {
+          const pData = pillarDetails[pillar.key];
+          if (!pData) return;
+          const score = pillarScores[pillar.key] || 0;
+          const scoreClass = score >= 75 ? 'score-good' : (score >= 55 ? 'score-warn' : 'score-bad');
           let html = '<div class="audit-section">';
           html += '<div class="audit-section-header">';
-          html += '<span class="audit-section-icon">' + section.icon + '</span>';
-          html += '<span class="audit-section-title">' + section.name + '</span>';
-          html += '<span class="audit-section-score ' + scoreClass + '">' + section.score + '/100</span>';
+          html += '<span class="audit-section-icon">' + pillar.icon + '</span>';
+          html += '<span class="audit-section-title">' + pData.name + '</span>';
+          html += '<span class="audit-section-score ' + scoreClass + '">' + score + '/100</span>';
           html += '</div>';
-          
           html += '<ul class="findings-list">';
-          section.findings.forEach(function(f) { html += '<li>' + f + '</li>'; });
-          html += '</ul>';
-
-          html += '<div class="recs-title">Recommendations:</div>';
-          html += '<ul class="recs-list">';
-          section.recommendations.forEach(function(r) { html += '<li>' + r + '</li>'; });
+          (pData.checks || []).forEach(function(ch) {
+            const icon = ch.status === 'pass' ? '✓' : ch.status === 'fail' ? '✗' : '!';
+            const color = ch.status === 'pass' ? '#4CAF50' : ch.status === 'fail' ? '#F44336' : '#FF9800';
+            html += '<li><span style="color:' + color + ';font-weight:700;margin-right:8px">' + icon + '</span><b>' + ch.factor + ':</b> ' + ch.detail + '</li>';
+          });
           html += '</ul>';
           html += '</div>';
           container.innerHTML += html;
         });
 
-        // Priorities
+        // Priorities from quick_wins and critical_issues
         const priList = document.getElementById('priorities-list');
         priList.innerHTML = '';
-        audit.top_3_priorities.forEach(function(p) {
+        const priorities = (audit.critical_issues || []).concat(audit.quick_wins || []).slice(0, 5);
+        priorities.forEach(function(p) {
           priList.innerHTML += '<div class="priority-item">' + p + '</div>';
         });
 
-        // Demo note
-        document.getElementById('demo-note').textContent = audit.note;
+        // Mode note
+        document.getElementById('demo-note').textContent = result.mode === 'live' ? 'Real-time audit — your website was actually crawled and analyzed across 100+ factors.' : '';
 
         // Scroll to results
         results.scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -586,34 +592,39 @@
     // PDF Download
     function downloadPDF() {
       const audit = window._lastAuditData;
+      const form = window._lastFormData || {};
       if (!audit) { alert('No audit data available.'); return; }
       let text = 'AI GROWTH LABS - DNA-LEVEL SEO AUDIT REPORT\n';
       text += '='.repeat(50) + '\n\n';
-      text += 'Business: ' + audit.business_name + '\n';
-      text += 'Website: ' + audit.website + '\n';
-      text += 'Date: ' + audit.audit_date + '\n';
-      text += 'Overall Score: ' + audit.overall_score + '/100 (Grade ' + audit.grade + ')\n\n';
+      text += 'Business: ' + (form.business_name || audit.domain) + '\n';
+      text += 'Website: ' + (audit.url || form.website) + '\n';
+      text += 'Date: ' + (audit.timestamp || new Date().toLocaleDateString()) + '\n';
+      text += 'Overall Score: ' + audit.overall_score + '/100 (' + (audit.maturity_level || '') + ')\n\n';
       text += '12 DNA PILLAR SCORES\n' + '-'.repeat(30) + '\n';
-      const pillars = ['Technical SEO','On-Page','Content','Entity SEO','Linking','Schema','Media','Social','Security','Mobile','Indexability','Performance'];
-      audit.sections.forEach(function(s, i) {
-        text += (pillars[i] || s.name) + ': ' + s.score + '/100\n';
-      });
+      const pillarNames = {technical:'Technical SEO',onpage:'On-Page',content:'Content',entity:'Entity SEO',linking:'Linking',schema:'Schema',media:'Media',social:'Social',security:'Security',mobile:'Mobile',indexability:'Indexability',performance:'Performance'};
+      const ps = audit.pillar_scores || {};
+      Object.keys(pillarNames).forEach(function(k) { text += pillarNames[k] + ': ' + (ps[k]||0) + '/100\n'; });
       text += '\nDETAILED FINDINGS\n' + '-'.repeat(30) + '\n';
-      audit.sections.forEach(function(s) {
-        text += '\n' + s.name + ' (' + s.score + '/100)\n';
-        s.findings.forEach(function(f) { text += '  • ' + f + '\n'; });
-        text += '  Recommendations:\n';
-        s.recommendations.forEach(function(r) { text += '  → ' + r + '\n'; });
+      const pillars = audit.pillars || {};
+      Object.keys(pillars).forEach(function(k) {
+        const p = pillars[k];
+        text += '\n' + p.name + ' (' + (ps[k]||0) + '/100)\n';
+        (p.checks || []).forEach(function(ch) { text += '  ' + (ch.status==='pass'?'✓':ch.status==='fail'?'✗':'!') + ' ' + ch.factor + ': ' + ch.detail + '\n'; });
       });
-      text += '\nTOP 3 PRIORITIES\n' + '-'.repeat(30) + '\n';
-      audit.top_3_priorities.forEach(function(p, i) { text += (i+1) + '. ' + p + '\n'; });
+      if (audit.critical_issues && audit.critical_issues.length) {
+        text += '\nCRITICAL ISSUES\n' + '-'.repeat(30) + '\n';
+        audit.critical_issues.forEach(function(p, i) { text += (i+1) + '. ' + p + '\n'; });
+      }
+      if (audit.quick_wins && audit.quick_wins.length) {
+        text += '\nQUICK WINS\n' + '-'.repeat(30) + '\n';
+        audit.quick_wins.forEach(function(p, i) { text += (i+1) + '. ' + p + '\n'; });
+      }
       text += '\n\nGenerated by AI Growth Labs | aigrowthabs.com\n';
-      
       const blob = new Blob([text], { type: 'text/plain' });
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = 'SEO-DNA-Audit-' + audit.business_name.replace(/\s+/g, '-') + '.txt';
+      a.download = 'SEO-DNA-Audit-' + (audit.domain || 'report').replace(/\s+/g, '-') + '.txt';
       a.click();
       URL.revokeObjectURL(url);
     }
@@ -621,17 +632,18 @@
     // Email Report
     function emailReport() {
       const audit = window._lastAuditData;
+      const form = window._lastFormData || {};
       if (!audit) { alert('No audit data available.'); return; }
       const email = prompt('Enter the email address to send the report to:');
       if (!email) return;
-      const subject = encodeURIComponent('SEO DNA Audit Report - ' + audit.business_name);
-      let body = 'SEO DNA Audit Report for ' + audit.business_name + '\n\n';
-      body += 'Website: ' + audit.website + '\n';
-      body += 'Overall Score: ' + audit.overall_score + '/100 (Grade ' + audit.grade + ')\n\n';
+      const subject = encodeURIComponent('SEO DNA Audit Report - ' + (form.business_name || audit.domain));
+      let body = 'SEO DNA Audit Report for ' + (form.business_name || audit.domain) + '\n\n';
+      body += 'Website: ' + (audit.url || form.website) + '\n';
+      body += 'Overall Score: ' + audit.overall_score + '/100 (' + (audit.maturity_level || '') + ')\n\n';
       body += 'DNA Pillar Scores:\n';
-      audit.sections.forEach(function(s) { body += '• ' + s.name + ': ' + s.score + '/100\n'; });
-      body += '\nTop 3 Priorities:\n';
-      audit.top_3_priorities.forEach(function(p, i) { body += (i+1) + '. ' + p + '\n'; });
+      const ps = audit.pillar_scores || {};
+      const names = {technical:'Technical SEO',onpage:'On-Page',content:'Content',entity:'Entity SEO',linking:'Linking',schema:'Schema',media:'Media',social:'Social',security:'Security',mobile:'Mobile',indexability:'Indexability',performance:'Performance'};
+      Object.keys(names).forEach(function(k) { body += '  ' + names[k] + ': ' + (ps[k]||0) + '/100\n'; });
       body += '\n\nFull report at: aigrowthabs.com/pages/free-audit.html';
       window.location.href = 'mailto:' + email + '?subject=' + subject + '&body=' + encodeURIComponent(body);
     }

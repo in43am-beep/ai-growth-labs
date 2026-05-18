@@ -20,6 +20,7 @@ from jose import jwt
 from passlib.hash import bcrypt
 
 from database import get_db, init_db
+from seo_audit import run_audit
 
 app = FastAPI(title="AI Growth Labs OS", docs_url=None, redoc_url=None)
 
@@ -95,6 +96,21 @@ def require_role(request: Request, roles: list):
     if user["role"] not in roles:
         raise HTTPException(status_code=403, detail="Access denied")
     return user
+
+# ===== PUBLIC FREE AUDIT PAGE (No Login) =====
+@app.get("/free-audit", response_class=HTMLResponse)
+async def free_audit_page(request: Request):
+    return templates.TemplateResponse("free_audit.html", {"request": request})
+
+@app.get("/audit-results/{audit_id}", response_class=HTMLResponse)
+async def audit_results_page(audit_id: int, request: Request):
+    db = get_db()
+    audit = db.execute("SELECT * FROM seo_audits WHERE id=?", (audit_id,)).fetchone()
+    db.close()
+    if not audit:
+        raise HTTPException(status_code=404, detail="Audit not found")
+    audit_data = json.loads(audit["audit_data"]) if audit["audit_data"] else {}
+    return templates.TemplateResponse("audit_results.html", {"request": request, "audit": audit_data, "audit_record": dict(audit)})
 
 # ===== LOGIN =====
 @app.get("/login", response_class=HTMLResponse)
@@ -632,6 +648,39 @@ async def create_social_post(request: Request):
     db.commit()
     db.close()
     return {"message": "Post created"}
+
+@app.post("/api/audit/run")
+async def run_live_audit(request: Request):
+    """Dashboard SEO audit — REAL website crawl, login required."""
+    user = require_auth(request)
+    data = await request.json()
+    website_url = data.get("website_url", "").strip()
+    if not website_url:
+        return JSONResponse({"error": "Website URL is required"}, status_code=400)
+    if not website_url.startswith("http"):
+        website_url = "https://" + website_url
+    db = get_db()
+    c = db.cursor()
+    c.execute("""INSERT INTO seo_audits (client_id, website_url, status, ai_provider, created_by)
+                 VALUES (?,?,?,?,?)""",
+              (data.get("client_id"), website_url, "running", "engine", user["id"]))
+    audit_id = c.lastrowid
+    db.commit()
+    try:
+        audit_result = run_audit(website_url)
+        overall_score = audit_result.get("overall_score", 0)
+        report_json = json.dumps(audit_result)
+        db.execute("""UPDATE seo_audits SET status='completed', overall_score=?, audit_data=?,
+                      completed_at=datetime('now') WHERE id=?""",
+                   (overall_score, report_json, audit_id))
+        db.commit()
+    except Exception as e:
+        db.execute("UPDATE seo_audits SET status='failed' WHERE id=?", (audit_id,))
+        db.commit()
+        db.close()
+        return JSONResponse({"error": str(e)}, status_code=500)
+    db.close()
+    return {"audit_id": audit_id, "overall_score": overall_score, "message": "Audit completed"}
 
 @app.post("/api/audit")
 async def create_audit(request: Request):
@@ -2559,7 +2608,7 @@ async def integration_status(request: Request):
 
 @app.post("/api/public/free-audit")
 async def public_free_audit(request: Request):
-    """Public endpoint for free audit form — no login needed. Returns instant demo audit."""
+    """Public endpoint for free audit — REAL website crawl, no login needed."""
     data = await request.json()
     website = data.get("website", "").strip()
     business_name = data.get("business_name", "Your Business").strip()
@@ -2568,191 +2617,57 @@ async def public_free_audit(request: Request):
     phone = data.get("phone", "").strip()
     industry = data.get("industry", "general").strip()
     city = data.get("city", "").strip()
-    
-    if not business_name:
-        raise HTTPException(status_code=400, detail="Business name is required")
-    
-    # Use website URL in the audit or default
-    site_url = website if website else f"https://{business_name.lower().replace(' ','-')}.com"
-    
-    # Check if we have a real AI API key
-    db = get_db()
-    api = db.execute("SELECT * FROM api_settings WHERE provider IN ('claude','chatgpt','gemini') AND is_active=1 AND api_key IS NOT NULL LIMIT 1").fetchone()
-    
-    if api and api["api_key"]:
-        provider = api["provider"]
-        # PRODUCTION: Real AI audit call would go here
-        # For now, use enhanced demo response
-    else:
-        provider = "demo"
-    
-    # Generate comprehensive audit result customized to the submitted website
-    import random
-    speed_score = random.randint(55, 92)
-    mobile_score = random.randint(60, 95)
-    seo_score = random.randint(50, 88)
-    security_score = random.randint(65, 100)
-    content_score = random.randint(55, 90)
-    overall = int((speed_score + mobile_score + seo_score + security_score + content_score) / 5)
-    
-    audit_result = {
-        "business_name": business_name,
-        "website": site_url,
-        "industry": industry,
-        "audit_date": datetime.now().strftime("%B %d, %Y"),
-        "overall_score": overall,
-        "grade": "A" if overall >= 85 else ("B" if overall >= 70 else ("C" if overall >= 55 else "D")),
-        "sections": [
-            {
-                "name": "Site Speed & Performance",
-                "score": speed_score,
-                "icon": "⚡",
-                "status": "good" if speed_score >= 75 else "needs_work",
-                "findings": [
-                    f"Page load time: {round(random.uniform(1.5, 4.2), 1)}s (target: under 3s)",
-                    f"First Contentful Paint: {round(random.uniform(0.8, 2.5), 1)}s",
-                    f"Largest Contentful Paint: {round(random.uniform(1.5, 4.0), 1)}s",
-                    f"Total page size: {round(random.uniform(1.2, 5.8), 1)}MB",
-                    f"Number of requests: {random.randint(25, 85)}"
-                ],
-                "recommendations": [
-                    "Compress images to WebP format (can save 40-60% file size)",
-                    "Enable browser caching for static assets",
-                    "Minify CSS and JavaScript files",
-                    "Consider using a CDN for faster content delivery",
-                    "Defer loading of non-critical JavaScript"
-                ]
-            },
-            {
-                "name": "Mobile Usability",
-                "score": mobile_score,
-                "icon": "📱",
-                "status": "good" if mobile_score >= 75 else "needs_work",
-                "findings": [
-                    f"Mobile-friendly: {'Yes' if mobile_score >= 70 else 'Needs improvement'}",
-                    f"Viewport configured: {'Yes' if mobile_score >= 60 else 'Missing'}",
-                    f"Text readability: {'Good' if mobile_score >= 75 else 'Too small on mobile'}",
-                    f"Touch targets: {'Properly sized' if mobile_score >= 80 else 'Some buttons too small'}",
-                    f"Content width: {'Fits screen' if mobile_score >= 70 else 'Horizontal scrolling detected'}"
-                ],
-                "recommendations": [
-                    "Ensure all buttons are at least 44x44px for easy tapping",
-                    "Use responsive images with srcset for different screen sizes",
-                    "Test on multiple devices (iPhone, Android, iPad)",
-                    "Ensure font size is at least 16px on mobile",
-                    "Remove horizontal scrolling on small screens"
-                ]
-            },
-            {
-                "name": "SEO Analysis",
-                "score": seo_score,
-                "icon": "🔍",
-                "status": "good" if seo_score >= 75 else "needs_work",
-                "findings": [
-                    f"Title tag: {'Present' if seo_score >= 50 else 'Missing'} ({random.randint(30, 70)} characters)",
-                    f"Meta description: {'Present' if seo_score >= 55 else 'Missing'} ({random.randint(100, 160)} characters)",
-                    f"H1 tags: {random.randint(1, 3)} found",
-                    f"Internal links: {random.randint(5, 45)} found",
-                    f"Images without alt text: {random.randint(0, 12)} found",
-                    f"Schema markup: {'Detected' if seo_score >= 70 else 'Not found'}",
-                    f"Sitemap: {'Found' if seo_score >= 65 else 'Not found'}",
-                    f"Robots.txt: {'Found' if seo_score >= 60 else 'Not found'}"
-                ],
-                "recommendations": [
-                    f"Optimize title tag to include '{business_name}' + primary keyword",
-                    "Add meta descriptions to all pages (150-160 characters)",
-                    "Add alt text to all images for accessibility and SEO",
-                    "Implement LocalBusiness schema markup for local SEO",
-                    "Create and submit an XML sitemap to Google Search Console",
-                    "Add internal links between related service pages",
-                    f"Target local keywords: '{industry} services in {city}'" if city else "Target location-specific keywords"
-                ]
-            },
-            {
-                "name": "Security & Technical",
-                "score": security_score,
-                "icon": "🔒",
-                "status": "good" if security_score >= 75 else "needs_work",
-                "findings": [
-                    f"HTTPS: {'Active' if security_score >= 70 else 'Not configured'}",
-                    f"SSL Certificate: {'Valid' if security_score >= 70 else 'Missing or expired'}",
-                    f"Mixed content: {'None detected' if security_score >= 80 else 'HTTP resources found on HTTPS page'}",
-                    f"Security headers: {random.randint(2, 6)}/6 present",
-                    f"HSTS: {'Enabled' if security_score >= 85 else 'Not enabled'}"
-                ],
-                "recommendations": [
-                    "Ensure all pages use HTTPS (redirect HTTP to HTTPS)",
-                    "Add security headers: X-Content-Type-Options, X-Frame-Options",
-                    "Enable HSTS (HTTP Strict Transport Security)",
-                    "Fix any mixed content warnings",
-                    "Keep SSL certificate auto-renewed"
-                ]
-            },
-            {
-                "name": "Content Quality",
-                "score": content_score,
-                "icon": "📝",
-                "status": "good" if content_score >= 75 else "needs_work",
-                "findings": [
-                    f"Estimated word count (homepage): {random.randint(200, 1200)} words",
-                    f"Unique pages detected: {random.randint(5, 25)}",
-                    f"Blog/News section: {'Found' if content_score >= 70 else 'Not found'}",
-                    f"Call-to-action elements: {random.randint(1, 5)} found",
-                    f"Contact information visible: {'Yes' if content_score >= 60 else 'Hard to find'}"
-                ],
-                "recommendations": [
-                    "Aim for 800+ words on key service pages",
-                    "Start a blog with regular industry content (2-4 posts/month)",
-                    f"Create dedicated service pages for each {industry} offering",
-                    "Add customer testimonials and case studies",
-                    "Include clear calls-to-action on every page",
-                    "Add an FAQ section with common customer questions"
-                ]
-            },
-            {
-                "name": "Local SEO",
-                "score": random.randint(40, 85),
-                "icon": "📍",
-                "status": "needs_work",
-                "findings": [
-                    f"Google Business Profile: {'Likely claimed' if random.random() > 0.4 else 'Not verified or not found'}",
-                    f"NAP consistency: {'Needs review' if random.random() > 0.3 else 'Consistent across directories'}",
-                    f"Local citations: Estimated {random.randint(5, 40)} directory listings",
-                    f"Review count: Check Google for current reviews",
-                    f"Local keywords: {'Some detected' if random.random() > 0.5 else 'Not optimized for local search'}"
-                ],
-                "recommendations": [
-                    "Claim and fully optimize your Google Business Profile",
-                    "Ensure NAP (Name, Address, Phone) is identical everywhere",
-                    f"Get listed on top directories: Yelp, Yellow Pages, {industry}-specific directories",
-                    "Actively ask happy customers for Google reviews",
-                    f"Add location pages if serving multiple areas near {city}" if city else "Add location-specific landing pages",
-                    "Post weekly updates on Google Business Profile"
-                ]
-            }
-        ],
-        "top_3_priorities": [
-            f"1. {'Set up Google Business Profile' if seo_score < 70 else 'Optimize existing GBP listing'} — This alone can 3x your local visibility",
-            f"2. {'Improve site speed (currently {0}s load time)'.format(round(random.uniform(2.5, 4.0), 1)) if speed_score < 75 else 'Add schema markup for rich search results'}",
-            f"3. {'Start creating content targeting local keywords' if content_score < 70 else 'Build local citations and get more reviews'}"
-        ],
-        "mode": "demo" if provider == "demo" else "live",
-        "provider": provider,
-        "note": "This is an AI-powered preliminary audit. For a comprehensive deep-dive analysis with actionable implementation plan, contact our team." if provider != "demo" else "Demo audit — connect a real AI API key (Claude/ChatGPT/Gemini) in dashboard Settings for deeper, AI-powered analysis."
-    }
-    
+
+    if not website:
+        raise HTTPException(status_code=400, detail="Website URL is required")
+
+    site_url = website if website.startswith("http") else "https://" + website
+
+    # Run REAL audit engine
+    try:
+        real_audit = run_audit(site_url)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Could not crawl website: {str(e)}")
+
     # Save as lead in database
+    db = get_db()
     try:
         db.execute("""INSERT OR IGNORE INTO sales_leads (business_name, contact_name, email, phone, industry, city, website, source, status, notes)
                       VALUES (?,?,?,?,?,?,?,?,?,?)""",
                    (business_name, contact_name, email, phone, industry, city, site_url, "free_audit", "new",
-                    json.dumps({"audit_score": overall, "audit_date": datetime.now().isoformat()})))
+                    json.dumps({"audit_score": real_audit.get("overall_score", 0), "audit_date": datetime.now().isoformat()})))
+        db.execute("""INSERT INTO seo_audits (website_url, status, ai_provider, overall_score, audit_data, completed_at)
+                      VALUES (?,?,?,?,?,datetime('now'))""",
+                   (site_url, "completed", "engine", real_audit.get("overall_score", 0),
+                    json.dumps(real_audit)))
         db.commit()
     except:
         pass
     db.close()
-    
-    return {"message": "Audit completed", "audit": audit_result}
+
+    # Build response with package suggestions
+    score = real_audit.get("overall_score", 0)
+    if score < 40:
+        suggested_package = {"name": "Growth Elite", "price": "$6,997/mo", "reason": "Your site needs comprehensive DNA-level optimization across all 12 pillars"}
+    elif score < 65:
+        suggested_package = {"name": "Growth Pro", "price": "$2,997/mo", "reason": "Your site has good foundation but needs advanced optimization to compete"}
+    else:
+        suggested_package = {"name": "Growth Starter", "price": "$997/mo", "reason": "Your site is well-optimized — targeted improvements will push you to #1"}
+
+    return {
+        "message": "Real audit completed",
+        "audit": real_audit,
+        "suggested_package": suggested_package,
+        "services_needed": [
+            {"service": "Local SEO", "link": "/pages/local-seo.html"} if real_audit.get("pillar_scores", {}).get("social", 100) < 80 else None,
+            {"service": "GBP Optimization", "link": "/pages/gbp-optimization.html"} if real_audit.get("pillar_scores", {}).get("entity", 100) < 70 else None,
+            {"service": "AI SEO", "link": "/pages/ai-seo.html"} if real_audit.get("pillar_scores", {}).get("content", 100) < 80 else None,
+            {"service": "Content Creation", "link": "/pages/content-creation.html"} if real_audit.get("pillar_scores", {}).get("content", 100) < 60 else None,
+            {"service": "Reputation Management", "link": "/pages/reputation-management.html"},
+        ],
+        "cta": "Book a FREE strategy call to discuss your custom SEO roadmap",
+        "mode": "live"
+    }
 
 
 if __name__ == "__main__":
