@@ -108,11 +108,10 @@
 <div id="admin-contracts"><p style="color:#64748B">Loading...</p></div></div>
 
 <div class="card" id="audit-section"><h3>🔍 Run SEO DNA Audit</h3>
-<p>Paste a client's website URL and select an AI provider to run a complete DNA-level audit.</p>
-<div class="form-row"><input type="url" id="auditUrl" placeholder="https://clientwebsite.com" class="form-input">
-<select id="auditProvider" class="form-select"><option value="claude">Claude Sonnet</option><option value="chatgpt">ChatGPT 4.5</option><option value="gemini">Google Gemini</option></select>
+<p>Paste a client's website URL to run a complete DNA-level audit (100+ factors, 12 pillars).</p>
+<div class="form-row"><input type="url" id="auditUrl" placeholder="https://clientwebsite.com" class="form-input" required>
 <button class="btn btn-primary" onclick="runAudit()">Run Audit →</button></div>
-<p class="text-muted">Note: AI API key must be configured in <a href="/settings">Settings</a> for audits to process.</p></div>
+<p class="text-muted">Built-in crawler — no API key needed. Results in 10-15 seconds.</p></div>
 
 <!-- Add Client Modal -->
 <div class="modal-overlay" id="addClientModal"><div class="modal"><div class="modal-header"><h3>Add New Client</h3><button onclick="closeModal('addClientModal')" class="modal-close">×</button></div>
@@ -164,8 +163,7 @@ function addWorker(){api('/api/users',{username:document.getElementById('nw_user
     role:document.getElementById('nw_role').value,rank:document.getElementById('nw_rank').value,
     salary:parseFloat(document.getElementById('nw_salary').value)||0}).then(()=>location.reload())}
 
-function runAudit(){api('/api/audit',{website_url:document.getElementById('auditUrl').value,ai_provider:document.getElementById('auditProvider').value})
-    .then(r=>{alert(r.message||r.error);location.reload()})}
+function runAudit(){var url=document.getElementById('auditUrl').value.trim();if(!url){alert('Please enter a website URL first.');return;}var btn=document.querySelector('#audit-section .btn-primary');btn.disabled=true;btn.textContent='Analyzing...';api('/api/audit',{website_url:url}).then(r=>{btn.disabled=false;btn.textContent='Run Audit →';alert(r.message||r.error);location.reload()}).catch(e=>{btn.disabled=false;btn.textContent='Run Audit →';alert('Error: '+e)})}
 
 function generateReport(clientId){api('/api/reports/generate',{client_id:clientId,report_type:'monthly'})
     .then(r=>{if(r.id){window.open('/api/reports/'+r.id+'/download','_blank')}else{alert(r.error||'Error')}})}

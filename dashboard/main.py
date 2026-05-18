@@ -686,14 +686,32 @@ async def run_live_audit(request: Request):
 async def create_audit(request: Request):
     user = require_auth(request)
     data = await request.json()
+    website_url = data.get("website_url", "").strip()
+    if not website_url:
+        return JSONResponse({"error": "Please enter a website URL first"}, status_code=400)
+    if not website_url.startswith("http"):
+        website_url = "https://" + website_url
     db = get_db()
     c = db.cursor()
     c.execute("""INSERT INTO seo_audits (client_id, website_url, status, ai_provider, created_by) VALUES (?,?,?,?,?)""",
-              (data.get("client_id"), data["website_url"], "pending", data.get("ai_provider", "claude"), user["id"]))
+              (data.get("client_id"), website_url, "running", data.get("ai_provider", "engine"), user["id"]))
     audit_id = c.lastrowid
     db.commit()
+    try:
+        audit_result = run_audit(website_url)
+        overall_score = audit_result.get("overall_score", 0)
+        report_json = json.dumps(audit_result)
+        db.execute("""UPDATE seo_audits SET status='completed', overall_score=?, audit_data=?,
+                      completed_at=datetime('now') WHERE id=?""",
+                   (overall_score, report_json, audit_id))
+        db.commit()
+    except Exception as e:
+        db.execute("UPDATE seo_audits SET status='failed' WHERE id=?", (audit_id,))
+        db.commit()
+        db.close()
+        return JSONResponse({"error": str(e)}, status_code=500)
     db.close()
-    return {"id": audit_id, "message": "Audit created — processing will begin when AI API key is configured"}
+    return {"id": audit_id, "overall_score": overall_score, "message": f"Audit completed — Score: {overall_score}/100"}
 
 @app.post("/api/notifications/{notif_id}/read")
 async def mark_notification_read(notif_id: int, request: Request):
