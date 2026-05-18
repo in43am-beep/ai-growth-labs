@@ -4,7 +4,7 @@
 > every database table described, and every API endpoint listed. If someone (or an AI agent) needs to understand
 > or continue work on this project, this file alone is enough to get started.
 >
-> **Last Updated:** May 2026 | **Total Files:** 135+ | **Total Lines of Code:** ~33,000+
+> **Last Updated:** May 2026 | **Total Files:** 188+ HTML | **Total Lines of Code:** ~40,000+
 
 ---
 
@@ -41,10 +41,17 @@
 ### Key URLs:
 | Resource | URL |
 |---|---|
-| Live Frontend | https://ai-growth-labs-part2-final-rdmstqlw.devinapps.com |
-| GitHub Repo | https://github.com/mariadomiguz-a11y/ai-growth-labs-final-3-update |
-| Branch | `devin/1778433837-ai-seo-agency-website` |
-| Git Remote | `neworigin` (use this for pushing, NOT `origin`) |
+| GitHub Repo | https://github.com/in43am-beep/ai-growth-labs |
+| Branch | `main` |
+| Free Audit | `/free-audit` (real 100+ factor crawler) |
+| Dashboard | `/login` (admin/admin123) |
+
+### REAL SEO Audit Engine (seo_audit.py)
+The audit engine crawls any website and analyzes 100+ ranking factors across 12 DNA pillars:
+- Technical SEO, On-Page SEO, Content Quality, Entity SEO, Internal Linking, Structured Data
+- Images & Media, Social Media Presence, Security Headers, Mobile & UX, Indexability, Performance
+- Returns: overall_score, pillar_scores, detailed checks per pillar, quick_wins, critical_issues
+- No external API needed — built-in Python crawler using httpx + html parsing
 
 ---
 
