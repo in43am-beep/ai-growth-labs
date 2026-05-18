@@ -1,0 +1,3 @@
+User-agent: *
+Allow: /
+Sitemap: https://aigrowthabs.com/sitemap.xml
