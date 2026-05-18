@@ -395,9 +395,13 @@ def _get_admin_data(db):
     total_tasks = db.execute("SELECT COUNT(*) FROM tasks").fetchone()[0]
     completed_tasks = db.execute("SELECT COUNT(*) FROM tasks WHERE status='completed'").fetchone()[0]
     
+    recent_audits = [dict(r) for r in db.execute(
+        "SELECT a.*, c.business_name FROM seo_audits a LEFT JOIN clients c ON a.client_id=c.id WHERE a.status='completed' ORDER BY a.completed_at DESC LIMIT 10").fetchall()]
+    
     return {
         "clients": clients, "projects": projects, "workers": workers, "tasks": tasks, "payments": payments,
         "suggestions": suggestions, "chat_requests": chat_requests, "unread_chats": unread_chats,
+        "recent_audits": recent_audits,
         "stats": {
             "total_revenue": total_revenue, "pending_revenue": pending_revenue,
             "active_clients": active_clients, "active_projects": active_projects,
@@ -525,6 +529,54 @@ async def create_client(request: Request):
     db.commit()
     db.close()
     return {"id": client_id, "message": "Client created"}
+
+@app.put("/api/clients/{client_id}")
+async def update_client(client_id: int, request: Request):
+    user = require_role(request, ["super_admin", "sales"])
+    data = await request.json()
+    db = get_db()
+    db.execute("""UPDATE clients SET business_name=?, contact_name=?, email=?, phone=?, website=?,
+                  industry=?, location=?, status=?, package=?, monthly_payment=? WHERE id=?""",
+               (data.get("business_name"), data.get("contact_name"), data.get("email"), data.get("phone"),
+                data.get("website"), data.get("industry"), data.get("location"), data.get("status"),
+                data.get("package"), data.get("monthly_payment", 0), client_id))
+    db.commit()
+    db.close()
+    return {"message": "Client updated successfully"}
+
+@app.delete("/api/clients/{client_id}")
+async def delete_client(client_id: int, request: Request):
+    user = require_role(request, ["super_admin"])
+    db = get_db()
+    db.execute("DELETE FROM clients WHERE id=?", (client_id,))
+    db.commit()
+    db.close()
+    return {"message": "Client deleted successfully"}
+
+@app.put("/api/users/{user_id}")
+async def update_user(user_id: int, request: Request):
+    user = require_role(request, ["super_admin"])
+    data = await request.json()
+    db = get_db()
+    db.execute("""UPDATE users SET full_name=?, email=?, role=?, rank=?, salary=? WHERE id=?""",
+               (data.get("full_name"), data.get("email"), data.get("role"), data.get("rank"),
+                data.get("salary", 0), user_id))
+    db.commit()
+    db.close()
+    return {"message": "Worker updated successfully"}
+
+@app.delete("/api/users/{user_id}")
+async def delete_user(user_id: int, request: Request):
+    user = require_role(request, ["super_admin"])
+    db = get_db()
+    target = db.execute("SELECT role FROM users WHERE id=?", (user_id,)).fetchone()
+    if target and target["role"] == "super_admin":
+        db.close()
+        return JSONResponse({"error": "Cannot delete super admin"}, status_code=400)
+    db.execute("DELETE FROM users WHERE id=?", (user_id,))
+    db.commit()
+    db.close()
+    return {"message": "Worker removed successfully"}
 
 def _auto_generate_package_tasks(db, client_id, package):
     """Auto-generate tasks from package template when client is created"""

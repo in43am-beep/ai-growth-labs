@@ -19,6 +19,11 @@
 <a href="/activity">📜Activity Log</a>
 <a href="/performance">📊Performance</a>
 <a href="/settings">⚙️API Settings</a>
+<div class="nav-section" style="margin-top:16px">Audit Reports</div>
+{% for a in recent_audits %}<a href="/audit/{{ a.id }}/results" style="font-size:12px">🔍 {{ a.business_name or a.website_url[:20] }} — {{ a.overall_score or '?' }}/100</a>
+{% endfor %}
+<div class="nav-section" style="margin-top:16px">Links</div>
+<a href="/free-audit" target="_blank">🌐 Free Audit Page</a>
 </nav>
 <div class="sidebar-user"><div class="user-avatar">{{ user.full_name[:2]|upper }}</div>
 <div><strong>{{ user.full_name }}</strong><small>{{ user.role }}</small></div></div></aside>
@@ -62,20 +67,24 @@
 {% endfor %}</tbody></table></div>
 
 <div class="card" id="clients-section"><h3>👥 All Clients</h3>
-<table><thead><tr><th>Business</th><th>Contact</th><th>Industry</th><th>Location</th><th>Package</th><th>Payment</th><th>Status</th><th>Details</th></tr></thead><tbody>
+<table><thead><tr><th>Business</th><th>Contact</th><th>Industry</th><th>Location</th><th>Package</th><th>Payment</th><th>Status</th><th>Actions</th></tr></thead><tbody>
 {% for c in clients %}
 <tr><td><strong>{{ c.business_name }}</strong><br><small>{{ c.website }}</small></td><td>{{ c.contact_name }}<br><small>{{ c.email }}</small></td>
 <td>{{ c.industry }}</td><td>{{ c.location }}</td><td>{{ c.package or '-' }}</td>
 <td>{% if c.monthly_payment %}${{ "{:,.0f}".format(c.monthly_payment) }}/mo{% else %}-{% endif %}</td>
 <td><span class="badge badge-{{ c.status }}">{{ c.status }}</span></td>
-<td><a href="/client/{{ c.id }}" class="btn btn-sm btn-primary">View</a></td></tr>
+<td><a href="/client/{{ c.id }}" class="btn btn-sm btn-primary">View</a>
+<button class="btn btn-sm btn-secondary" onclick="editClient({{ c.id }},'{{ c.business_name }}','{{ c.contact_name }}','{{ c.email }}','{{ c.phone }}','{{ c.website }}','{{ c.industry }}','{{ c.location }}','{{ c.package or '' }}','{{ c.status }}')">✏️</button>
+<button class="btn btn-sm btn-danger" onclick="deleteClient({{ c.id }},'{{ c.business_name }}')">🗑️</button></td></tr>
 {% endfor %}</tbody></table></div>
 
 <div class="card" id="workers-section"><h3>👷 Team Members</h3>
-<table><thead><tr><th>Name</th><th>Role</th><th>Rank</th><th>Salary</th><th>Status</th></tr></thead><tbody>
+<table><thead><tr><th>Name</th><th>Role</th><th>Rank</th><th>Salary</th><th>Status</th><th>Actions</th></tr></thead><tbody>
 {% for w in workers %}
 <tr><td><strong>{{ w.full_name }}</strong><br><small>@{{ w.username }}</small></td><td>{{ w.role|replace('_',' ')|title }}</td><td>{{ w.rank }}</td>
-<td>${{ "{:,.0f}".format(w.salary) }}</td><td><span class="badge badge-active">Active</span></td></tr>
+<td>${{ "{:,.0f}".format(w.salary) }}</td><td><span class="badge badge-active">Active</span></td>
+<td><button class="btn btn-sm btn-secondary" onclick="editWorker({{ w.id }},'{{ w.username }}','{{ w.full_name }}','{{ w.email }}','{{ w.role }}','{{ w.rank }}',{{ w.salary }})">✏️</button>
+{% if w.role != 'super_admin' %}<button class="btn btn-sm btn-danger" onclick="deleteWorker({{ w.id }},'{{ w.full_name }}')">🗑️</button>{% endif %}</td></tr>
 {% endfor %}</tbody></table></div>
 
 <div class="card" id="tasks-section"><h3>✅ Recent Tasks</h3>
@@ -115,13 +124,30 @@
 
 <!-- Add Client Modal -->
 <div class="modal-overlay" id="addClientModal"><div class="modal"><div class="modal-header"><h3>Add New Client</h3><button onclick="closeModal('addClientModal')" class="modal-close">×</button></div>
-<div class="modal-body"><input id="nc_business" placeholder="Business Name" class="form-input"><input id="nc_contact" placeholder="Contact Name" class="form-input">
-<input id="nc_email" placeholder="Email" class="form-input"><input id="nc_phone" placeholder="Phone" class="form-input">
-<input id="nc_website" placeholder="Website URL" class="form-input"><input id="nc_industry" placeholder="Industry" class="form-input">
-<input id="nc_location" placeholder="Location (City, ST)" class="form-input">
-<select id="nc_package" class="form-select"><option value="">Select Package</option><option value="Growth Starter">Growth Starter - $997/mo</option><option value="Growth Pro">Growth Pro - $2,997/mo</option><option value="Growth Elite">Growth Elite - $6,997/mo</option></select>
+<div class="modal-body"><input id="nc_business" placeholder="Business Name *" class="form-input" required>
+<input id="nc_contact" placeholder="Contact Name *" class="form-input" required>
+<input id="nc_email" placeholder="Email *" class="form-input" type="email" required>
+<input id="nc_phone" placeholder="Phone * (e.g. 555-123-4567)" class="form-input" type="tel" required>
+<input id="nc_website" placeholder="Website URL * (e.g. https://example.com)" class="form-input" type="url" required>
+<input id="nc_industry" placeholder="Industry *" class="form-input" required>
+<input id="nc_location" placeholder="Location * (City, ST)" class="form-input" required>
+<select id="nc_package" class="form-select" required><option value="">Select Package *</option><option value="Growth Starter">Growth Starter - $997/mo</option><option value="Growth Pro">Growth Pro - $2,997/mo</option><option value="Growth Elite">Growth Elite - $6,997/mo</option></select>
 <select id="nc_status" class="form-select"><option value="lead">Lead</option><option value="prospect">Prospect</option><option value="active">Active</option></select>
 <button class="btn btn-primary btn-full" onclick="addClient()">Add Client</button></div></div></div>
+
+<!-- Edit Client Modal -->
+<div class="modal-overlay" id="editClientModal"><div class="modal"><div class="modal-header"><h3>Edit Client</h3><button onclick="closeModal('editClientModal')" class="modal-close">×</button></div>
+<div class="modal-body"><input type="hidden" id="ec_id">
+<input id="ec_business" placeholder="Business Name *" class="form-input" required>
+<input id="ec_contact" placeholder="Contact Name *" class="form-input" required>
+<input id="ec_email" placeholder="Email *" class="form-input" type="email" required>
+<input id="ec_phone" placeholder="Phone *" class="form-input" type="tel" required>
+<input id="ec_website" placeholder="Website URL *" class="form-input" type="url" required>
+<input id="ec_industry" placeholder="Industry *" class="form-input" required>
+<input id="ec_location" placeholder="Location *" class="form-input" required>
+<select id="ec_package" class="form-select"><option value="">Select Package</option><option value="Growth Starter">Growth Starter - $997/mo</option><option value="Growth Pro">Growth Pro - $2,997/mo</option><option value="Growth Elite">Growth Elite - $6,997/mo</option></select>
+<select id="ec_status" class="form-select"><option value="lead">Lead</option><option value="prospect">Prospect</option><option value="active">Active</option></select>
+<button class="btn btn-primary btn-full" onclick="saveClient()">Save Changes</button></div></div></div>
 
 <!-- Add Project Modal -->
 <div class="modal-overlay" id="addProjectModal"><div class="modal"><div class="modal-header"><h3>New Project</h3><button onclick="closeModal('addProjectModal')" class="modal-close">×</button></div>
@@ -133,12 +159,24 @@
 
 <!-- Add Worker Modal -->
 <div class="modal-overlay" id="addWorkerModal"><div class="modal"><div class="modal-header"><h3>Add Worker</h3><button onclick="closeModal('addWorkerModal')" class="modal-close">×</button></div>
-<div class="modal-body"><input id="nw_username" placeholder="Username" class="form-input"><input id="nw_name" placeholder="Full Name" class="form-input">
-<input id="nw_email" placeholder="Email" class="form-input"><input id="nw_password" placeholder="Password" class="form-input" type="password">
-<select id="nw_role" class="form-select"><option value="worker">Worker</option><option value="tech_seo">Tech SEO</option><option value="content_writer">Content Writer</option><option value="link_builder">Link Builder</option><option value="social_media">Social Media</option><option value="finance">Finance</option><option value="sales">Sales</option><option value="account_manager">Account Manager</option><option value="operations_manager">Operations Manager</option></select>
-<select id="nw_rank" class="form-select"><option value="junior">Junior</option><option value="mid">Mid</option><option value="senior">Senior</option><option value="lead">Lead</option></select>
-<input id="nw_salary" placeholder="Monthly Salary" type="number" class="form-input">
+<div class="modal-body"><input id="nw_username" placeholder="Username *" class="form-input" required>
+<input id="nw_name" placeholder="Full Name *" class="form-input" required>
+<input id="nw_email" placeholder="Email *" class="form-input" type="email" required>
+<input id="nw_password" placeholder="Password * (min 6 chars)" class="form-input" type="password" minlength="6" required>
+<select id="nw_role" class="form-select" required><option value="worker">Worker</option><option value="tech_seo">Tech SEO</option><option value="content_writer">Content Writer</option><option value="link_builder">Link Builder</option><option value="social_media">Social Media</option><option value="finance">Finance</option><option value="sales">Sales</option><option value="account_manager">Account Manager</option><option value="operations_manager">Operations Manager</option></select>
+<select id="nw_rank" class="form-select" required><option value="junior">Junior</option><option value="mid">Mid</option><option value="senior">Senior</option><option value="lead">Lead</option></select>
+<input id="nw_salary" placeholder="Monthly Salary *" type="number" min="0" class="form-input" required>
 <button class="btn btn-primary btn-full" onclick="addWorker()">Add Worker</button></div></div></div>
+
+<!-- Edit Worker Modal -->
+<div class="modal-overlay" id="editWorkerModal"><div class="modal"><div class="modal-header"><h3>Edit Worker</h3><button onclick="closeModal('editWorkerModal')" class="modal-close">×</button></div>
+<div class="modal-body"><input type="hidden" id="ew_id">
+<input id="ew_name" placeholder="Full Name *" class="form-input" required>
+<input id="ew_email" placeholder="Email *" class="form-input" type="email" required>
+<select id="ew_role" class="form-select" required><option value="worker">Worker</option><option value="tech_seo">Tech SEO</option><option value="content_writer">Content Writer</option><option value="link_builder">Link Builder</option><option value="social_media">Social Media</option><option value="finance">Finance</option><option value="sales">Sales</option><option value="account_manager">Account Manager</option><option value="operations_manager">Operations Manager</option></select>
+<select id="ew_rank" class="form-select" required><option value="junior">Junior</option><option value="mid">Mid</option><option value="senior">Senior</option><option value="lead">Lead</option></select>
+<input id="ew_salary" placeholder="Monthly Salary *" type="number" min="0" class="form-input" required>
+<button class="btn btn-primary btn-full" onclick="saveWorker()">Save Changes</button></div></div></div>
 
 <script>
 function openModal(id){document.getElementById(id).classList.add('show')}
@@ -146,22 +184,78 @@ function closeModal(id){document.getElementById(id).classList.remove('show')}
 function api(url,data){return fetch(url,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(data)}).then(r=>r.json())}
 function apiPut(url,data){return fetch(url,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(data)}).then(r=>r.json())}
 
+function validateRequired(fields){for(var i=0;i<fields.length;i++){var v=document.getElementById(fields[i]).value.trim();if(!v){alert('Please fill all required fields.');document.getElementById(fields[i]).focus();return false;}}return true;}
+
 function addClient(){
+    if(!validateRequired(['nc_business','nc_contact','nc_email','nc_phone','nc_website','nc_industry','nc_location','nc_package']))return;
+    var email=document.getElementById('nc_email').value.trim();
+    if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){alert('Please enter a valid email address.');return;}
     const pkg=document.getElementById('nc_package').value;
     const pmts={'Growth Starter':997,'Growth Pro':2997,'Growth Elite':6997};
     api('/api/clients',{business_name:document.getElementById('nc_business').value,contact_name:document.getElementById('nc_contact').value,
-        email:document.getElementById('nc_email').value,phone:document.getElementById('nc_phone').value,website:document.getElementById('nc_website').value,
+        email:email,phone:document.getElementById('nc_phone').value,website:document.getElementById('nc_website').value,
         industry:document.getElementById('nc_industry').value,location:document.getElementById('nc_location').value,
-        package:pkg,monthly_payment:pmts[pkg]||0,status:document.getElementById('nc_status').value}).then(()=>location.reload())}
+        package:pkg,monthly_payment:pmts[pkg]||0,status:document.getElementById('nc_status').value}).then(()=>{closeModal('addClientModal');location.reload()})}
+
+function editClient(id,biz,contact,email,phone,website,industry,loc,pkg,status){
+    document.getElementById('ec_id').value=id;
+    document.getElementById('ec_business').value=biz;
+    document.getElementById('ec_contact').value=contact;
+    document.getElementById('ec_email').value=email;
+    document.getElementById('ec_phone').value=phone;
+    document.getElementById('ec_website').value=website;
+    document.getElementById('ec_industry').value=industry;
+    document.getElementById('ec_location').value=loc;
+    document.getElementById('ec_package').value=pkg;
+    document.getElementById('ec_status').value=status;
+    openModal('editClientModal');}
+
+function saveClient(){
+    if(!validateRequired(['ec_business','ec_contact','ec_email']))return;
+    var id=document.getElementById('ec_id').value;
+    var pkg=document.getElementById('ec_package').value;
+    var pmts={'Growth Starter':997,'Growth Pro':2997,'Growth Elite':6997};
+    apiPut('/api/clients/'+id,{business_name:document.getElementById('ec_business').value,contact_name:document.getElementById('ec_contact').value,
+        email:document.getElementById('ec_email').value,phone:document.getElementById('ec_phone').value,website:document.getElementById('ec_website').value,
+        industry:document.getElementById('ec_industry').value,location:document.getElementById('ec_location').value,
+        package:pkg,monthly_payment:pmts[pkg]||0,status:document.getElementById('ec_status').value}).then(()=>{closeModal('editClientModal');location.reload()})}
+
+function deleteClient(id,name){if(!confirm('Are you sure you want to delete client "'+name+'"? This cannot be undone.'))return;
+    fetch('/api/clients/'+id,{method:'DELETE'}).then(r=>r.json()).then(r=>{alert(r.message||r.error);location.reload()})}
 
 function addProject(){api('/api/projects',{client_id:parseInt(document.getElementById('np_client').value),title:document.getElementById('np_title').value,
     description:document.getElementById('np_desc').value,service_type:document.getElementById('np_service').value,
     assigned_worker_id:parseInt(document.getElementById('np_worker').value)}).then(()=>location.reload())}
 
-function addWorker(){api('/api/users',{username:document.getElementById('nw_username').value,full_name:document.getElementById('nw_name').value,
-    email:document.getElementById('nw_email').value,password:document.getElementById('nw_password').value,
+function addWorker(){
+    if(!validateRequired(['nw_username','nw_name','nw_email','nw_password','nw_salary']))return;
+    var email=document.getElementById('nw_email').value.trim();
+    if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){alert('Please enter a valid email address.');return;}
+    var pwd=document.getElementById('nw_password').value;
+    if(pwd.length<6){alert('Password must be at least 6 characters.');return;}
+    api('/api/users',{username:document.getElementById('nw_username').value,full_name:document.getElementById('nw_name').value,
+    email:email,password:pwd,
     role:document.getElementById('nw_role').value,rank:document.getElementById('nw_rank').value,
-    salary:parseFloat(document.getElementById('nw_salary').value)||0}).then(()=>location.reload())}
+    salary:parseFloat(document.getElementById('nw_salary').value)||0}).then(()=>{closeModal('addWorkerModal');location.reload()})}
+
+function editWorker(id,username,name,email,role,rank,salary){
+    document.getElementById('ew_id').value=id;
+    document.getElementById('ew_name').value=name;
+    document.getElementById('ew_email').value=email;
+    document.getElementById('ew_role').value=role;
+    document.getElementById('ew_rank').value=rank;
+    document.getElementById('ew_salary').value=salary;
+    openModal('editWorkerModal');}
+
+function saveWorker(){
+    if(!validateRequired(['ew_name','ew_email','ew_salary']))return;
+    var id=document.getElementById('ew_id').value;
+    apiPut('/api/users/'+id,{full_name:document.getElementById('ew_name').value,email:document.getElementById('ew_email').value,
+        role:document.getElementById('ew_role').value,rank:document.getElementById('ew_rank').value,
+        salary:parseFloat(document.getElementById('ew_salary').value)||0}).then(()=>{closeModal('editWorkerModal');location.reload()})}
+
+function deleteWorker(id,name){if(!confirm('Are you sure you want to remove worker "'+name+'"?'))return;
+    fetch('/api/users/'+id,{method:'DELETE'}).then(r=>r.json()).then(r=>{alert(r.message||r.error);location.reload()})}
 
 function runAudit(){var url=document.getElementById('auditUrl').value.trim();if(!url){alert('Please enter a website URL first.');return;}var btn=document.querySelector('#audit-section .btn-primary');btn.disabled=true;btn.textContent='Analyzing...';api('/api/audit',{website_url:url}).then(r=>{btn.disabled=false;btn.textContent='Run Audit →';alert(r.message||r.error);location.reload()}).catch(e=>{btn.disabled=false;btn.textContent='Run Audit →';alert('Error: '+e)})}
 
